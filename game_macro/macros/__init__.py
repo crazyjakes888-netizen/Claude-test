@@ -1,0 +1,2 @@
+from .hill_climb_racing import HillClimbRacingMacro
+from .subway_surfers import SubwaySurfersMacro
