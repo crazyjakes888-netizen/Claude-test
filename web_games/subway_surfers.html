@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Subway Surfers</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; touch-action:none; }
+body { background:#000; overflow:hidden; font-family:Arial,sans-serif; }
+canvas { display:block; width:100vw; height:100vh; }
+#score-box {
+  position:fixed; top:14px; left:50%; transform:translateX(-50%);
+  background:rgba(0,0,0,0.45); color:#fff; font-size:22px; font-weight:bold;
+  padding:6px 22px; border-radius:20px; pointer-events:none;
+}
+#bot-btn {
+  position:fixed; top:14px; right:14px; background:#c0392b; color:#fff; border:none;
+  padding:11px 16px; border-radius:13px; font-size:14px; font-weight:bold; cursor:pointer;
+  box-shadow:0 4px 10px rgba(0,0,0,0.5);
+}
+#bot-btn.on { background:#27ae60; }
+#ctrl-row {
+  position:fixed; bottom:20px; width:100%; display:flex;
+  justify-content:space-around; padding:0 20px; pointer-events:none;
+}
+.ctrl-btn {
+  width:80px; height:80px; border:none; border-radius:50%;
+  font-size:28px; cursor:pointer; pointer-events:all;
+  background:rgba(255,255,255,0.18); color:#fff; border:2px solid rgba(255,255,255,0.35);
+  display:flex; align-items:center; justify-content:center;
+  user-select:none; -webkit-user-select:none;
+}
+#overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.78);
+  display:none; flex-direction:column; align-items:center; justify-content:center;
+}
+#overlay h1 { color:#fff; font-size:50px; margin-bottom:10px; }
+#overlay .od { color:#f1c40f; font-size:28px; margin-bottom:6px; }
+#overlay .oc { color:#aaa; font-size:17px; margin-bottom:26px; }
+#overlay button {
+  background:#e67e22; color:#fff; border:none; padding:15px 48px;
+  border-radius:16px; font-size:22px; font-weight:bold; cursor:pointer;
+}
+#back-btn { position:fixed; top:14px; left:14px; background:rgba(0,0,0,0.4); color:#fff; border:none; padding:10px 14px; border-radius:12px; font-size:14px; cursor:pointer; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="score-box">0</div>
+<button id="bot-btn" onclick="toggleBot()">🤖 BOT OFF</button>
+<div id="ctrl-row">
+  <button class="ctrl-btn" ontouchstart="swipe('left')"  onmousedown="swipe('left')">⬅️</button>
+  <button class="ctrl-btn" ontouchstart="swipe('up')"    onmousedown="swipe('up')">⬆️</button>
+  <button class="ctrl-btn" ontouchstart="swipe('down')"  onmousedown="swipe('down')">⬇️</button>
+  <button class="ctrl-btn" ontouchstart="swipe('right')" onmousedown="swipe('right')">➡️</button>
+</div>
+<div id="overlay">
+  <h1>💀 BUSTED!</h1>
+  <div class="od" id="od"></div>
+  <div class="oc" id="oc"></div>
+  <button onclick="restart()">🔄 PLAY AGAIN</button>
+</div>
+<button id="back-btn" onclick="location.href='index.html'">◀ Menu</button>
+
+<script>
+'use strict';
+const cv=document.getElementById('c'), ctx=cv.getContext('2d');
+let W,H;
+function rsz(){ W=cv.width=innerWidth; H=cv.height=innerHeight; }
+addEventListener('resize',rsz); rsz();
+
+// ── Perspective constants ────────────────────────────────────────────────────
+const VP_Y_RATIO = 0.28;   // vanishing point Y as fraction of H
+const TRACK_BOT_RATIO = 0.88;
+const LANE_W_BOTTOM = 110; // half-lane width at player position
+const LANES = 3;
+
+function project(laneOff, depth) {
+  // laneOff: -1, 0, +1; depth: 0=far, 1=near
+  return {
+    x: W/2 + laneOff * LANE_W_BOTTOM * depth,
+    y: H*VP_Y_RATIO + (H*TRACK_BOT_RATIO - H*VP_Y_RATIO)*depth,
+    sc: depth
+  };
+}
+
+// ── Player ───────────────────────────────────────────────────────────────────
+let player={}, runs=0, score=0, active=true, coins=0;
+function resetPlayer() {
+  player = {
+    lane: 1, targetLane: 1, laneT: 1,  // 0=left,1=center,2=right; laneT=transition 0-1
+    jumpT: 0, jumping: false,
+    rollT: 0, rolling: false,
+    alive: true, hitFlash: 0
+  };
+}
+
+function updatePlayer() {
+  // Lane transition
+  if (player.laneT < 1) {
+    player.laneT = Math.min(1, player.laneT + 0.18);
+  } else {
+    player.lane = player.targetLane;
+  }
+  // Jump arc
+  if (player.jumping) {
+    player.jumpT += 0.07;
+    if (player.jumpT >= 1) { player.jumpT=0; player.jumping=false; }
+  }
+  // Roll
+  if (player.rolling) {
+    player.rollT += 0.08;
+    if (player.rollT >= 1) { player.rollT=0; player.rolling=false; }
+  }
+  if (player.hitFlash > 0) player.hitFlash--;
+}
+
+function playerLaneOff() {
+  const from = player.lane - 1;
+  const to   = player.targetLane - 1;
+  return from + (to - from) * easeOut(player.laneT);
+}
+function jumpHeight() {
+  if (!player.jumping) return 0;
+  return Math.sin(player.jumpT * Math.PI) * 0.18; // fraction of track height
+}
+function easeOut(t) { return 1-(1-t)*(1-t); }
+
+// ── Obstacles ─────────────────────────────────────────────────────────────────
+// Each: { lane, depth, type:'train'|'barrier'|'log', scored }
+let obstacles=[], spawnTimer=0;
+const SPAWN_INTERVAL=90; // frames between spawns
+const OBS_SPEED=0.018;
+
+function spawnObstacle() {
+  const types=['train','train','barrier','log'];
+  const type=types[Math.floor(Math.random()*types.length)];
+  // Don't always fill the player's lane at start
+  const lane=Math.floor(Math.random()*3);
+  obstacles.push({ lane, depth:0, type, scored:false });
+}
+
+function updateObstacles(speed) {
+  for(const o of obstacles) o.depth += speed;
+  // Remove off-screen
+  obstacles=obstacles.filter(o=>o.depth<1.15);
+}
+
+function checkCollisions() {
+  const jh = jumpHeight();
+  for(const o of obstacles) {
+    if(o.depth < 0.85 || o.depth > 1.05) continue;
+    if(o.lane !== player.targetLane && o.lane !== player.lane) continue;
+    // Check lane overlap more carefully
+    const lOff = playerLaneOff();
+    const oBins = o.lane - 1; // -1, 0, +1
+    if(Math.abs(lOff - oBins) > 0.55) continue;
+    // Jump clears log and barrier
+    if(jh > 0.08 && o.type !== 'train') continue;
+    if(jh > 0.15 && o.type === 'train') continue;
+    // Hit!
+    player.alive = false;
+    player.hitFlash = 20;
+  }
+}
+
+// ── Coins on track ────────────────────────────────────────────────────────────
+let trackCoins=[], coinTimer=0;
+function spawnCoin() {
+  trackCoins.push({ lane:Math.floor(Math.random()*3), depth:0, got:false });
+}
+function updateCoins(speed) {
+  for(const c of trackCoins) c.depth+=speed;
+  trackCoins=trackCoins.filter(c=>c.depth<1.1);
+}
+function collectCoins() {
+  for(const c of trackCoins) {
+    if(c.got) continue;
+    if(c.depth<0.88||c.depth>1.0) continue;
+    const lOff=playerLaneOff(), cOff=c.lane-1;
+    if(Math.abs(lOff-cOff)>0.55) continue;
+    c.got=true; coins++;
+  }
+}
+
+// ── Bot ───────────────────────────────────────────────────────────────────────
+let botOn=false, botCooldown=0;
+function toggleBot() {
+  botOn=!botOn;
+  const b=document.getElementById('bot-btn');
+  b.textContent=botOn?'🤖 BOT ON':'🤖 BOT OFF';
+  b.className=botOn?'on':'';
+}
+function botThink() {
+  if(!botOn||!active||botCooldown>0||player.laneT<0.9) return;
+  // Look at obstacles between depth 0.45 and 0.85
+  const danger=obstacles.filter(o=>o.depth>0.45&&o.depth<0.85&&o.lane===player.targetLane);
+  if(!danger.length) return;
+  const o=danger[0];
+  // Can we jump over it?
+  if(o.type==='barrier'||o.type==='log') {
+    if(!player.jumping) { swipe('up'); return; }
+  }
+  // Need to change lane
+  const left=player.targetLane-1, right=player.targetLane+1;
+  const leftSafe  = left>=0  && !obstacles.some(x=>x.depth>0.4&&x.depth<0.9&&x.lane===left);
+  const rightSafe = right<=2 && !obstacles.some(x=>x.depth>0.4&&x.depth<0.9&&x.lane===right);
+  if(leftSafe)       swipe('left');
+  else if(rightSafe) swipe('right');
+  else if(!player.jumping) swipe('up');
+}
+
+// ── Input ─────────────────────────────────────────────────────────────────────
+let swipeCooldown=0;
+function swipe(dir) {
+  if(!active||swipeCooldown>0) return;
+  swipeCooldown=12;
+  if(dir==='left'  && player.targetLane>0) { player.targetLane--; player.laneT=0; }
+  if(dir==='right' && player.targetLane<2) { player.targetLane++; player.laneT=0; }
+  if(dir==='up'    && !player.jumping)     { player.jumping=true; player.jumpT=0; }
+  if(dir==='down'  && !player.rolling)     { player.rolling=true; player.rollT=0; }
+}
+
+// Touch swipe detection
+let tx0=0,ty0=0;
+cv.addEventListener('touchstart',e=>{ tx0=e.touches[0].clientX; ty0=e.touches[0].clientY; },{passive:true});
+cv.addEventListener('touchend',e=>{
+  const dx=e.changedTouches[0].clientX-tx0, dy=e.changedTouches[0].clientY-ty0;
+  if(Math.abs(dx)>Math.abs(dy)*1.2) swipe(dx>0?'right':'left');
+  else swipe(dy<0?'up':'down');
+});
+addEventListener('keydown',e=>{
+  if(e.key==='ArrowLeft') swipe('left');
+  if(e.key==='ArrowRight') swipe('right');
+  if(e.key==='ArrowUp') swipe('up');
+  if(e.key==='ArrowDown') swipe('down');
+});
+
+// ── Rendering ─────────────────────────────────────────────────────────────────
+function drawBackground() {
+  // Sky
+  const sky=ctx.createLinearGradient(0,0,0,H*VP_Y_RATIO+20);
+  sky.addColorStop(0,'#0d1b2a'); sky.addColorStop(1,'#1b3a5c');
+  ctx.fillStyle=sky; ctx.fillRect(0,0,W,H*VP_Y_RATIO+20);
+  // Buildings silhouette
+  ctx.fillStyle='#0a1628';
+  const buildX=[0,80,180,310,420,550,680,780,880,980,1100];
+  const buildW=[75,95,110,80,120,85,95,90,110,80,120];
+  const buildH=[120,80,150,100,130,90,110,100,140,95,160];
+  for(let i=0;i<buildX.length;i++){
+    const bx=((buildX[i]-0)%W+W)%W;
+    const by=H*VP_Y_RATIO-buildH[i]+20;
+    ctx.fillRect(bx,by,buildW[i],buildH[i]+5);
+    // Windows
+    ctx.fillStyle='rgba(255,220,100,0.6)';
+    for(let wy=by+10;wy<H*VP_Y_RATIO-5;wy+=18)
+      for(let wx=bx+8;wx<bx+buildW[i]-8;wx+=14)
+        if(Math.sin(wx*7+wy*3)>0.2) ctx.fillRect(wx,wy,7,9);
+    ctx.fillStyle='#0a1628';
+  }
+}
+
+function drawTrack() {
+  const vx=W/2, vy=H*VP_Y_RATIO;
+  const bLeft=W/2-1.5*LANE_W_BOTTOM, bRight=W/2+1.5*LANE_W_BOTTOM, by=H*TRACK_BOT_RATIO;
+
+  // Main track surface
+  ctx.beginPath();
+  ctx.moveTo(vx,vy); ctx.lineTo(bRight,by); ctx.lineTo(bLeft,by); ctx.closePath();
+  const tg=ctx.createLinearGradient(0,vy,0,by);
+  tg.addColorStop(0,'#2c3e50'); tg.addColorStop(1,'#445566');
+  ctx.fillStyle=tg; ctx.fill();
+
+  // Lane dividers
+  ctx.strokeStyle='rgba(255,255,0,0.55)'; ctx.lineWidth=2; ctx.setLineDash([18,24]);
+  for(let l=-0.5;l<=0.5;l++){
+    ctx.beginPath(); ctx.moveTo(vx,vy);
+    ctx.lineTo(W/2+l*2*LANE_W_BOTTOM,by); ctx.stroke();
+  }
+  ctx.setLineDash([]);
+  // Outer edges
+  ctx.strokeStyle='#fff'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(vx,vy); ctx.lineTo(bLeft,by); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(vx,vy); ctx.lineTo(bRight,by); ctx.stroke();
+
+  // Speed lines on sides
+  const frame=Date.now()/16|0;
+  ctx.strokeStyle='rgba(255,255,255,0.18)'; ctx.lineWidth=1.5;
+  for(let i=0;i<6;i++){
+    const lp=project(-1.8-i*.12, ((frame*0.04+i*.17)%1));
+    const lp2=project(-1.8-i*.12, ((frame*0.04+i*.17+.12)%1));
+    ctx.beginPath(); ctx.moveTo(lp.x,lp.y); ctx.lineTo(lp2.x,lp2.y); ctx.stroke();
+    const rp=project(1.8+i*.12, ((frame*0.04+i*.17)%1));
+    const rp2=project(1.8+i*.12, ((frame*0.04+i*.17+.12)%1));
+    ctx.beginPath(); ctx.moveTo(rp.x,rp.y); ctx.lineTo(rp2.x,rp2.y); ctx.stroke();
+  }
+}
+
+function drawObstacles() {
+  // Sort back-to-front
+  const sorted=[...obstacles].sort((a,b)=>a.depth-b.depth);
+  for(const o of sorted) {
+    if(o.depth<0.01) continue;
+    const p=project(o.lane-1, o.depth);
+    const sc=p.sc;
+    const ow=LANE_W_BOTTOM*1.8*sc, oh=(o.type==='train'?140:o.type==='barrier'?50:30)*sc;
+    const ox=p.x-ow/2, oy=p.y-oh;
+
+    ctx.save();
+    if(o.type==='train'){
+      // Train car body
+      ctx.fillStyle='#1a5276'; ctx.fillRect(ox,oy,ow,oh);
+      ctx.strokeStyle='#2980b9'; ctx.lineWidth=2*sc; ctx.strokeRect(ox,oy,ow,oh);
+      // Windows
+      ctx.fillStyle='#f9e79f';
+      for(let wi=0;wi<3;wi++){
+        const wx=ox+ow*.12+wi*(ow*.28);
+        ctx.fillRect(wx,oy+oh*.15,ow*.18,oh*.2);
+      }
+      // Wheels
+      ctx.fillStyle='#2c3e50';
+      ctx.beginPath(); ctx.arc(ox+ow*.2,p.y,10*sc,0,Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(ox+ow*.8,p.y,10*sc,0,Math.PI*2); ctx.fill();
+    } else if(o.type==='barrier'){
+      ctx.fillStyle='#e74c3c'; ctx.fillRect(ox,oy,ow,oh);
+      ctx.strokeStyle='#fff'; ctx.lineWidth=3*sc;
+      ctx.beginPath(); ctx.moveTo(ox,oy); ctx.lineTo(ox+ow,oy+oh); ctx.stroke();
+      ctx.beginPath(); ctx.moveTo(ox+ow,oy); ctx.lineTo(ox,oy+oh); ctx.stroke();
+    } else { // log
+      ctx.fillStyle='#8B4513';
+      for(let li=0;li<3;li++){
+        ctx.beginPath(); ctx.ellipse(ox+ow/2, p.y-li*(8*sc), ow/2, 12*sc, 0,0,Math.PI*2);
+        ctx.fill();
+      }
+    }
+    ctx.restore();
+  }
+}
+
+function drawTrackCoins() {
+  for(const c of trackCoins) {
+    if(c.got||c.depth<0.05) continue;
+    const p=project(c.lane-1, c.depth);
+    ctx.save(); ctx.translate(p.x, p.y-20*p.sc);
+    ctx.beginPath(); ctx.arc(0,0,10*p.sc,0,Math.PI*2);
+    ctx.fillStyle='#f1c40f'; ctx.fill();
+    ctx.strokeStyle='#d4ac0d'; ctx.lineWidth=2*p.sc; ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.5)'; ctx.beginPath(); ctx.arc(-3*p.sc,-3*p.sc,3*p.sc,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+}
+
+function drawPlayer() {
+  const lOff=playerLaneOff();
+  const jh=jumpHeight();
+  const trackH=H*TRACK_BOT_RATIO-H*VP_Y_RATIO;
+  const p=project(lOff, 1);
+  const lift=jh*trackH*.9;
+  const rolling=player.rolling;
+  const sc=0.95;
+  const px=p.x, py=p.y - lift;
+
+  ctx.save();
+  if(player.hitFlash>0&&Math.floor(player.hitFlash/3)%2===0){
+    ctx.globalAlpha=0.4;
+  }
+
+  const bh=rolling?32:75; // body height when rolling vs standing
+  const bw=rolling?55:36;
+
+  // Shadow
+  ctx.fillStyle='rgba(0,0,0,0.35)';
+  ctx.beginPath(); ctx.ellipse(px, p.y+4, 25*sc, 8*sc, 0, 0, Math.PI*2); ctx.fill();
+
+  // Body
+  ctx.fillStyle='#e74c3c';
+  ctx.beginPath(); ctx.roundRect(px-bw/2*sc, py-bh*sc, bw*sc, bh*sc, 8*sc); ctx.fill();
+
+  // Jacket stripe
+  ctx.fillStyle='#fff';
+  ctx.fillRect(px-bw/2*sc, py-bh*.6*sc, bw*sc, 6*sc);
+
+  if(!rolling) {
+    // Head
+    ctx.beginPath(); ctx.arc(px, py-bh*sc-18*sc, 16*sc, 0, Math.PI*2);
+    ctx.fillStyle='#f5cba7'; ctx.fill();
+    // Hat
+    ctx.fillStyle='#2c3e50';
+    ctx.fillRect(px-16*sc, py-bh*sc-36*sc, 32*sc, 10*sc);
+    ctx.fillRect(px-10*sc, py-bh*sc-50*sc, 20*sc, 18*sc);
+    // Hair
+    ctx.fillStyle='#1a1a1a'; ctx.fillRect(px-10*sc, py-bh*sc-36*sc, 20*sc, 5*sc);
+    // Legs (animated)
+    const lt=Date.now()/180;
+    ctx.fillStyle='#2c3e50';
+    ctx.fillRect(px-12*sc, py-20*sc, 10*sc, 22*sc);
+    ctx.fillRect(px+2*sc,  py+(Math.sin(lt)*6-13)*sc, 10*sc, 22*sc);
+  } else {
+    // Rolling - just show squished form, no head visible
+    ctx.beginPath(); ctx.arc(px, py-16*sc, 14*sc, 0, Math.PI*2);
+    ctx.fillStyle='#f5cba7'; ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ── Game over ─────────────────────────────────────────────────────────────────
+let autoTimer=null;
+function showOver(){
+  active=false;
+  document.getElementById('od').textContent='Score: '+score+'  🪙 '+coins;
+  document.getElementById('oc').textContent='Run '+runs;
+  document.getElementById('overlay').style.display='flex';
+  if(botOn) autoTimer=setTimeout(restart,1400);
+}
+function restart(){
+  clearTimeout(autoTimer);
+  document.getElementById('overlay').style.display='none';
+  obstacles=[]; trackCoins=[]; score=0; spawnTimer=0; coinTimer=0;
+  resetPlayer(); active=true;
+}
+
+// ── Game speed ────────────────────────────────────────────────────────────────
+let gameSpeed=OBS_SPEED;
+let frame=0;
+
+// ── Main loop ─────────────────────────────────────────────────────────────────
+resetPlayer(); runs=1;
+
+function loop(){
+  requestAnimationFrame(loop);
+  frame++;
+  if(swipeCooldown>0) swipeCooldown--;
+  if(botCooldown>0)   botCooldown--;
+
+  if(active){
+    gameSpeed=Math.min(OBS_SPEED+frame*.000015, 0.038); // speed up over time
+    updatePlayer();
+    updateObstacles(gameSpeed);
+    updateCoins(gameSpeed);
+    checkCollisions();
+    collectCoins();
+    botThink();
+    score=Math.floor(frame*0.12);
+    spawnTimer++; if(spawnTimer>=Math.max(40,SPAWN_INTERVAL-frame*.05)){ spawnTimer=0; spawnObstacle(); }
+    coinTimer++;  if(coinTimer>=30){ coinTimer=0; spawnCoin(); }
+    if(!player.alive) { runs++; showOver(); }
+  }
+
+  ctx.clearRect(0,0,W,H);
+  drawBackground();
+  drawTrack();
+  // Draw coins behind obstacles behind player
+  drawTrackCoins();
+  drawObstacles();
+  drawPlayer();
+
+  // HUD
+  document.getElementById('score-box').textContent='Score: '+score+'  🪙 '+coins;
+}
+loop();
+</script>
+</body>
+</html>

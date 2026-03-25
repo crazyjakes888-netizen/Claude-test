@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Hill Climb Racing</title>
+<style>
+* { margin:0; padding:0; box-sizing:border-box; touch-action:none; }
+body { background:#000; overflow:hidden; font-family:Arial,sans-serif; }
+canvas { display:block; width:100vw; height:100vh; }
+#score-box {
+  position:fixed; top:14px; left:50%; transform:translateX(-50%);
+  background:rgba(0,0,0,0.45); color:#fff; font-size:22px; font-weight:bold;
+  padding:6px 22px; border-radius:20px; text-shadow:1px 1px 4px #000; pointer-events:none;
+}
+#fuel-wrap { position:fixed; bottom:140px; left:18px; pointer-events:none; }
+#fuel-label { color:#fff; font-size:13px; font-weight:bold; text-shadow:1px 1px 3px #000; margin-bottom:3px; }
+#fuel-track { width:130px; height:16px; background:rgba(0,0,0,0.5); border-radius:8px; border:2px solid rgba(255,255,255,0.35); overflow:hidden; }
+#fuel-fill { height:100%; width:100%; background:linear-gradient(90deg,#e74c3c,#f39c12,#2ecc71); border-radius:6px; transition:width .12s; }
+#bot-btn {
+  position:fixed; top:14px; right:14px; background:#c0392b; color:#fff; border:none;
+  padding:11px 16px; border-radius:13px; font-size:14px; font-weight:bold; cursor:pointer;
+  box-shadow:0 4px 10px rgba(0,0,0,0.5);
+}
+#bot-btn.on { background:#27ae60; }
+#brake-btn,#gas-btn {
+  position:fixed; bottom:20px; width:130px; height:95px; border:none; border-radius:20px;
+  font-size:26px; font-weight:bold; color:#fff; cursor:pointer;
+  display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+  box-shadow:0 7px 16px rgba(0,0,0,0.55); user-select:none; -webkit-user-select:none;
+}
+#brake-btn { left:18px; background:linear-gradient(150deg,#e74c3c,#922b21); }
+#gas-btn   { right:18px; background:linear-gradient(150deg,#27ae60,#1a6b3e); }
+.btn-sub { font-size:11px; letter-spacing:1px; opacity:.85; }
+#overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.78);
+  display:none; flex-direction:column; align-items:center; justify-content:center;
+}
+#overlay h1 { color:#fff; font-size:50px; margin-bottom:10px; }
+#overlay .od { color:#f1c40f; font-size:28px; margin-bottom:6px; }
+#overlay .oc { color:#aaa; font-size:17px; margin-bottom:26px; }
+#overlay button {
+  background:#e67e22; color:#fff; border:none; padding:15px 48px;
+  border-radius:16px; font-size:22px; font-weight:bold; cursor:pointer;
+}
+#back-btn { position:fixed; top:14px; left:14px; background:rgba(0,0,0,0.4); color:#fff; border:none; padding:10px 14px; border-radius:12px; font-size:14px; cursor:pointer; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="score-box">0 m</div>
+<div id="fuel-wrap"><div id="fuel-label">⛽ FUEL</div><div id="fuel-track"><div id="fuel-fill"></div></div></div>
+<button id="bot-btn" onclick="toggleBot()">🤖 BOT OFF</button>
+<button id="brake-btn" ontouchstart="K.b=1" ontouchend="K.b=0" onmousedown="K.b=1" onmouseup="K.b=0">⬅️<span class="btn-sub">BRAKE</span></button>
+<button id="gas-btn"   ontouchstart="K.g=1" ontouchend="K.g=0" onmousedown="K.g=1" onmouseup="K.g=0">⛽<span class="btn-sub">GAS</span></button>
+<div id="overlay">
+  <h1>💥 CRASH!</h1>
+  <div class="od" id="od"></div>
+  <div class="oc" id="oc"></div>
+  <button onclick="restart()">🔄 TRY AGAIN</button>
+</div>
+<button id="back-btn" onclick="location.href='index.html'">◀ Menu</button>
+
+<script>
+'use strict';
+const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+let W, H;
+function rsz() { W = cv.width = innerWidth; H = cv.height = innerHeight; }
+addEventListener('resize', rsz); rsz();
+
+// ── Terrain ──────────────────────────────────────────────────────────────────
+function tY(x) {
+  return H*.56 + Math.sin(x*.007)*88 + Math.sin(x*.019)*42
+       + Math.sin(x*.048)*18 + Math.sin(x*.003)*115 + Math.sin(x*.0013)*145;
+}
+function tSlope(x) { return (tY(x+6)-tY(x-6))/12; }
+
+// ── Car constants ─────────────────────────────────────────────────────────────
+const WB=80, WR=23, BW=92, BH=34;
+
+// ── Car state ─────────────────────────────────────────────────────────────────
+let car={}, runs=0, active=true, totalCoins=0;
+function resetCar() {
+  car = { x:220, y:tY(220)-WR-BH/2-4, angle:0, spd:0, fuel:100, alive:true, dist:0 };
+}
+
+function updateCar(gas, brake) {
+  if (!car.alive) return;
+  const rX=car.x-Math.cos(car.angle)*WB/2, fX=car.x+Math.cos(car.angle)*WB/2;
+  const rY=tY(rX), fY=tY(fX);
+  const ta=Math.atan2(fY-rY, fX-rX);
+  car.angle += (ta-car.angle)*.27;
+  const my=(rY+fY)/2;
+  car.y += (my-WR-BH/2-car.y)*.44;
+  const sl=tSlope(car.x);
+  const grav=sl*.38;
+  if (gas && car.fuel>0) { car.spd+=.27; car.fuel=Math.max(0,car.fuel-.05); }
+  if (brake) car.spd-=.34;
+  car.spd+=grav; car.spd-=car.spd*.027;
+  car.spd=Math.max(0,Math.min(9,car.spd));
+  car.x+=car.spd; car.dist+=car.spd;
+  if (Math.abs(car.angle)>1.22) car.alive=false;
+}
+
+// ── Coins ─────────────────────────────────────────────────────────────────────
+let coins=[], lastCX=400;
+function spawnCoins(upto) {
+  while(lastCX < upto+W+200) {
+    coins.push({ x:lastCX, y:tY(lastCX)-58, got:false });
+    lastCX += 180+Math.random()*120;
+  }
+}
+function collectCoins() {
+  for(const c of coins) {
+    if(c.got) continue;
+    const dx=c.x-car.x, dy=c.y-car.y;
+    if(dx*dx+dy*dy<1600) { c.got=true; totalCoins++; }
+  }
+}
+
+// ── Bot ───────────────────────────────────────────────────────────────────────
+let botOn=false;
+function toggleBot() {
+  botOn=!botOn;
+  const b=document.getElementById('bot-btn');
+  b.textContent=botOn?'🤖 BOT ON':'🤖 BOT OFF';
+  b.className=botOn?'on':'';
+}
+function botDecide() {
+  const sl=tSlope(car.x+160);
+  if(car.angle>0.52) return{g:0,b:1};
+  if(car.angle<-0.34||sl<-0.13) return{g:1,b:0};
+  if(sl>0.24&&car.spd>6) return{g:0,b:1};
+  return{g:1,b:0};
+}
+
+// ── Input ─────────────────────────────────────────────────────────────────────
+const K={g:0,b:0};
+addEventListener('keydown',e=>{ if(e.key==='ArrowRight')K.g=1; if(e.key==='ArrowLeft')K.b=1; });
+addEventListener('keyup',  e=>{ if(e.key==='ArrowRight')K.g=0; if(e.key==='ArrowLeft')K.b=0; });
+
+// ── Drawing helpers ───────────────────────────────────────────────────────────
+function rr(x,y,w,h,r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y); ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r); ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h); ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r); ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+function drawWheel(x,y) {
+  ctx.beginPath(); ctx.arc(x,y,WR,0,Math.PI*2);
+  ctx.fillStyle='#2c3e50'; ctx.fill(); ctx.strokeStyle='#1a252f'; ctx.lineWidth=3; ctx.stroke();
+  ctx.beginPath(); ctx.arc(x,y,WR*.55,0,Math.PI*2);
+  ctx.fillStyle='#95a5a6'; ctx.fill();
+  ctx.beginPath(); ctx.arc(x,y,WR*.18,0,Math.PI*2);
+  ctx.fillStyle='#7f8c8d'; ctx.fill();
+  for(let i=0;i<8;i++){
+    const a=i/8*Math.PI*2;
+    ctx.beginPath();
+    ctx.moveTo(x+Math.cos(a)*WR*.63,y+Math.sin(a)*WR*.63);
+    ctx.lineTo(x+Math.cos(a)*WR*.96,y+Math.sin(a)*WR*.96);
+    ctx.strokeStyle='#34495e'; ctx.lineWidth=2.5; ctx.stroke();
+  }
+}
+
+function drawCarBody(angle) {
+  ctx.save(); ctx.rotate(angle);
+  rr(-BW/2,-BH/2,BW,BH,10); ctx.fillStyle='#e74c3c'; ctx.fill(); ctx.strokeStyle='#c0392b'; ctx.lineWidth=3; ctx.stroke();
+  rr(-BW/2+4,BH/2-11,BW-8,13,4); ctx.fillStyle='#922b21'; ctx.fill();
+  rr(-BW/4,-BH/2-25,BW*.55,25,7); ctx.fillStyle='#85c1e9'; ctx.fill(); ctx.strokeStyle='#5dade2'; ctx.lineWidth=2; ctx.stroke();
+  rr(-BW/4+2,-BH/2-25,BW*.55-4,8,3); ctx.fillStyle='#c0392b'; ctx.fill();
+  ctx.beginPath(); ctx.arc(BW/8,-BH/2-29,13,0,Math.PI*2); ctx.fillStyle='#f39c12'; ctx.fill(); ctx.strokeStyle='#e67e22'; ctx.lineWidth=2; ctx.stroke();
+  ctx.beginPath(); ctx.arc(BW/8+4,-BH/2-28,7,-0.5,0.5); ctx.fillStyle='#2980b9'; ctx.fill();
+  ctx.beginPath(); ctx.arc(BW/2-8,-4,6,0,Math.PI*2); ctx.fillStyle='#f9e79f'; ctx.fill();
+  ctx.fillStyle='#7f8c8d'; ctx.fillRect(-BW/2-10,2,12,8);
+  ctx.restore();
+}
+
+function drawTerrain(cx) {
+  ctx.beginPath(); ctx.moveTo(0,H);
+  for(let sx=0;sx<=W+4;sx+=4) ctx.lineTo(sx,tY(sx+cx));
+  ctx.lineTo(W,H); ctx.closePath();
+  const g=ctx.createLinearGradient(0,H*.38,0,H);
+  g.addColorStop(0,'#3d8b47'); g.addColorStop(.08,'#8B6914');
+  g.addColorStop(.5,'#6b4a1e'); g.addColorStop(1,'#4a2f0f');
+  ctx.fillStyle=g; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(0,tY(cx));
+  for(let sx=0;sx<=W+4;sx+=4) ctx.lineTo(sx,tY(sx+cx));
+  ctx.strokeStyle='#2ecc71'; ctx.lineWidth=4; ctx.stroke();
+}
+
+function drawBG(cx) {
+  const sk=ctx.createLinearGradient(0,0,0,H*.6);
+  sk.addColorStop(0,'#1a6ea8'); sk.addColorStop(1,'#87ceeb');
+  ctx.fillStyle=sk; ctx.fillRect(0,0,W,H*.6);
+  // distant hills
+  ctx.beginPath(); ctx.moveTo(0,H);
+  for(let sx=0;sx<=W;sx+=6){
+    const wx=sx+cx*.3;
+    ctx.lineTo(sx, H*.54+Math.sin(wx*.005)*65+Math.sin(wx*.011)*28);
+  }
+  ctx.lineTo(W,H); ctx.fillStyle='#2d7a3b'; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(0,H);
+  for(let sx=0;sx<=W;sx+=6){
+    const wx=sx+cx*.55;
+    ctx.lineTo(sx, H*.62+Math.sin(wx*.007)*45+Math.sin(wx*.016)*22);
+  }
+  ctx.lineTo(W,H); ctx.fillStyle='#3a8a45'; ctx.fill();
+  // clouds
+  [[200,.2],[520,.18],[900,.22],[1250,.16]].forEach(([bx,ry])=>{
+    const scx=((bx-cx*.18)%(W+320)+W+320)%(W+320)-160;
+    const scy=H*ry;
+    ctx.save(); ctx.globalAlpha=.82; ctx.fillStyle='#fff';
+    [[-35,0],[0,-22],[35,0],[60,6],[-60,6]].forEach(([ox,oy])=>{
+      ctx.beginPath(); ctx.arc(scx+ox,scy+oy,22,0,Math.PI*2); ctx.fill();
+    });
+    ctx.restore();
+  });
+}
+
+function drawCoins(cx) {
+  const t=Date.now()/300;
+  for(const c of coins){
+    if(c.got) continue;
+    const sx=c.x-cx;
+    if(sx<-50||sx>W+50) continue;
+    ctx.save(); ctx.translate(sx, c.y+Math.sin(t+c.x*.05)*5);
+    ctx.beginPath(); ctx.arc(0,0,11,0,Math.PI*2);
+    ctx.fillStyle='#f1c40f'; ctx.fill(); ctx.strokeStyle='#d4ac0d'; ctx.lineWidth=2; ctx.stroke();
+    ctx.fillStyle='rgba(255,255,255,.5)'; ctx.beginPath(); ctx.arc(-3,-3,4,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#b7950b'; ctx.font='bold 10px Arial'; ctx.textAlign='center'; ctx.textBaseline='middle';
+    ctx.fillText('$',0,0);
+    ctx.restore();
+  }
+}
+
+// ── Game over ─────────────────────────────────────────────────────────────────
+let autoRestartTimer=null;
+function showOver() {
+  active=false;
+  document.getElementById('od').textContent=Math.floor(car.dist/10)+' m  🪙 '+totalCoins;
+  document.getElementById('oc').textContent='Run '+runs;
+  document.getElementById('overlay').style.display='flex';
+  if(botOn) autoRestartTimer=setTimeout(restart,1400);
+}
+function restart() {
+  clearTimeout(autoRestartTimer);
+  document.getElementById('overlay').style.display='none';
+  coins=[]; lastCX=400; resetCar(); active=true;
+}
+
+// ── Main loop ─────────────────────────────────────────────────────────────────
+resetCar(); spawnCoins(W*2); runs=1;
+
+function loop() {
+  requestAnimationFrame(loop);
+  const cx=car.x-W*.34;
+  let g=K.g, b=K.b;
+  if(botOn&&active){ const d=botDecide(); g=d.g; b=d.b; }
+  if(active){ updateCar(g,b); spawnCoins(car.x+W); collectCoins(); }
+  if(active&&!car.alive){ runs++; showOver(); }
+
+  ctx.clearRect(0,0,W,H);
+  drawBG(cx); drawTerrain(cx); drawCoins(cx);
+
+  const rX=car.x-Math.cos(car.angle)*WB/2-cx, rY=tY(car.x-Math.cos(car.angle)*WB/2);
+  const fX=car.x+Math.cos(car.angle)*WB/2-cx, fY=tY(car.x+Math.cos(car.angle)*WB/2);
+  drawWheel(rX,rY); drawWheel(fX,fY);
+  ctx.save(); ctx.translate(car.x-cx,car.y); drawCarBody(car.angle); ctx.restore();
+
+  // Speed lines
+  if(car.spd>5&&active){
+    ctx.save(); ctx.globalAlpha=(car.spd-5)/5*.25; ctx.strokeStyle='#fff'; ctx.lineWidth=1.5;
+    for(let i=0;i<6;i++){
+      const lx=W*.28-Math.random()*180, ly=car.y-35+Math.random()*70;
+      ctx.beginPath(); ctx.moveTo(lx,ly); ctx.lineTo(lx-28-Math.random()*18,ly); ctx.stroke();
+    }
+    ctx.restore();
+  }
+
+  document.getElementById('score-box').textContent=Math.floor(car.dist/10)+' m  🪙 '+totalCoins;
+  document.getElementById('fuel-fill').style.width=car.fuel+'%';
+}
+loop();
+</script>
+</body>
+</html>
