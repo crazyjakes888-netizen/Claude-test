@@ -53,5 +53,12 @@ p  { color: #a8b2c1; font-size: 16px; margin-bottom: 40px; text-align: center; }
   </a>
 </div>
 <p class="foot">Tap BOT ON in any game — it plays and restarts automatically forever</p>
+<p class="foot" id="bank" style="margin-top:10px; font-size:15px; color:#f1c40f;"></p>
+<script>
+const hcr = parseInt(localStorage.getItem('hcr_coins') || '0');
+const ss  = parseInt(localStorage.getItem('ss_coins')  || '0');
+if (hcr + ss > 0)
+  document.getElementById('bank').textContent = '🏦 Coin Bank — Hill Climb: ' + hcr + '  Subway: ' + ss + '  (Total: ' + (hcr+ss) + ')';
+</script>
 </body>
 </html>

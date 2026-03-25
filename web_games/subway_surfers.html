@@ -85,7 +85,14 @@ function project(laneOff, depth) {
 }
 
 // ── Player ───────────────────────────────────────────────────────────────────
-let player={}, runs=0, score=0, active=true, coins=0;
+// ── Coin persistence ──────────────────────────────────────────────────────────
+const SS_KEY = 'ss_coins';
+let savedCoins = parseInt(localStorage.getItem(SS_KEY) || '0');
+let sessionCoins = 0;
+function totalCoins() { return savedCoins + sessionCoins; }
+function saveCoins() { localStorage.setItem(SS_KEY, totalCoins()); }
+
+let player={}, runs=0, score=0, active=true;
 function resetPlayer() {
   player = {
     lane: 1, targetLane: 1, laneT: 1,  // 0=left,1=center,2=right; laneT=transition 0-1
@@ -179,7 +186,7 @@ function collectCoins() {
     if(c.depth<0.88||c.depth>1.0) continue;
     const lOff=playerLaneOff(), cOff=c.lane-1;
     if(Math.abs(lOff-cOff)>0.55) continue;
-    c.got=true; coins++;
+    c.got=true; sessionCoins++; saveCoins();
   }
 }
 
@@ -407,7 +414,7 @@ function drawPlayer() {
 let autoTimer=null;
 function showOver(){
   active=false;
-  document.getElementById('od').textContent='Score: '+score+'  🪙 '+coins;
+  document.getElementById('od').textContent='Score: '+score+'  🪙 +'+sessionCoins+' (Total: '+totalCoins()+')';
   document.getElementById('oc').textContent='Run '+runs;
   document.getElementById('overlay').style.display='flex';
   if(botOn) autoTimer=setTimeout(restart,1400);
@@ -415,6 +422,7 @@ function showOver(){
 function restart(){
   clearTimeout(autoTimer);
   document.getElementById('overlay').style.display='none';
+  savedCoins = totalCoins(); sessionCoins = 0;
   obstacles=[]; trackCoins=[]; score=0; spawnTimer=0; coinTimer=0;
   resetPlayer(); active=true;
 }
@@ -455,7 +463,7 @@ function loop(){
   drawPlayer();
 
   // HUD
-  document.getElementById('score-box').textContent='Score: '+score+'  🪙 '+coins;
+  document.getElementById('score-box').textContent='Score: '+score+'  🪙 '+totalCoins();
 }
 loop();
 </script>

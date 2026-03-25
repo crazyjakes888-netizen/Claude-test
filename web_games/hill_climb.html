@@ -78,8 +78,15 @@ function tSlope(x) { return (tY(x+6)-tY(x-6))/12; }
 // ── Car constants ─────────────────────────────────────────────────────────────
 const WB=80, WR=23, BW=92, BH=34;
 
+// ── Coin persistence ──────────────────────────────────────────────────────────
+const HC_KEY = 'hcr_coins';
+let savedCoins = parseInt(localStorage.getItem(HC_KEY) || '0');
+let sessionCoins = 0;
+function totalCoins() { return savedCoins + sessionCoins; }
+function saveCoins() { localStorage.setItem(HC_KEY, totalCoins()); }
+
 // ── Car state ─────────────────────────────────────────────────────────────────
-let car={}, runs=0, active=true, totalCoins=0;
+let car={}, runs=0, active=true;
 function resetCar() {
   car = { x:220, y:tY(220)-WR-BH/2-4, angle:0, spd:0, fuel:100, alive:true, dist:0 };
 }
@@ -114,7 +121,7 @@ function collectCoins() {
   for(const c of coins) {
     if(c.got) continue;
     const dx=c.x-car.x, dy=c.y-car.y;
-    if(dx*dx+dy*dy<1600) { c.got=true; totalCoins++; }
+    if(dx*dx+dy*dy<1600) { c.got=true; sessionCoins++; saveCoins(); }
   }
 }
 
@@ -240,7 +247,7 @@ function drawCoins(cx) {
 let autoRestartTimer=null;
 function showOver() {
   active=false;
-  document.getElementById('od').textContent=Math.floor(car.dist/10)+' m  🪙 '+totalCoins;
+  document.getElementById('od').textContent=Math.floor(car.dist/10)+' m  🪙 +'+sessionCoins+' (Total: '+totalCoins()+')';
   document.getElementById('oc').textContent='Run '+runs;
   document.getElementById('overlay').style.display='flex';
   if(botOn) autoRestartTimer=setTimeout(restart,1400);
@@ -248,6 +255,7 @@ function showOver() {
 function restart() {
   clearTimeout(autoRestartTimer);
   document.getElementById('overlay').style.display='none';
+  savedCoins = totalCoins(); sessionCoins = 0;
   coins=[]; lastCX=400; resetCar(); active=true;
 }
 
@@ -280,7 +288,7 @@ function loop() {
     ctx.restore();
   }
 
-  document.getElementById('score-box').textContent=Math.floor(car.dist/10)+' m  🪙 '+totalCoins;
+  document.getElementById('score-box').textContent=Math.floor(car.dist/10)+' m  🪙 '+totalCoins();
   document.getElementById('fuel-fill').style.width=car.fuel+'%';
 }
 loop();
