@@ -28,10 +28,107 @@
       min-height: 100vh;
     }
 
+    /* WEATHER BAR */
+    #weather-bar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 200;
+      height: 38px;
+      background: #12121a;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      font-size: 0.82rem;
+      color: var(--text);
+      padding: 0 1.5rem;
+    }
+
+    .weather-icon { font-size: 1.1rem; }
+
+    .weather-detail {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--muted);
+    }
+    .weather-detail strong { color: var(--text); }
+
+    .weather-location {
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    #weather-bar.loading { color: var(--muted); justify-content: center; }
+
+    /* NEWS TICKER */
+    #news-ticker {
+      position: fixed;
+      top: 38px; left: 0; right: 0;
+      z-index: 199;
+      height: 36px;
+      background: #c0392b;
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    .ticker-label {
+      flex-shrink: 0;
+      background: #96281b;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      padding: 0 1rem;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #fff;
+      white-space: nowrap;
+      z-index: 1;
+    }
+
+    .ticker-track {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .ticker-content {
+      display: inline-flex;
+      white-space: nowrap;
+      animation: ticker-scroll 40s linear infinite;
+      will-change: transform;
+    }
+
+    .ticker-content:hover { animation-play-state: paused; }
+
+    .ticker-item {
+      display: inline-flex;
+      align-items: center;
+      font-size: 0.82rem;
+      color: #fff;
+      padding: 0 2.5rem;
+    }
+
+    .ticker-item::before {
+      content: '●';
+      margin-right: 0.6rem;
+      font-size: 0.5rem;
+      opacity: 0.7;
+    }
+
+    @keyframes ticker-scroll {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-50%); }
+    }
+
     /* NAV */
     nav {
       position: fixed;
-      top: 0; left: 0; right: 0;
+      top: 74px; left: 0; right: 0;
       z-index: 100;
       display: flex;
       justify-content: space-between;
@@ -67,7 +164,7 @@
       justify-content: center;
       align-items: center;
       text-align: center;
-      padding: 6rem 2rem 4rem;
+      padding: 10rem 2rem 4rem;
       position: relative;
       overflow: hidden;
     }
@@ -275,6 +372,21 @@
 </head>
 <body>
 
+  <!-- WEATHER BAR -->
+  <div id="weather-bar" class="loading">
+    <span>Detecting your location...</span>
+  </div>
+
+  <!-- BREAKING NEWS TICKER -->
+  <div id="news-ticker">
+    <div class="ticker-label">&#128308; Breaking News</div>
+    <div class="ticker-track">
+      <div class="ticker-content" id="ticker-content">
+        <!-- items injected by JS -->
+      </div>
+    </div>
+  </div>
+
   <!-- NAV -->
   <nav>
     <span class="logo">MySite</span>
@@ -397,17 +509,17 @@
   </footer>
 
   <script>
-    // Year
+    // ── Year ──────────────────────────────────────────────────────────────────
     document.getElementById('year').textContent = new Date().getFullYear();
 
-    // Scroll fade-in
+    // ── Scroll fade-in ────────────────────────────────────────────────────────
     const observer = new IntersectionObserver(
       (entries) => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
       { threshold: 0.1 }
     );
     document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
-    // Form
+    // ── Form ──────────────────────────────────────────────────────────────────
     function handleSubmit(e) {
       e.preventDefault();
       const status = document.getElementById('form-status');
@@ -415,6 +527,111 @@
       e.target.reset();
       setTimeout(() => { status.style.display = 'none'; }, 4000);
     }
+
+    // ── Weather ───────────────────────────────────────────────────────────────
+    const WMO_CODES = {
+      0:'Clear sky', 1:'Mainly clear', 2:'Partly cloudy', 3:'Overcast',
+      45:'Foggy', 48:'Icy fog', 51:'Light drizzle', 53:'Drizzle', 55:'Heavy drizzle',
+      61:'Light rain', 63:'Rain', 65:'Heavy rain',
+      71:'Light snow', 73:'Snow', 75:'Heavy snow', 77:'Snow grains',
+      80:'Light showers', 81:'Showers', 82:'Heavy showers',
+      85:'Snow showers', 86:'Heavy snow showers',
+      95:'Thunderstorm', 96:'Thunderstorm + hail', 99:'Heavy thunderstorm + hail'
+    };
+
+    const WMO_ICON = {
+      0:'☀️', 1:'🌤️', 2:'⛅', 3:'☁️',
+      45:'🌫️', 48:'🌫️',
+      51:'🌦️', 53:'🌦️', 55:'🌧️',
+      61:'🌧️', 63:'🌧️', 65:'🌧️',
+      71:'🌨️', 73:'❄️', 75:'❄️', 77:'❄️',
+      80:'🌦️', 81:'🌦️', 82:'⛈️',
+      85:'🌨️', 86:'🌨️',
+      95:'⛈️', 96:'⛈️', 99:'⛈️'
+    };
+
+    function windDirection(deg) {
+      const dirs = ['N','NE','E','SE','S','SW','W','NW'];
+      return dirs[Math.round(deg / 45) % 8];
+    }
+
+    async function loadWeather() {
+      const bar = document.getElementById('weather-bar');
+      if (!navigator.geolocation) {
+        bar.innerHTML = '<span style="color:var(--muted)">Weather unavailable — geolocation not supported</span>';
+        return;
+      }
+      navigator.geolocation.getCurrentPosition(async (pos) => {
+        const { latitude: lat, longitude: lon } = pos.coords;
+        try {
+          const [weatherRes, geoRes] = await Promise.all([
+            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m,apparent_temperature&timezone=auto&forecast_days=1`),
+            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+          ]);
+          const weather = await weatherRes.json();
+          const geo     = await geoRes.json();
+
+          const cw      = weather.current_weather;
+          const tempC   = cw.temperature;
+          const tempF   = ((tempC * 9/5) + 32).toFixed(1);
+          const code    = cw.weathercode;
+          const icon    = WMO_ICON[code]  ?? '🌡️';
+          const desc    = WMO_CODES[code] ?? 'Unknown';
+          const wind    = cw.windspeed;
+          const windDir = windDirection(cw.winddirection);
+
+          // humidity — pick the value closest to now
+          const nowHour = new Date().getHours();
+          const humidity = weather.hourly?.relative_humidity_2m?.[nowHour] ?? '—';
+
+          const city = geo.address?.city || geo.address?.town || geo.address?.village || geo.address?.county || 'Your Location';
+          const state = geo.address?.state ?? '';
+
+          bar.classList.remove('loading');
+          bar.innerHTML = `
+            <span class="weather-icon">${icon}</span>
+            <span class="weather-location">${city}${state ? ', ' + state : ''}</span>
+            <span class="weather-detail"><strong>${tempF}°F</strong> / ${tempC}°C</span>
+            <span class="weather-detail">🌤 <strong>${desc}</strong></span>
+            <span class="weather-detail">💧 <strong>${humidity}%</strong> humidity</span>
+            <span class="weather-detail">💨 <strong>${wind} km/h ${windDir}</strong></span>
+          `;
+        } catch (err) {
+          bar.innerHTML = '<span style="color:var(--muted)">Weather data unavailable</span>';
+        }
+      }, () => {
+        bar.innerHTML = '<span style="color:var(--muted)">Enable location access to see local weather</span>';
+      });
+    }
+
+    loadWeather();
+
+    // ── Breaking News Ticker ──────────────────────────────────────────────────
+    const headlines = [
+      'Scientists discover new exoplanet that may support liquid water',
+      'Global leaders gather for emergency climate summit in Geneva',
+      'Tech giant unveils next-generation AI chip with record performance',
+      'Central banks signal potential rate cuts amid cooling inflation',
+      'Historic peace agreement signed between rival factions',
+      'Researchers develop breakthrough treatment for rare genetic disease',
+      'Space agency confirms successful launch of deep-space telescope',
+      'Record-breaking heatwave sweeps across multiple continents',
+      'Major earthquake strikes Pacific Rim — tsunami warnings issued',
+      'Stock markets reach all-time high as earnings season begins',
+      'New cybersecurity vulnerability found in widely-used software',
+      'International team completes first crewed mission around the Moon',
+    ];
+
+    function buildTicker() {
+      const track = document.getElementById('ticker-content');
+      // Double the list so the seamless loop works
+      const doubled = [...headlines, ...headlines];
+      track.innerHTML = doubled
+        .map(h => `<span class="ticker-item">${h}</span>`)
+        .join('');
+    }
+
+    buildTicker();
   </script>
 
 </body>
