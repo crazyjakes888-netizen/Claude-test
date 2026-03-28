@@ -33,16 +33,17 @@
       position: fixed;
       top: 0; left: 0; right: 0;
       z-index: 200;
-      height: 38px;
+      min-height: 38px;
       background: #12121a;
       border-bottom: 1px solid var(--border);
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 1.5rem;
+      gap: 1rem;
       font-size: 0.82rem;
       color: var(--text);
-      padding: 0 1.5rem;
+      padding: 0 1rem;
+      flex-wrap: wrap;
     }
 
     .weather-icon { font-size: 1.1rem; }
@@ -61,6 +62,36 @@
     }
 
     #weather-bar.loading { color: var(--muted); justify-content: center; }
+
+    .weather-search {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    #city-input {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.2rem 0.6rem;
+      color: var(--text);
+      font-size: 0.8rem;
+      width: 140px;
+      outline: none;
+    }
+    #city-input:focus { border-color: var(--accent); }
+
+    #city-btn {
+      background: var(--accent);
+      border: none;
+      border-radius: 6px;
+      color: #fff;
+      font-size: 0.75rem;
+      padding: 0.2rem 0.6rem;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    #city-btn:hover { opacity: 0.85; }
 
     /* NEWS TICKER */
     #news-ticker {
@@ -374,7 +405,11 @@
 
   <!-- WEATHER BAR -->
   <div id="weather-bar" class="loading">
-    <span>Detecting your location...</span>
+    <span id="weather-info">Detecting your location...</span>
+    <div class="weather-search">
+      <input id="city-input" type="text" placeholder="Enter city..." />
+      <button id="city-btn" onclick="searchCity()">Go</button>
+    </div>
   </div>
 
   <!-- BREAKING NEWS TICKER -->
@@ -555,53 +590,91 @@
       return dirs[Math.round(deg / 45) % 8];
     }
 
+    function setWeatherInfo(html) {
+      document.getElementById('weather-info').innerHTML = html;
+      document.getElementById('weather-bar').classList.remove('loading');
+    }
+
+    async function fetchWeatherByCoords(lat, lon, labelOverride) {
+      const [weatherRes, geoRes] = await Promise.all([
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m&timezone=auto&forecast_days=1`),
+        fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+      ]);
+      const weather = await weatherRes.json();
+      const geo     = await geoRes.json();
+
+      const cw      = weather.current_weather;
+      const tempC   = cw.temperature;
+      const tempF   = ((tempC * 9/5) + 32).toFixed(1);
+      const code    = cw.weathercode;
+      const icon    = WMO_ICON[code]  ?? '🌡️';
+      const desc    = WMO_CODES[code] ?? 'Unknown';
+      const wind    = cw.windspeed;
+      const windDir = windDirection(cw.winddirection);
+      const nowHour = new Date().getHours();
+      const humidity = weather.hourly?.relative_humidity_2m?.[nowHour] ?? '—';
+
+      const addr  = geo.address ?? {};
+      const place = labelOverride
+        || addr.city || addr.town || addr.village || addr.hamlet || addr.suburb || addr.county || 'Your Location';
+      const state = addr.state ?? '';
+      const country = addr.country_code?.toUpperCase() ?? '';
+
+      setWeatherInfo(`
+        <span class="weather-icon">${icon}</span>
+        <span class="weather-location">${place}${state ? ', ' + state : ''}${country ? ' ' + country : ''}</span>
+        <span class="weather-detail"><strong>${tempF}°F</strong> / ${tempC}°C</span>
+        <span class="weather-detail">🌤 <strong>${desc}</strong></span>
+        <span class="weather-detail">💧 <strong>${humidity}%</strong> humidity</span>
+        <span class="weather-detail">💨 <strong>${wind} km/h ${windDir}</strong></span>
+      `);
+    }
+
+    async function searchCity() {
+      const input = document.getElementById('city-input').value.trim();
+      if (!input) return;
+      document.getElementById('weather-info').textContent = 'Loading...';
+      try {
+        // Geocode the typed city/town using Nominatim (handles cities, towns, villages)
+        const geoRes = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(input)}`
+        );
+        const results = await geoRes.json();
+        if (!results.length) {
+          document.getElementById('weather-info').textContent = 'Location not found. Try a different name.';
+          return;
+        }
+        const { lat, lon, display_name } = results[0];
+        // Use the first part of display_name as a friendly label
+        const label = display_name.split(',')[0].trim();
+        await fetchWeatherByCoords(lat, lon, label);
+      } catch (err) {
+        document.getElementById('weather-info').textContent = 'Error fetching weather.';
+      }
+    }
+
+    // Allow pressing Enter in the input
+    document.getElementById('city-input').addEventListener('keydown', e => {
+      if (e.key === 'Enter') searchCity();
+    });
+
     async function loadWeather() {
-      const bar = document.getElementById('weather-bar');
       if (!navigator.geolocation) {
-        bar.innerHTML = '<span style="color:var(--muted)">Weather unavailable — geolocation not supported</span>';
+        setWeatherInfo('<span style="color:var(--muted)">Enter a city above to see weather</span>');
         return;
       }
-      navigator.geolocation.getCurrentPosition(async (pos) => {
-        const { latitude: lat, longitude: lon } = pos.coords;
-        try {
-          const [weatherRes, geoRes] = await Promise.all([
-            fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m,apparent_temperature&timezone=auto&forecast_days=1`),
-            fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-          ]);
-          const weather = await weatherRes.json();
-          const geo     = await geoRes.json();
-
-          const cw      = weather.current_weather;
-          const tempC   = cw.temperature;
-          const tempF   = ((tempC * 9/5) + 32).toFixed(1);
-          const code    = cw.weathercode;
-          const icon    = WMO_ICON[code]  ?? '🌡️';
-          const desc    = WMO_CODES[code] ?? 'Unknown';
-          const wind    = cw.windspeed;
-          const windDir = windDirection(cw.winddirection);
-
-          // humidity — pick the value closest to now
-          const nowHour = new Date().getHours();
-          const humidity = weather.hourly?.relative_humidity_2m?.[nowHour] ?? '—';
-
-          const city = geo.address?.city || geo.address?.town || geo.address?.village || geo.address?.county || 'Your Location';
-          const state = geo.address?.state ?? '';
-
-          bar.classList.remove('loading');
-          bar.innerHTML = `
-            <span class="weather-icon">${icon}</span>
-            <span class="weather-location">${city}${state ? ', ' + state : ''}</span>
-            <span class="weather-detail"><strong>${tempF}°F</strong> / ${tempC}°C</span>
-            <span class="weather-detail">🌤 <strong>${desc}</strong></span>
-            <span class="weather-detail">💧 <strong>${humidity}%</strong> humidity</span>
-            <span class="weather-detail">💨 <strong>${wind} km/h ${windDir}</strong></span>
-          `;
-        } catch (err) {
-          bar.innerHTML = '<span style="color:var(--muted)">Weather data unavailable</span>';
+      navigator.geolocation.getCurrentPosition(
+        async (pos) => {
+          try {
+            await fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude, null);
+          } catch {
+            setWeatherInfo('<span style="color:var(--muted)">Weather unavailable — enter a city above</span>');
+          }
+        },
+        () => {
+          setWeatherInfo('<span style="color:var(--muted)">Enter any city, town, or village above</span>');
         }
-      }, () => {
-        bar.innerHTML = '<span style="color:var(--muted)">Enable location access to see local weather</span>';
-      });
+      );
     }
 
     loadWeather();
