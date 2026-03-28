@@ -8,196 +8,114 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0a0a0f; --surface: #111118; --card: #16161f; --border: #25253a;
-      --accent: #6c63ff; --accent2: #ff4d8d;
+      --bg: #000; --card: #111; --border: #222;
+      --accent: #6c63ff;
       --green: #00e5a0; --blue: #38c6ff; --orange: #ff9b3a; --red: #ff5e6c; --lavender: #b39ddb;
-      --text: #eeeef5; --muted: #7777a0;
+      --text: #eeeef5; --muted: #666;
     }
     html { scroll-behavior: smooth; }
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-top: 36px; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
 
     /* ── BREAKING NEWS ── */
     #news-bar {
-      position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+      position: sticky; top: 0; z-index: 300;
       height: 36px; display: flex; align-items: center;
       background: #b91c1c; overflow: hidden;
     }
     .news-label {
       flex-shrink: 0; height: 100%; display: flex; align-items: center;
-      gap: 0.4rem; padding: 0 1rem; background: #7f1d1d;
+      padding: 0 1rem; background: #7f1d1d;
       font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em;
-      text-transform: uppercase; color: #fff; white-space: nowrap;
+      text-transform: uppercase; color: #fff; white-space: nowrap; gap: 0.4rem;
     }
     .news-track-wrap { flex: 1; overflow: hidden; }
-    .news-track { display: inline-flex; white-space: nowrap; animation: scroll-left 50s linear infinite; }
+    .news-track { display: inline-flex; white-space: nowrap; animation: ticker 50s linear infinite; }
     .news-track:hover { animation-play-state: paused; }
     .news-item { font-size: 0.8rem; color: #fff; padding: 0 2.5rem; display: inline-flex; align-items: center; gap: 0.5rem; }
     .news-item::before { content: '●'; font-size: 0.45rem; opacity: 0.6; }
-    @keyframes scroll-left { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-    /* ── NAV ── */
-    nav {
-      position: sticky; top: 0; z-index: 200;
-      height: 56px; display: flex; align-items: center; justify-content: space-between;
-      padding: 0 2rem; background: rgba(10,10,15,0.95); backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
-    }
-    .logo { font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .nav-links { display: flex; gap: 2rem; list-style: none; }
-    .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.88rem; font-weight: 500; transition: color 0.2s; }
-    .nav-links a:hover { color: var(--text); }
-    @media (max-width: 600px) { .nav-links { display: none; } }
+    /* ── WEATHER ── */
+    #weather { padding: 1.5rem 1.25rem; }
 
-    /* ── WEATHER SECTION ── */
-    #weather { background: #0d0d18; border-bottom: 1px solid var(--border); padding: 1.5rem 2rem; }
     .wx-header {
-      display: flex; align-items: center; justify-content: space-between;
+      display: flex; align-items: flex-start; justify-content: space-between;
       flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;
     }
-    .wx-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); }
-    .wx-location-name { font-size: 1.3rem; font-weight: 800; color: #c5beff; margin-top: 0.2rem; }
-    .wx-search {
-      display: flex; align-items: center; gap: 0.5rem; position: relative;
-    }
+    .wx-loc-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 0.2rem; }
+    .wx-loc-name  { font-size: 1.4rem; font-weight: 800; color: #c5beff; }
+
+    .wx-search { display: flex; align-items: center; gap: 0.5rem; position: relative; }
     #city-input {
-      background: rgba(255,255,255,0.07); border: 1px solid var(--border); border-radius: 8px;
-      padding: 0.45rem 0.85rem; color: var(--text); font-size: 0.85rem; width: 210px;
-      outline: none; font-family: inherit;
+      background: #111; border: 1px solid var(--border); border-radius: 8px;
+      padding: 0.5rem 0.9rem; color: var(--text); font-size: 0.85rem;
+      width: 200px; outline: none; font-family: inherit;
     }
     #city-input:focus { border-color: var(--accent); }
     #city-input::placeholder { color: var(--muted); }
     #city-btn {
       background: var(--accent); border: none; border-radius: 8px; color: #fff;
-      font-size: 0.85rem; font-weight: 700; padding: 0.45rem 1rem;
-      cursor: pointer; font-family: inherit; transition: opacity 0.15s;
+      font-size: 0.85rem; font-weight: 700; padding: 0.5rem 1rem;
+      cursor: pointer; font-family: inherit;
     }
-    #city-btn:hover { opacity: 0.82; }
+    #city-btn:hover { opacity: 0.85; }
+
     #suggestions {
-      position: absolute; top: calc(100% + 6px); left: 0; width: 300px;
-      background: #1a1a2e; border: 1px solid var(--border); border-radius: 10px;
+      position: absolute; top: calc(100% + 6px); left: 0; width: 290px;
+      background: #1a1a1a; border: 1px solid var(--border); border-radius: 10px;
       overflow: hidden; z-index: 999; display: none;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.7);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.8);
     }
-    .sug-item { padding: 0.6rem 1rem; cursor: pointer; border-bottom: 1px solid var(--border); transition: background 0.1s; }
+    .sug-item { padding: 0.6rem 1rem; cursor: pointer; border-bottom: 1px solid var(--border); }
     .sug-item:last-child { border-bottom: none; }
     .sug-item:hover { background: rgba(108,99,255,0.15); }
-    .sug-name { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+    .sug-name   { font-size: 0.85rem; font-weight: 600; }
     .sug-detail { font-size: 0.73rem; color: var(--muted); margin-top: 2px; }
 
-    /* Weather columns grid */
+    /* Weather cards grid */
     .wx-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
       gap: 1rem;
     }
     .wx-card {
-      border-radius: 14px; border: 1px solid var(--border);
-      padding: 1.25rem 1.1rem;
-      display: flex; flex-direction: column; gap: 0.5rem;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.25rem;
+      display: flex; flex-direction: column; gap: 0.4rem;
     }
-    .wx-card-label {
-      font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.7;
-    }
-    .wx-card-icon { font-size: 2rem; line-height: 1; }
-    .wx-card-main { font-size: 1.7rem; font-weight: 900; line-height: 1; }
-    .wx-card-sub  { font-size: 0.8rem; opacity: 0.6; }
-    .wx-card-extra { font-size: 0.78rem; margin-top: 0.25rem; }
+    .wx-card-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.12em; }
+    .wx-card-icon  { font-size: 2.2rem; line-height: 1; margin: 0.25rem 0; }
+    .wx-card-main  { font-size: 1.9rem; font-weight: 900; line-height: 1; }
+    .wx-card-sub   { font-size: 0.8rem; color: var(--muted); }
+    .wx-card-extra { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; border-top: 1px solid var(--border); padding-top: 0.4rem; }
 
-    .wx-temp   { background: rgba(255,94,108,0.1);  border-color: rgba(255,94,108,0.25); }
-    .wx-temp   .wx-card-label { color: var(--red); }
-    .wx-temp   .wx-card-main  { color: #ff9aa3; }
+    .wx-temp  { border-color: rgba(255,94,108,0.3); }
+    .wx-temp  .wx-card-label { color: var(--red); }
+    .wx-temp  .wx-card-main  { color: #ff9aa3; }
 
-    .wx-feel   { background: rgba(255,155,58,0.1);  border-color: rgba(255,155,58,0.25); }
-    .wx-feel   .wx-card-label { color: var(--orange); }
-    .wx-feel   .wx-card-main  { color: #ffc07a; }
+    .wx-feel  { border-color: rgba(255,155,58,0.3); }
+    .wx-feel  .wx-card-label { color: var(--orange); }
+    .wx-feel  .wx-card-main  { color: #ffc07a; }
 
-    .wx-rain   { background: rgba(56,198,255,0.1);  border-color: rgba(56,198,255,0.25); }
-    .wx-rain   .wx-card-label { color: var(--blue); }
-    .wx-rain   .wx-card-main  { color: #8ddcff; }
+    .wx-rain  { border-color: rgba(56,198,255,0.3); }
+    .wx-rain  .wx-card-label { color: var(--blue); }
+    .wx-rain  .wx-card-main  { color: #8ddcff; }
 
-    .wx-wind   { background: rgba(0,229,160,0.1);   border-color: rgba(0,229,160,0.25); }
-    .wx-wind   .wx-card-label { color: var(--green); }
-    .wx-wind   .wx-card-main  { color: #7fffd4; }
+    .wx-wind  { border-color: rgba(0,229,160,0.3); }
+    .wx-wind  .wx-card-label { color: var(--green); }
+    .wx-wind  .wx-card-main  { color: #7fffd4; }
 
-    .wx-cond   { background: rgba(179,157,219,0.1); border-color: rgba(179,157,219,0.25); }
-    .wx-cond   .wx-card-label { color: var(--lavender); }
-    .wx-cond   .wx-card-main  { color: #d8ccff; font-size: 1.1rem; }
+    .wx-cond  { border-color: rgba(179,157,219,0.3); }
+    .wx-cond  .wx-card-label { color: var(--lavender); }
+    .wx-cond  .wx-card-main  { color: #d8ccff; font-size: 1.15rem; }
 
-    .wx-humid  { background: rgba(108,99,255,0.1);  border-color: rgba(108,99,255,0.25); }
-    .wx-humid  .wx-card-label { color: #a59dff; }
-    .wx-humid  .wx-card-main  { color: #c5beff; }
+    .wx-sun   { border-color: rgba(255,200,50,0.3); }
+    .wx-sun   .wx-card-label { color: #fcd34d; }
+    .wx-sun   .wx-card-main  { color: #fde68a; font-size: 1.2rem; }
 
-    .wx-loading { color: var(--muted); font-size: 0.9rem; padding: 1rem 0; }
-
-    /* ── HERO ── */
-    .hero {
-      min-height: 75vh; display: flex; flex-direction: column;
-      align-items: center; justify-content: center; text-align: center;
-      padding: 4rem 2rem; position: relative; overflow: hidden;
-    }
-    .hero::before {
-      content: ''; position: absolute; inset: 0;
-      background: radial-gradient(ellipse 60% 50% at 50% 40%, rgba(108,99,255,0.12) 0%, transparent 70%),
-                  radial-gradient(ellipse 40% 30% at 70% 60%, rgba(255,77,141,0.07) 0%, transparent 60%);
-      pointer-events: none;
-    }
-    .hero-chip {
-      display: inline-flex; align-items: center; gap: 0.4rem;
-      padding: 0.3rem 1rem; background: rgba(108,99,255,0.12);
-      border: 1px solid rgba(108,99,255,0.35); border-radius: 999px;
-      font-size: 0.78rem; color: #a59dff; margin-bottom: 1.5rem; letter-spacing: 0.04em;
-    }
-    .hero h1 { font-size: clamp(2.8rem, 7vw, 5.5rem); font-weight: 900; line-height: 1.05; letter-spacing: -0.02em; margin-bottom: 1.25rem; }
-    .grad { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
-    .hero p { font-size: 1.1rem; color: var(--muted); max-width: 480px; line-height: 1.7; margin-bottom: 2.5rem; }
-    .btn-row { display: flex; gap: 0.9rem; flex-wrap: wrap; justify-content: center; }
-    .btn { padding: 0.7rem 1.6rem; border-radius: 10px; font-size: 0.92rem; font-weight: 700; cursor: pointer; text-decoration: none; border: none; transition: all 0.18s; font-family: inherit; }
-    .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; box-shadow: 0 4px 18px rgba(108,99,255,0.35); }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,99,255,0.45); }
-    .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
-    .btn-ghost:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
-
-    /* ── SECTIONS ── */
-    .section { padding: 5rem 2rem; }
-    .section-alt { background: var(--surface); }
-    .inner { max-width: 1050px; margin: 0 auto; }
-    .section-tag { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 0.6rem; }
-    .section-h { font-size: clamp(1.7rem, 4vw, 2.4rem); font-weight: 800; margin-bottom: 0.75rem; }
-    .section-sub { color: var(--muted); max-width: 460px; margin-bottom: 3rem; line-height: 1.65; }
-    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1.25rem; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.75rem; transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s; }
-    .card:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 8px 28px rgba(108,99,255,0.12); }
-    .card-icon { font-size: 2rem; margin-bottom: 1rem; }
-    .card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.45rem; }
-    .card p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
-
-    /* ── ABOUT ── */
-    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
-    .about-visual { aspect-ratio: 1; max-width: 380px; border-radius: 20px; background: linear-gradient(135deg, rgba(108,99,255,0.18), rgba(255,77,141,0.12)); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 5.5rem; }
-    .stats { display: flex; gap: 2.5rem; margin-top: 2rem; flex-wrap: wrap; }
-    .stat-n { font-size: 2.2rem; font-weight: 900; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
-    .stat-l { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
-
-    /* ── CONTACT ── */
-    .contact-form { display: flex; flex-direction: column; gap: 1rem; max-width: 500px; }
-    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-    input[type=text], input[type=email], textarea { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1rem; color: var(--text); font-family: inherit; font-size: 0.92rem; width: 100%; transition: border-color 0.2s; }
-    input[type=text]:focus, input[type=email]:focus, textarea:focus { outline: none; border-color: var(--accent); }
-    textarea { resize: vertical; min-height: 120px; }
-    .form-ok { font-size: 0.88rem; color: var(--green); display: none; }
-
-    /* ── FOOTER ── */
-    footer { text-align: center; padding: 2rem; font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--border); }
-
-    /* ── FADE IN ── */
-    .fi { opacity: 0; transform: translateY(22px); transition: opacity 0.55s ease, transform 0.55s ease; }
-    .fi.show { opacity: 1; transform: none; }
-
-    @media (max-width: 680px) {
-      .about-grid { grid-template-columns: 1fr; }
-      .about-visual { max-width: 100%; }
-      .form-row { grid-template-columns: 1fr; }
-    }
+    .wx-msg { color: var(--muted); font-size: 0.9rem; padding: 0.5rem 0; }
   </style>
 </head>
 <body>
@@ -210,23 +128,12 @@
     </div>
   </div>
 
-  <!-- NAV -->
-  <nav>
-    <span class="logo">MySite</span>
-    <ul class="nav-links">
-      <li><a href="#weather">Weather</a></li>
-      <li><a href="#features">Features</a></li>
-      <li><a href="#about">About</a></li>
-      <li><a href="#contact">Contact</a></li>
-    </ul>
-  </nav>
-
-  <!-- WEATHER SECTION -->
+  <!-- WEATHER -->
   <section id="weather">
     <div class="wx-header">
       <div>
-        <div class="wx-title">Local Weather</div>
-        <div class="wx-location-name" id="wx-location-name">Detecting location…</div>
+        <div class="wx-loc-label">Local Weather</div>
+        <div class="wx-loc-name" id="wx-loc">Detecting location…</div>
       </div>
       <div class="wx-search">
         <input id="city-input" type="text" placeholder="Search city, town, village…" autocomplete="off" />
@@ -235,100 +142,12 @@
       </div>
     </div>
     <div class="wx-grid" id="wx-grid">
-      <div class="wx-loading" id="wx-loading">Loading weather data…</div>
+      <p class="wx-msg" id="wx-msg">Loading weather…</p>
     </div>
   </section>
-
-  <!-- HERO -->
-  <section class="hero">
-    <div class="hero-chip">✦ Welcome</div>
-    <h1>Build Something<br /><span class="grad">Amazing</span></h1>
-    <p>A fast, modern, and beautiful home on the web. Fully customizable — make it yours.</p>
-    <div class="btn-row">
-      <a href="#features" class="btn btn-primary">Explore Features</a>
-      <a href="#contact"  class="btn btn-ghost">Get in Touch</a>
-    </div>
-  </section>
-
-  <!-- FEATURES -->
-  <section class="section section-alt" id="features">
-    <div class="inner">
-      <div class="section-tag fi">Features</div>
-      <h2 class="section-h fi">Everything You Need</h2>
-      <p class="section-sub fi">A solid foundation built for speed, beauty, and flexibility.</p>
-      <div class="card-grid">
-        <div class="card fi"><div class="card-icon">⚡</div><h3>Lightning Fast</h3><p>Zero dependencies, clean minimal code optimized for speed.</p></div>
-        <div class="card fi"><div class="card-icon">🎨</div><h3>Beautiful Design</h3><p>Dark theme with gradient accents that look great on any screen.</p></div>
-        <div class="card fi"><div class="card-icon">📱</div><h3>Fully Responsive</h3><p>Looks perfect on desktop, tablet, and mobile automatically.</p></div>
-        <div class="card fi"><div class="card-icon">🌤️</div><h3>Live Weather</h3><p>Real-time weather by location — temperature, wind, rain and more.</p></div>
-        <div class="card fi"><div class="card-icon">📰</div><h3>Breaking News</h3><p>Scrolling live news ticker across the top of every page.</p></div>
-        <div class="card fi"><div class="card-icon">🚀</div><h3>Deploy Anywhere</h3><p>Static HTML — host free on GitHub Pages, Netlify, or Vercel.</p></div>
-      </div>
-    </div>
-  </section>
-
-  <!-- ABOUT -->
-  <section class="section" id="about">
-    <div class="inner">
-      <div class="about-grid">
-        <div>
-          <div class="section-tag fi">About</div>
-          <h2 class="section-h fi">Who We Are</h2>
-          <p class="fi" style="color:var(--muted);line-height:1.7;margin-bottom:0.85rem;">We believe great software should also look great. This site is your blank canvas — tell your story, showcase your work, or launch your next idea.</p>
-          <p class="fi" style="color:var(--muted);line-height:1.7;">Edit any text, swap any color, add any section. The possibilities are endless.</p>
-          <div class="stats fi">
-            <div><div class="stat-n">100%</div><div class="stat-l">Pure HTML/CSS/JS</div></div>
-            <div><div class="stat-n">0</div><div class="stat-l">Dependencies</div></div>
-            <div><div class="stat-n">∞</div><div class="stat-l">Possibilities</div></div>
-          </div>
-        </div>
-        <div class="fi" style="display:flex;justify-content:center;">
-          <div class="about-visual">🌐</div>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <!-- CONTACT -->
-  <section class="section section-alt" id="contact">
-    <div class="inner">
-      <div class="section-tag fi">Contact</div>
-      <h2 class="section-h fi">Get in Touch</h2>
-      <p class="section-sub fi">Have a question or just want to say hi? Drop a message below.</p>
-      <form class="contact-form fi" onsubmit="submitForm(event)">
-        <div class="form-row">
-          <input type="text" placeholder="First name" required />
-          <input type="text" placeholder="Last name" required />
-        </div>
-        <input type="email" placeholder="Email address" required />
-        <textarea placeholder="Your message…"></textarea>
-        <button type="submit" class="btn btn-primary" style="align-self:flex-start;">Send Message</button>
-        <p class="form-ok" id="form-ok">Message sent! I'll get back to you soon.</p>
-      </form>
-    </div>
-  </section>
-
-  <!-- FOOTER -->
-  <footer>
-    <p>Built with care &mdash; &copy; <span id="yr"></span> MySite. All rights reserved.</p>
-  </footer>
 
   <script>
-  document.getElementById('yr').textContent = new Date().getFullYear();
-
-  document.querySelectorAll('.fi').forEach(el =>
-    new IntersectionObserver(([e]) => { if (e.isIntersecting) e.target.classList.add('show'); }, { threshold: 0.1 }).observe(el)
-  );
-
-  function submitForm(e) {
-    e.preventDefault();
-    const ok = document.getElementById('form-ok');
-    ok.style.display = 'block';
-    e.target.reset();
-    setTimeout(() => { ok.style.display = 'none'; }, 4000);
-  }
-
-  // ── Breaking News ──
+  // Breaking News
   const HEADLINES = [
     'Scientists discover new exoplanet that may support liquid water',
     'Global leaders gather for emergency climate summit in Geneva',
@@ -343,10 +162,10 @@
     'New cybersecurity vulnerability found in widely-used software',
     'International team completes first crewed mission around the Moon',
   ];
-  const track = document.getElementById('news-track');
-  track.innerHTML = [...HEADLINES,...HEADLINES].map(h => `<span class="news-item">${h}</span>`).join('');
+  document.getElementById('news-track').innerHTML =
+    [...HEADLINES,...HEADLINES].map(h => `<span class="news-item">${h}</span>`).join('');
 
-  // ── Weather ──
+  // Weather
   const WMO = {
     0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',
     45:'Foggy',48:'Icy fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',
@@ -356,16 +175,16 @@
   };
   const ICONS = {
     0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',
-    61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'❄️',75:'❄️',77:'❄️',80:'🌦️',81:'🌦️',
-    82:'⛈️',85:'🌨️',86:'🌨️',95:'⛈️',96:'⛈️',99:'⛈️'
+    61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'❄️',75:'❄️',77:'❄️',80:'🌦️',
+    81:'🌦️',82:'⛈️',85:'🌨️',86:'🌨️',95:'⛈️',96:'⛈️',99:'⛈️'
   };
   const WDIRS = ['N','NE','E','SE','S','SW','W','NW'];
-  function wdir(d) { return WDIRS[Math.round(d/45)%8]; }
-  function c2f(c)  { return ((c*9/5)+32).toFixed(1); }
-  function uvLevel(u) { return u<=2?'Low':u<=5?'Moderate':u<=7?'High':u<=10?'Very High':'Extreme'; }
+  const wdir = d => WDIRS[Math.round(d/45)%8];
+  const c2f  = c => ((c*9/5)+32).toFixed(1);
+  const uvLv = u => u<=2?'Low':u<=5?'Moderate':u<=7?'High':u<=10?'Very High':'Extreme';
 
   function renderWeather(cw, hourly, daily, place) {
-    document.getElementById('wx-location-name').textContent = place;
+    document.getElementById('wx-loc').textContent = place;
     const h    = new Date().getHours();
     const feel = hourly?.apparent_temperature?.[h];
     const prec = hourly?.precipitation_probability?.[h] ?? '—';
@@ -373,8 +192,8 @@
     const vis  = hourly?.visibility?.[h];
     const uv   = daily?.uv_index_max?.[0];
     const code = cw.weathercode;
-    const sunrise = daily?.sunrise?.[0]?.split('T')[1] ?? '—';
-    const sunset  = daily?.sunset?.[0]?.split('T')[1] ?? '—';
+    const rise = daily?.sunrise?.[0]?.split('T')[1] ?? '—';
+    const set  = daily?.sunset?.[0]?.split('T')[1] ?? '—';
     const maxT = daily?.temperature_2m_max?.[0];
     const minT = daily?.temperature_2m_min?.[0];
 
@@ -384,20 +203,14 @@
         <span class="wx-card-icon">${ICONS[code]??'🌡️'}</span>
         <span class="wx-card-main">${c2f(cw.temperature)}°F</span>
         <span class="wx-card-sub">${cw.temperature}°C</span>
-        <span class="wx-card-extra">High: ${maxT!=null?c2f(maxT)+'°F':'—'} &nbsp;|&nbsp; Low: ${minT!=null?c2f(minT)+'°F':'—'}</span>
-      </div>
-      <div class="wx-card wx-feel">
-        <span class="wx-card-label">🤔 Feels Like</span>
-        <span class="wx-card-icon">🌡️</span>
-        <span class="wx-card-main">${feel!=null?c2f(feel)+'°F':'—'}</span>
-        <span class="wx-card-sub">${feel!=null?feel+'°C':''}</span>
-        <span class="wx-card-extra">Humidity: ${hum}%</span>
+        <span class="wx-card-extra" style="color:#ffc07a">Feels like: ${feel!=null?c2f(feel)+'°F / '+feel+'°C':'—'}</span>
+        <span class="wx-card-extra">High: ${maxT!=null?c2f(maxT)+'°F':'—'} &nbsp;·&nbsp; Low: ${minT!=null?c2f(minT)+'°F':'—'}</span>
       </div>
       <div class="wx-card wx-rain">
         <span class="wx-card-label">🌧️ Precipitation</span>
         <span class="wx-card-icon">💧</span>
         <span class="wx-card-main">${prec}%</span>
-        <span class="wx-card-sub">chance of rain</span>
+        <span class="wx-card-sub">Chance of rain</span>
         <span class="wx-card-extra">Humidity: ${hum}%</span>
       </div>
       <div class="wx-card wx-wind">
@@ -405,21 +218,21 @@
         <span class="wx-card-icon">🌬️</span>
         <span class="wx-card-main">${cw.windspeed}<span style="font-size:1rem"> km/h</span></span>
         <span class="wx-card-sub">Direction: ${wdir(cw.winddirection)}</span>
-        <span class="wx-card-extra">Gusts vary by region</span>
+        <span class="wx-card-extra">${cw.windspeed < 20 ? 'Light breeze' : cw.windspeed < 40 ? 'Moderate wind' : 'Strong wind'}</span>
       </div>
       <div class="wx-card wx-cond">
         <span class="wx-card-label">🌤️ Condition</span>
         <span class="wx-card-icon">${ICONS[code]??'🌡️'}</span>
         <span class="wx-card-main">${WMO[code]??'Unknown'}</span>
-        <span class="wx-card-sub">UV Index: ${uv!=null?uv+' ('+uvLevel(uv)+')':'—'}</span>
+        <span class="wx-card-sub">UV: ${uv!=null?uv+' — '+uvLv(uv):'—'}</span>
         <span class="wx-card-extra">Visibility: ${vis!=null?(vis/1000).toFixed(1)+' km':'—'}</span>
       </div>
-      <div class="wx-card wx-humid">
+      <div class="wx-card wx-sun">
         <span class="wx-card-label">🌅 Sun</span>
         <span class="wx-card-icon">☀️</span>
-        <span class="wx-card-main" style="font-size:1.1rem">Rise ${sunrise}</span>
-        <span class="wx-card-sub">Set ${sunset}</span>
-        <span class="wx-card-extra">UV Max: ${uv!=null?uv:'—'}</span>
+        <span class="wx-card-main">Rise ${rise}</span>
+        <span class="wx-card-sub">Set ${set}</span>
+        <span class="wx-card-extra">UV Max: ${uv!=null?uv+' ('+uvLv(uv)+')':'—'}</span>
       </div>
     `;
   }
@@ -440,22 +253,22 @@
       }
       renderWeather(w.current_weather, w.hourly, w.daily, place);
     } catch {
-      document.getElementById('wx-loading').textContent = 'Could not load weather. Try searching a city.';
+      document.getElementById('wx-loc').textContent = 'Search a city above';
+      document.getElementById('wx-msg') && (document.getElementById('wx-msg').textContent = 'Could not load weather.');
     }
   }
 
   async function searchCity() {
     const val = document.getElementById('city-input').value.trim();
     if (!val) return;
-    document.getElementById('wx-location-name').textContent = 'Loading…';
+    document.getElementById('wx-loc').textContent = 'Loading…';
     hideSug();
     try {
       const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(val)}`);
       const j = await r.json();
-      if (!j.length) { document.getElementById('wx-location-name').textContent = 'Not found'; return; }
-      const label = j[0].display_name.split(',')[0].trim();
-      await fetchWeather(j[0].lat, j[0].lon, label);
-    } catch { document.getElementById('wx-location-name').textContent = 'Error'; }
+      if (!j.length) { document.getElementById('wx-loc').textContent = 'Not found'; return; }
+      await fetchWeather(j[0].lat, j[0].lon, j[0].display_name.split(',')[0].trim());
+    } catch { document.getElementById('wx-loc').textContent = 'Error'; }
   }
 
   document.getElementById('city-btn').addEventListener('click', searchCity);
@@ -464,7 +277,6 @@
     if (e.key === 'Escape') hideSug();
   });
 
-  // Suggestions
   const sugBox = document.getElementById('suggestions');
   let sugTimer;
   function hideSug() { sugBox.style.display='none'; sugBox.innerHTML=''; }
@@ -489,24 +301,22 @@
           el.addEventListener('click', () => {
             const x = results[i];
             const a = x.address??{};
-            const label = a.city||a.town||a.village||a.hamlet||a.suburb||x.display_name.split(',')[0];
-            document.getElementById('city-input').value = label;
+            document.getElementById('city-input').value = a.city||a.town||a.village||a.hamlet||a.suburb||x.display_name.split(',')[0];
             hideSug();
-            fetchWeather(x.lat, x.lon, label);
+            fetchWeather(x.lat, x.lon, document.getElementById('city-input').value);
           });
         });
       } catch { hideSug(); }
     }, 350);
   });
 
-  // Auto-detect
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       pos => fetchWeather(pos.coords.latitude, pos.coords.longitude, null),
-      ()  => { document.getElementById('wx-location-name').textContent = 'Search a city above'; }
+      ()  => { document.getElementById('wx-loc').textContent = 'Search a city above'; document.getElementById('wx-msg') && (document.getElementById('wx-msg').remove()); }
     );
   } else {
-    document.getElementById('wx-location-name').textContent = 'Search a city above';
+    document.getElementById('wx-loc').textContent = 'Search a city above';
   }
   </script>
 </body>
