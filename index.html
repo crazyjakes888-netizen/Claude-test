@@ -33,35 +33,77 @@
       position: fixed;
       top: 36px; left: 0; right: 0;
       z-index: 200;
-      min-height: 38px;
       background: #12121a;
       border-bottom: 1px solid var(--border);
       display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 1rem;
-      font-size: 0.82rem;
+      align-items: stretch;
+      font-size: 0.8rem;
       color: var(--text);
-      padding: 0 1rem;
-      flex-wrap: wrap;
     }
 
-    .weather-icon { font-size: 1.1rem; }
+    #weather-bar.loading {
+      justify-content: center;
+      align-items: center;
+      min-height: 52px;
+      color: var(--muted);
+      padding: 0 1rem;
+    }
 
-    .weather-detail {
+    .wx-location {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 0.35rem 1rem;
+      background: #1a1a2e;
+      border-right: 1px solid var(--border);
+      white-space: nowrap;
+    }
+    .wx-location .wx-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.08em; color: #888; }
+    .wx-location .wx-val  { font-weight: 700; font-size: 0.85rem; color: #a78bfa; }
+
+    .wx-col {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      padding: 0.35rem 1.1rem;
+      border-right: 1px solid var(--border);
+      min-width: 90px;
+    }
+    .wx-col .wx-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 0.1rem; }
+    .wx-col .wx-val   { font-weight: 700; font-size: 0.9rem; }
+    .wx-col .wx-sub   { font-size: 0.65rem; opacity: 0.7; margin-top: 0.05rem; }
+
+    /* Column accent colors */
+    .wx-temp   { background: rgba(251,113,133,0.08); }
+    .wx-temp   .wx-label { color: #fb7185; }
+    .wx-temp   .wx-val   { color: #fda4af; }
+
+    .wx-feels  { background: rgba(251,146,60,0.08); }
+    .wx-feels  .wx-label { color: #fb923c; }
+    .wx-feels  .wx-val   { color: #fdba74; }
+
+    .wx-precip { background: rgba(56,189,248,0.08); }
+    .wx-precip .wx-label { color: #38bdf8; }
+    .wx-precip .wx-val   { color: #7dd3fc; }
+
+    .wx-wind   { background: rgba(52,211,153,0.08); }
+    .wx-wind   .wx-label { color: #34d399; }
+    .wx-wind   .wx-val   { color: #6ee7b7; }
+
+    .wx-cond   { background: rgba(167,139,250,0.08); }
+    .wx-cond   .wx-label { color: #a78bfa; }
+    .wx-cond   .wx-val   { color: #c4b5fd; font-size: 0.78rem; text-align: center; }
+
+    .wx-search {
       display: flex;
       align-items: center;
       gap: 0.4rem;
-      color: var(--muted);
+      padding: 0 0.75rem;
+      margin-left: auto;
+      position: relative;
+      flex-shrink: 0;
     }
-    .weather-detail strong { color: var(--text); }
-
-    .weather-location {
-      font-weight: 600;
-      color: var(--accent);
-    }
-
-    #weather-bar.loading { color: var(--muted); justify-content: center; }
 
     .weather-search {
       display: flex;
@@ -187,7 +229,7 @@
     /* NAV */
     nav {
       position: fixed;
-      top: 74px; left: 0; right: 0;
+      top: 88px; left: 0; right: 0;
       z-index: 100;
       display: flex;
       justify-content: space-between;
@@ -434,7 +476,7 @@
   <!-- WEATHER BAR -->
   <div id="weather-bar" class="loading">
     <span id="weather-info">Detecting your location...</span>
-    <div class="weather-search">
+    <div class="wx-search">
       <input id="city-input" type="text" placeholder="Search city, town, village..." autocomplete="off" />
       <button id="city-btn" onclick="searchCity()">Go</button>
       <div id="suggestions"></div>
@@ -620,13 +662,15 @@
     }
 
     function setWeatherInfo(html) {
-      document.getElementById('weather-info').innerHTML = html;
-      document.getElementById('weather-bar').classList.remove('loading');
+      const bar = document.getElementById('weather-bar');
+      bar.classList.remove('loading');
+      // Replace only the weather-info span content, keep the search box
+      document.getElementById('weather-info').outerHTML = html;
     }
 
     async function fetchWeatherByCoords(lat, lon, labelOverride) {
       const [weatherRes, geoRes] = await Promise.all([
-        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m&timezone=auto&forecast_days=1`),
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=relative_humidity_2m,apparent_temperature,precipitation_probability&timezone=auto&forecast_days=1`),
         fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
       ]);
       const weather = await weatherRes.json();
@@ -636,50 +680,77 @@
       const tempC   = cw.temperature;
       const tempF   = ((tempC * 9/5) + 32).toFixed(1);
       const code    = cw.weathercode;
-      const icon    = WMO_ICON[code]  ?? '🌡️';
+      const icon    = WMO_ICON[code] ?? '🌡️';
       const desc    = WMO_CODES[code] ?? 'Unknown';
       const wind    = cw.windspeed;
       const windDir = windDirection(cw.winddirection);
       const nowHour = new Date().getHours();
-      const humidity = weather.hourly?.relative_humidity_2m?.[nowHour] ?? '—';
+      const humidity   = weather.hourly?.relative_humidity_2m?.[nowHour] ?? '—';
+      const feelsC     = weather.hourly?.apparent_temperature?.[nowHour];
+      const feelsF     = feelsC != null ? ((feelsC * 9/5) + 32).toFixed(1) : null;
+      const precipProb = weather.hourly?.precipitation_probability?.[nowHour] ?? '—';
 
-      const addr  = geo.address ?? {};
-      const place = labelOverride
-        || addr.city || addr.town || addr.village || addr.hamlet || addr.suburb || addr.county || 'Your Location';
-      const state = addr.state ?? '';
+      const addr    = geo.address ?? {};
+      const place   = labelOverride || addr.city || addr.town || addr.village || addr.hamlet || addr.suburb || addr.county || 'Your Location';
+      const state   = addr.state ?? '';
       const country = addr.country_code?.toUpperCase() ?? '';
 
-      setWeatherInfo(`
-        <span class="weather-icon">${icon}</span>
-        <span class="weather-location">${place}${state ? ', ' + state : ''}${country ? ' ' + country : ''}</span>
-        <span class="weather-detail"><strong>${tempF}°F</strong> / ${tempC}°C</span>
-        <span class="weather-detail">🌤 <strong>${desc}</strong></span>
-        <span class="weather-detail">💧 <strong>${humidity}%</strong> humidity</span>
-        <span class="weather-detail">💨 <strong>${wind} km/h ${windDir}</strong></span>
-      `);
+      const bar = document.getElementById('weather-bar');
+      bar.classList.remove('loading');
+
+      // Build columns before the search box
+      const searchBox = bar.querySelector('.wx-search');
+      // Remove old weather columns
+      bar.querySelectorAll('.wx-location, .wx-col').forEach(el => el.remove());
+
+      const cols = `
+        <div class="wx-location">
+          <span class="wx-label">Location</span>
+          <span class="wx-val">${icon} ${place}${state ? ', ' + state : ''} ${country}</span>
+        </div>
+        <div class="wx-col wx-temp">
+          <span class="wx-label">Temperature</span>
+          <span class="wx-val">${tempF}°F</span>
+          <span class="wx-sub">${tempC}°C</span>
+        </div>
+        <div class="wx-col wx-feels">
+          <span class="wx-label">Feels Like</span>
+          <span class="wx-val">${feelsF ? feelsF + '°F' : '—'}</span>
+          <span class="wx-sub">${feelsC != null ? feelsC + '°C' : ''}</span>
+        </div>
+        <div class="wx-col wx-precip">
+          <span class="wx-label">Precipitation</span>
+          <span class="wx-val">${precipProb}%</span>
+          <span class="wx-sub">${humidity}% humidity</span>
+        </div>
+        <div class="wx-col wx-wind">
+          <span class="wx-label">Wind Speed</span>
+          <span class="wx-val">${wind} km/h</span>
+          <span class="wx-sub">${windDir}</span>
+        </div>
+        <div class="wx-col wx-cond">
+          <span class="wx-label">Condition</span>
+          <span class="wx-val">${desc}</span>
+        </div>
+      `;
+
+      bar.insertAdjacentHTML('afterbegin', cols);
     }
 
     async function searchCity() {
       const input = document.getElementById('city-input').value.trim();
       if (!input) return;
-      document.getElementById('weather-info').textContent = 'Loading...';
+      setLoadingMsg('Loading...');
       try {
-        // Geocode the typed city/town using Nominatim (handles cities, towns, villages)
         const geoRes = await fetch(
           `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(input)}`
         );
         const results = await geoRes.json();
-        if (!results.length) {
-          document.getElementById('weather-info').textContent = 'Location not found. Try a different name.';
-          return;
-        }
+        if (!results.length) { setLoadingMsg('Location not found. Try a different name.'); return; }
         const { lat, lon, display_name } = results[0];
-        // Use the first part of display_name as a friendly label
         const label = display_name.split(',')[0].trim();
         await fetchWeatherByCoords(lat, lon, label);
-      } catch (err) {
-        document.getElementById('weather-info').textContent = 'Error fetching weather.';
-      }
+      } catch { setLoadingMsg('Error fetching weather.'); }
     }
 
     // ── Suggestions dropdown ─────────────────────────────────────────────────
@@ -741,9 +812,14 @@
       } catch { hideSuggestions(); }
     }
 
+    function setLoadingMsg(msg) {
+      const info = document.getElementById('weather-info');
+      if (info) info.textContent = msg;
+    }
+
     async function loadWeather() {
       if (!navigator.geolocation) {
-        setWeatherInfo('<span style="color:var(--muted)">Enter a city above to see weather</span>');
+        setLoadingMsg('Enter a city above to see weather');
         return;
       }
       navigator.geolocation.getCurrentPosition(
@@ -751,12 +827,10 @@
           try {
             await fetchWeatherByCoords(pos.coords.latitude, pos.coords.longitude, null);
           } catch {
-            setWeatherInfo('<span style="color:var(--muted)">Weather unavailable — enter a city above</span>');
+            setLoadingMsg('Weather unavailable — enter a city above');
           }
         },
-        () => {
-          setWeatherInfo('<span style="color:var(--muted)">Enter any city, town, or village above</span>');
-        }
+        () => { setLoadingMsg('Enter any city, town, or village above'); }
       );
     }
 
