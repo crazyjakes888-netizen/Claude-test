@@ -8,18 +8,57 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #000; --card: #111; --border: #222;
+      --card: rgba(0,0,0,0.45); --border: rgba(255,255,255,0.1);
       --accent: #6c63ff;
       --green: #00e5a0; --blue: #38c6ff; --orange: #ff9b3a; --red: #ff5e6c; --lavender: #b39ddb;
-      --text: #eeeef5; --muted: #666;
+      --text: #eeeef5; --muted: rgba(255,255,255,0.45);
     }
     html { scroll-behavior: smooth; }
-    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      color: var(--text);
+      min-height: 100vh;
+      background: #000;
+      position: relative;
+      overflow-x: hidden;
+    }
+
+    /* ── ANIMATED BACKGROUND ── */
+    #bg {
+      position: fixed; inset: 0; z-index: 0;
+      transition: background 2s ease;
+    }
+
+    /* Particle canvas for rain/snow */
+    #particle-canvas {
+      position: fixed; inset: 0; z-index: 1; pointer-events: none;
+    }
+
+    /* Lightning flash */
+    #lightning {
+      position: fixed; inset: 0; z-index: 2;
+      background: rgba(255,255,255,0);
+      pointer-events: none;
+      transition: background 0.05s;
+    }
+
+    /* Stars */
+    .star {
+      position: absolute;
+      border-radius: 50%;
+      background: #fff;
+      animation: twinkle 3s infinite alternate;
+    }
+    @keyframes twinkle { from { opacity: 0.2; } to { opacity: 1; } }
+
+    /* ── PAGE CONTENT (above bg) ── */
+    #page { position: relative; z-index: 10; }
 
     /* ── BREAKING NEWS ── */
     #news-bar {
       position: sticky; top: 0; z-index: 300;
-      height: 36px; display: flex; align-items: center;
+      height: 38px; display: flex; align-items: center;
       background: #b91c1c; overflow: hidden;
     }
     .news-label {
@@ -35,91 +74,106 @@
     .news-item::before { content: '●'; font-size: 0.45rem; opacity: 0.6; }
     @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-    /* ── WEATHER ── */
-    #weather { padding: 1.5rem 1.25rem; }
+    /* ── WEATHER SECTION ── */
+    #weather { padding: 1.75rem 1.5rem 2rem; }
 
     .wx-header {
       display: flex; align-items: flex-start; justify-content: space-between;
-      flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;
+      flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;
     }
-    .wx-loc-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 0.2rem; }
-    .wx-loc-name  { font-size: 1.4rem; font-weight: 800; color: #c5beff; }
+    .wx-loc-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 0.25rem; }
+    .wx-loc-name  { font-size: 1.6rem; font-weight: 800; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,0.6); }
+    .wx-time      { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
 
     .wx-search { display: flex; align-items: center; gap: 0.5rem; position: relative; }
     #city-input {
-      background: #111; border: 1px solid var(--border); border-radius: 8px;
+      background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 8px;
       padding: 0.5rem 0.9rem; color: var(--text); font-size: 0.85rem;
-      width: 200px; outline: none; font-family: inherit;
+      width: 210px; outline: none; font-family: inherit;
+      backdrop-filter: blur(8px);
     }
     #city-input:focus { border-color: var(--accent); }
     #city-input::placeholder { color: var(--muted); }
     #city-btn {
       background: var(--accent); border: none; border-radius: 8px; color: #fff;
       font-size: 0.85rem; font-weight: 700; padding: 0.5rem 1rem;
-      cursor: pointer; font-family: inherit;
+      cursor: pointer; font-family: inherit; transition: opacity 0.15s;
     }
     #city-btn:hover { opacity: 0.85; }
 
     #suggestions {
       position: absolute; top: calc(100% + 6px); left: 0; width: 290px;
-      background: #1a1a1a; border: 1px solid var(--border); border-radius: 10px;
+      background: #111; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
       overflow: hidden; z-index: 999; display: none;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.8);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.9);
     }
-    .sug-item { padding: 0.6rem 1rem; cursor: pointer; border-bottom: 1px solid var(--border); }
+    .sug-item { padding: 0.65rem 1rem; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.07); }
     .sug-item:last-child { border-bottom: none; }
-    .sug-item:hover { background: rgba(108,99,255,0.15); }
+    .sug-item:hover { background: rgba(108,99,255,0.2); }
     .sug-name   { font-size: 0.85rem; font-weight: 600; }
     .sug-detail { font-size: 0.73rem; color: var(--muted); margin-top: 2px; }
 
-    /* Weather cards grid */
+    /* Weather grid */
     .wx-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
       gap: 1rem;
     }
+
     .wx-card {
       background: var(--card);
       border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 1.25rem;
-      display: flex; flex-direction: column; gap: 0.4rem;
+      border-radius: 18px;
+      padding: 1.5rem 1.25rem;
+      display: flex; flex-direction: column; gap: 0.35rem;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      min-height: 260px;
     }
-    .wx-card-label { font-size: 0.62rem; text-transform: uppercase; letter-spacing: 0.12em; }
-    .wx-card-icon  { font-size: 2.2rem; line-height: 1; margin: 0.25rem 0; }
-    .wx-card-main  { font-size: 1.9rem; font-weight: 900; line-height: 1; }
-    .wx-card-sub   { font-size: 0.8rem; color: var(--muted); }
-    .wx-card-extra { font-size: 0.78rem; color: var(--muted); margin-top: 0.2rem; border-top: 1px solid var(--border); padding-top: 0.4rem; }
 
-    .wx-temp  { border-color: rgba(255,94,108,0.3); }
+    .wx-card-label {
+      font-size: 0.6rem; text-transform: uppercase;
+      letter-spacing: 0.14em; margin-bottom: 0.2rem;
+      font-weight: 700;
+    }
+    .wx-card-icon  { font-size: 2.6rem; line-height: 1; margin: 0.4rem 0; }
+    .wx-card-main  { font-size: 2rem; font-weight: 900; line-height: 1; }
+    .wx-card-unit  { font-size: 1rem; font-weight: 400; opacity: 0.6; }
+    .wx-card-sub   { font-size: 0.82rem; color: var(--muted); margin-top: 0.1rem; }
+    .wx-divider    { border: none; border-top: 1px solid var(--border); margin: 0.5rem 0; }
+    .wx-row        { display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--muted); }
+    .wx-row strong { color: var(--text); }
+
+    .wx-temp  { border-color: rgba(255,94,108,0.35); }
     .wx-temp  .wx-card-label { color: var(--red); }
     .wx-temp  .wx-card-main  { color: #ff9aa3; }
 
-    .wx-feel  { border-color: rgba(255,155,58,0.3); }
-    .wx-feel  .wx-card-label { color: var(--orange); }
-    .wx-feel  .wx-card-main  { color: #ffc07a; }
-
-    .wx-rain  { border-color: rgba(56,198,255,0.3); }
+    .wx-rain  { border-color: rgba(56,198,255,0.35); }
     .wx-rain  .wx-card-label { color: var(--blue); }
     .wx-rain  .wx-card-main  { color: #8ddcff; }
 
-    .wx-wind  { border-color: rgba(0,229,160,0.3); }
+    .wx-wind  { border-color: rgba(0,229,160,0.35); }
     .wx-wind  .wx-card-label { color: var(--green); }
     .wx-wind  .wx-card-main  { color: #7fffd4; }
 
-    .wx-cond  { border-color: rgba(179,157,219,0.3); }
+    .wx-cond  { border-color: rgba(179,157,219,0.35); }
     .wx-cond  .wx-card-label { color: var(--lavender); }
-    .wx-cond  .wx-card-main  { color: #d8ccff; font-size: 1.15rem; }
+    .wx-cond  .wx-card-main  { color: #d8ccff; font-size: 1.25rem; }
 
-    .wx-sun   { border-color: rgba(255,200,50,0.3); }
-    .wx-sun   .wx-card-label { color: #fcd34d; }
-    .wx-sun   .wx-card-main  { color: #fde68a; font-size: 1.2rem; }
+    .wx-uv    { border-color: rgba(255,200,50,0.35); }
+    .wx-uv    .wx-card-label { color: #fcd34d; }
+    .wx-uv    .wx-card-main  { color: #fde68a; }
 
     .wx-msg { color: var(--muted); font-size: 0.9rem; padding: 0.5rem 0; }
   </style>
 </head>
 <body>
 
+<div id="bg"></div>
+<canvas id="particle-canvas"></canvas>
+<div id="lightning"></div>
+
+<div id="page">
   <!-- BREAKING NEWS -->
   <div id="news-bar">
     <div class="news-label">&#128308; Breaking News</div>
@@ -134,6 +188,7 @@
       <div>
         <div class="wx-loc-label">Local Weather</div>
         <div class="wx-loc-name" id="wx-loc">Detecting location…</div>
+        <div class="wx-time" id="wx-time"></div>
       </div>
       <div class="wx-search">
         <input id="city-input" type="text" placeholder="Search city, town, village…" autocomplete="off" />
@@ -145,179 +200,372 @@
       <p class="wx-msg" id="wx-msg">Loading weather…</p>
     </div>
   </section>
+</div>
 
-  <script>
-  // Breaking News
-  const HEADLINES = [
-    'Scientists discover new exoplanet that may support liquid water',
-    'Global leaders gather for emergency climate summit in Geneva',
-    'Tech giant unveils next-generation AI chip with record performance',
-    'Central banks signal potential rate cuts amid cooling inflation',
-    'Historic peace agreement signed between rival factions',
-    'Researchers develop breakthrough treatment for rare genetic disease',
-    'Space agency confirms successful launch of deep-space telescope',
-    'Record-breaking heatwave sweeps across multiple continents',
-    'Major earthquake strikes Pacific Rim — tsunami warnings issued',
-    'Stock markets reach all-time high as earnings season begins',
-    'New cybersecurity vulnerability found in widely-used software',
-    'International team completes first crewed mission around the Moon',
-  ];
-  document.getElementById('news-track').innerHTML =
-    [...HEADLINES,...HEADLINES].map(h => `<span class="news-item">${h}</span>`).join('');
+<script>
+// ── Breaking News ──────────────────────────────────────────────────────────
+const HEADLINES = [
+  'Scientists discover new exoplanet that may support liquid water',
+  'Global leaders gather for emergency climate summit in Geneva',
+  'Tech giant unveils next-generation AI chip with record performance',
+  'Central banks signal potential rate cuts amid cooling inflation',
+  'Historic peace agreement signed between rival factions',
+  'Researchers develop breakthrough treatment for rare genetic disease',
+  'Space agency confirms successful launch of deep-space telescope',
+  'Record-breaking heatwave sweeps across multiple continents',
+  'Major earthquake strikes Pacific Rim — tsunami warnings issued',
+  'Stock markets reach all-time high as earnings season begins',
+  'New cybersecurity vulnerability found in widely-used software',
+  'International team completes first crewed mission around the Moon',
+];
+document.getElementById('news-track').innerHTML =
+  [...HEADLINES,...HEADLINES].map(h=>`<span class="news-item">${h}</span>`).join('');
 
-  // Weather
-  const WMO = {
-    0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',
-    45:'Foggy',48:'Icy fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',
-    61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',
-    75:'Heavy snow',77:'Snow grains',80:'Light showers',81:'Showers',82:'Heavy showers',
-    85:'Snow showers',86:'Heavy snow showers',95:'Thunderstorm',96:'Thunderstorm+hail',99:'Heavy thunderstorm'
+// ── Weather data ────────────────────────────────────────────────────────────
+const WMO = {
+  0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',
+  45:'Foggy',48:'Icy fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',
+  61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',
+  75:'Heavy snow',77:'Snow grains',80:'Light showers',81:'Showers',82:'Heavy showers',
+  85:'Snow showers',86:'Heavy snow showers',95:'Thunderstorm',96:'Thunderstorm+hail',99:'Heavy thunderstorm'
+};
+const ICONS = {
+  0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',
+  61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'❄️',75:'❄️',77:'❄️',80:'🌦️',
+  81:'🌦️',82:'⛈️',85:'🌨️',86:'🌨️',95:'⛈️',96:'⛈️',99:'⛈️'
+};
+const WDIRS = ['N','NE','E','SE','S','SW','W','NW'];
+const wdir = d => WDIRS[Math.round(d/45)%8];
+const c2f  = c => ((c*9/5)+32).toFixed(1);
+const uvLv = u => u<=2?'Low':u<=5?'Moderate':u<=7?'High':u<=10?'Very High':'Extreme';
+const uvColor = u => u<=2?'#4ade80':u<=5?'#facc15':u<=7?'#fb923c':u<=10?'#f87171':'#c084fc';
+
+// ── Dynamic Background ─────────────────────────────────────────────────────
+let particleAnim = null;
+let lightningTimer = null;
+
+function getWeatherCategory(code, isNight) {
+  if ([95,96,99].includes(code)) return 'storm';
+  if ([61,63,65,80,81,82,51,53,55].includes(code)) return 'rain';
+  if ([71,73,75,77,85,86].includes(code)) return 'snow';
+  if ([45,48].includes(code)) return 'fog';
+  if (code === 3) return 'overcast';
+  if (code === 2) return isNight ? 'clear-night' : 'cloudy-day';
+  if (code <= 1) return isNight ? 'clear-night' : 'clear-day';
+  return isNight ? 'clear-night' : 'clear-day';
+}
+
+function applyBackground(code, sunrise, sunset) {
+  const now = new Date();
+  const riseH = parseInt(sunrise.split(':')[0]);
+  const riseM = parseInt(sunrise.split(':')[1]);
+  const setH  = parseInt(sunset.split(':')[0]);
+  const setM  = parseInt(sunset.split(':')[1]);
+  const nowMin = now.getHours()*60 + now.getMinutes();
+  const riseMin = riseH*60 + riseM;
+  const setMin  = setH*60 + setM;
+  const isNight = nowMin < riseMin || nowMin > setMin;
+  const isDusk  = Math.abs(nowMin - setMin) < 60;
+  const isDawn  = Math.abs(nowMin - riseMin) < 60;
+
+  const cat = getWeatherCategory(code, isNight);
+  const bg  = document.getElementById('bg');
+
+  // Clear old particles/lightning
+  stopParticles();
+  clearStars();
+  if (lightningTimer) { clearInterval(lightningTimer); lightningTimer = null; }
+
+  const gradients = {
+    'clear-day':   'linear-gradient(180deg, #0ea5e9 0%, #38bdf8 40%, #7dd3fc 100%)',
+    'clear-night': 'linear-gradient(180deg, #020617 0%, #0f172a 50%, #1e1b4b 100%)',
+    'cloudy-day':  'linear-gradient(180deg, #475569 0%, #64748b 60%, #94a3b8 100%)',
+    'overcast':    'linear-gradient(180deg, #1e293b 0%, #334155 100%)',
+    'rain':        'linear-gradient(180deg, #0c1a2e 0%, #1e3a5f 50%, #0f2d47 100%)',
+    'storm':       'linear-gradient(180deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)',
+    'snow':        'linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 50%, #94a3b8 100%)',
+    'fog':         'linear-gradient(180deg, #6b7280 0%, #9ca3af 100%)',
   };
-  const ICONS = {
-    0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',
-    61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'❄️',75:'❄️',77:'❄️',80:'🌦️',
-    81:'🌦️',82:'⛈️',85:'🌨️',86:'🌨️',95:'⛈️',96:'⛈️',99:'⛈️'
-  };
-  const WDIRS = ['N','NE','E','SE','S','SW','W','NW'];
-  const wdir = d => WDIRS[Math.round(d/45)%8];
-  const c2f  = c => ((c*9/5)+32).toFixed(1);
-  const uvLv = u => u<=2?'Low':u<=5?'Moderate':u<=7?'High':u<=10?'Very High':'Extreme';
-
-  function renderWeather(cw, hourly, daily, place) {
-    document.getElementById('wx-loc').textContent = place;
-    const h    = new Date().getHours();
-    const feel = hourly?.apparent_temperature?.[h];
-    const prec = hourly?.precipitation_probability?.[h] ?? '—';
-    const hum  = hourly?.relative_humidity_2m?.[h] ?? '—';
-    const vis  = hourly?.visibility?.[h];
-    const uv   = daily?.uv_index_max?.[0];
-    const code = cw.weathercode;
-    const rise = daily?.sunrise?.[0]?.split('T')[1] ?? '—';
-    const set  = daily?.sunset?.[0]?.split('T')[1] ?? '—';
-    const maxT = daily?.temperature_2m_max?.[0];
-    const minT = daily?.temperature_2m_min?.[0];
-
-    document.getElementById('wx-grid').innerHTML = `
-      <div class="wx-card wx-temp">
-        <span class="wx-card-label">🌡️ Temperature</span>
-        <span class="wx-card-icon">${ICONS[code]??'🌡️'}</span>
-        <span class="wx-card-main">${c2f(cw.temperature)}°F</span>
-        <span class="wx-card-sub">${cw.temperature}°C</span>
-        <span class="wx-card-extra" style="color:#ffc07a">Feels like: ${feel!=null?c2f(feel)+'°F / '+feel+'°C':'—'}</span>
-        <span class="wx-card-extra">High: ${maxT!=null?c2f(maxT)+'°F':'—'} &nbsp;·&nbsp; Low: ${minT!=null?c2f(minT)+'°F':'—'}</span>
-      </div>
-      <div class="wx-card wx-rain">
-        <span class="wx-card-label">🌧️ Precipitation</span>
-        <span class="wx-card-icon">💧</span>
-        <span class="wx-card-main">${prec}%</span>
-        <span class="wx-card-sub">Chance of rain</span>
-        <span class="wx-card-extra">Humidity: ${hum}%</span>
-      </div>
-      <div class="wx-card wx-wind">
-        <span class="wx-card-label">💨 Wind</span>
-        <span class="wx-card-icon">🌬️</span>
-        <span class="wx-card-main">${cw.windspeed}<span style="font-size:1rem"> km/h</span></span>
-        <span class="wx-card-sub">Direction: ${wdir(cw.winddirection)}</span>
-        <span class="wx-card-extra">${cw.windspeed < 20 ? 'Light breeze' : cw.windspeed < 40 ? 'Moderate wind' : 'Strong wind'}</span>
-      </div>
-      <div class="wx-card wx-cond">
-        <span class="wx-card-label">🌤️ Condition</span>
-        <span class="wx-card-icon">${ICONS[code]??'🌡️'}</span>
-        <span class="wx-card-main">${WMO[code]??'Unknown'}</span>
-        <span class="wx-card-sub">UV: ${uv!=null?uv+' — '+uvLv(uv):'—'}</span>
-        <span class="wx-card-extra">Visibility: ${vis!=null?(vis/1000).toFixed(1)+' km':'—'}</span>
-      </div>
-      <div class="wx-card wx-sun">
-        <span class="wx-card-label">🌅 Sun</span>
-        <span class="wx-card-icon">☀️</span>
-        <span class="wx-card-main">Rise ${rise}</span>
-        <span class="wx-card-sub">Set ${set}</span>
-        <span class="wx-card-extra">UV Max: ${uv!=null?uv+' ('+uvLv(uv)+')':'—'}</span>
-      </div>
-    `;
-  }
-
-  async function fetchWeather(lat, lon, label) {
-    try {
-      const [wRes, gRes] = await Promise.all([
-        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=apparent_temperature,relative_humidity_2m,precipitation_probability,visibility&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&timezone=auto&forecast_days=1`),
-        label ? Promise.resolve(null) : fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-      ]);
-      const w = await wRes.json();
-      let place = label;
-      if (!place && gRes) {
-        const g = await gRes.json();
-        const a = g.address ?? {};
-        place = a.city||a.town||a.village||a.hamlet||a.suburb||a.county||'Your Location';
-        if (a.state) place += ', ' + a.state;
-      }
-      renderWeather(w.current_weather, w.hourly, w.daily, place);
-    } catch {
-      document.getElementById('wx-loc').textContent = 'Search a city above';
-      document.getElementById('wx-msg') && (document.getElementById('wx-msg').textContent = 'Could not load weather.');
-    }
-  }
-
-  async function searchCity() {
-    const val = document.getElementById('city-input').value.trim();
-    if (!val) return;
-    document.getElementById('wx-loc').textContent = 'Loading…';
-    hideSug();
-    try {
-      const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(val)}`);
-      const j = await r.json();
-      if (!j.length) { document.getElementById('wx-loc').textContent = 'Not found'; return; }
-      await fetchWeather(j[0].lat, j[0].lon, j[0].display_name.split(',')[0].trim());
-    } catch { document.getElementById('wx-loc').textContent = 'Error'; }
-  }
-
-  document.getElementById('city-btn').addEventListener('click', searchCity);
-  document.getElementById('city-input').addEventListener('keydown', e => {
-    if (e.key === 'Enter') { hideSug(); searchCity(); }
-    if (e.key === 'Escape') hideSug();
-  });
-
-  const sugBox = document.getElementById('suggestions');
-  let sugTimer;
-  function hideSug() { sugBox.style.display='none'; sugBox.innerHTML=''; }
-  document.addEventListener('click', e => { if (!e.target.closest('.wx-search')) hideSug(); });
-  document.getElementById('city-input').addEventListener('input', () => {
-    clearTimeout(sugTimer);
-    const v = document.getElementById('city-input').value.trim();
-    if (v.length < 2) { hideSug(); return; }
-    sugTimer = setTimeout(async () => {
-      try {
-        const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=6&addressdetails=1&q=${encodeURIComponent(v)}`);
-        const results = await r.json();
-        if (!results.length) { hideSug(); return; }
-        sugBox.innerHTML = results.map((x,i) => {
-          const a = x.address??{};
-          const name = a.city||a.town||a.village||a.hamlet||a.suburb||x.display_name.split(',')[0];
-          const detail = x.display_name.split(',').slice(1,4).join(',').trim();
-          return `<div class="sug-item" data-i="${i}"><div class="sug-name">${name}</div><div class="sug-detail">${detail}</div></div>`;
-        }).join('');
-        sugBox.style.display = 'block';
-        sugBox.querySelectorAll('.sug-item').forEach((el,i) => {
-          el.addEventListener('click', () => {
-            const x = results[i];
-            const a = x.address??{};
-            document.getElementById('city-input').value = a.city||a.town||a.village||a.hamlet||a.suburb||x.display_name.split(',')[0];
-            hideSug();
-            fetchWeather(x.lat, x.lon, document.getElementById('city-input').value);
-          });
-        });
-      } catch { hideSug(); }
-    }, 350);
-  });
-
-  if (navigator.geolocation) {
-    navigator.geolocation.getCurrentPosition(
-      pos => fetchWeather(pos.coords.latitude, pos.coords.longitude, null),
-      ()  => { document.getElementById('wx-loc').textContent = 'Search a city above'; document.getElementById('wx-msg') && (document.getElementById('wx-msg').remove()); }
-    );
+  if (isDusk && cat.includes('clear')) {
+    bg.style.background = 'linear-gradient(180deg, #7c3aed 0%, #db2777 40%, #ea580c 70%, #1c1917 100%)';
+  } else if (isDawn && cat.includes('clear')) {
+    bg.style.background = 'linear-gradient(180deg, #1c1917 0%, #9a3412 30%, #fb923c 60%, #fde68a 100%)';
   } else {
+    bg.style.background = gradients[cat] || gradients['clear-night'];
+  }
+
+  if (cat === 'clear-night') spawnStars(120);
+  if (cat === 'rain')  startParticles('rain');
+  if (cat === 'storm') { startParticles('rain'); startLightning(); }
+  if (cat === 'snow')  startParticles('snow');
+}
+
+// ── Stars ──────────────────────────────────────────────────────────────────
+function spawnStars(count) {
+  const bg = document.getElementById('bg');
+  for (let i = 0; i < count; i++) {
+    const s = document.createElement('div');
+    s.className = 'star';
+    const size = Math.random()*2.5 + 0.5;
+    s.style.cssText = `
+      width:${size}px; height:${size}px;
+      top:${Math.random()*100}%; left:${Math.random()*100}%;
+      animation-delay:${Math.random()*3}s;
+      animation-duration:${2+Math.random()*3}s;
+    `;
+    bg.appendChild(s);
+  }
+}
+function clearStars() {
+  document.querySelectorAll('.star').forEach(s => s.remove());
+}
+
+// ── Rain / Snow particles ──────────────────────────────────────────────────
+function startParticles(type) {
+  const canvas = document.getElementById('particle-canvas');
+  canvas.width  = window.innerWidth;
+  canvas.height = window.innerHeight;
+  const ctx = canvas.getContext('2d');
+  const particles = [];
+  const count = type === 'rain' ? 200 : 120;
+
+  for (let i = 0; i < count; i++) {
+    particles.push(type === 'rain' ? {
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      len: 10 + Math.random() * 15,
+      speed: 12 + Math.random() * 8,
+      opacity: 0.3 + Math.random() * 0.4,
+    } : {
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      r: 2 + Math.random() * 3,
+      speed: 1 + Math.random() * 2,
+      drift: (Math.random() - 0.5) * 0.8,
+      opacity: 0.6 + Math.random() * 0.4,
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    particles.forEach(p => {
+      if (type === 'rain') {
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y);
+        ctx.lineTo(p.x - 2, p.y + p.len);
+        ctx.strokeStyle = `rgba(174,214,241,${p.opacity})`;
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        p.y += p.speed;
+        if (p.y > canvas.height) { p.y = -p.len; p.x = Math.random()*canvas.width; }
+      } else {
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.fillStyle = `rgba(255,255,255,${p.opacity})`;
+        ctx.fill();
+        p.y += p.speed; p.x += p.drift;
+        if (p.y > canvas.height) { p.y = -p.r; p.x = Math.random()*canvas.width; }
+        if (p.x < 0) p.x = canvas.width;
+        if (p.x > canvas.width) p.x = 0;
+      }
+    });
+    particleAnim = requestAnimationFrame(draw);
+  }
+  draw();
+}
+function stopParticles() {
+  if (particleAnim) { cancelAnimationFrame(particleAnim); particleAnim = null; }
+  const canvas = document.getElementById('particle-canvas');
+  canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+}
+
+// ── Lightning ──────────────────────────────────────────────────────────────
+function startLightning() {
+  const el = document.getElementById('lightning');
+  function flash() {
+    el.style.background = 'rgba(255,255,255,0.18)';
+    setTimeout(() => { el.style.background = 'rgba(255,255,255,0)'; }, 80);
+    setTimeout(() => {
+      el.style.background = 'rgba(255,255,255,0.1)';
+      setTimeout(() => { el.style.background = 'rgba(255,255,255,0)'; }, 60);
+    }, 150);
+  }
+  lightningTimer = setInterval(flash, 4000 + Math.random()*6000);
+}
+
+// ── Render weather cards ───────────────────────────────────────────────────
+function renderWeather(cw, hourly, daily, place) {
+  document.getElementById('wx-loc').textContent = place;
+  document.getElementById('wx-time').textContent = new Date().toLocaleString('en-US', {weekday:'long', month:'long', day:'numeric', hour:'numeric', minute:'2-digit'});
+
+  const h    = new Date().getHours();
+  const feel = hourly?.apparent_temperature?.[h];
+  const prec = hourly?.precipitation_probability?.[h] ?? '—';
+  const hum  = hourly?.relative_humidity_2m?.[h] ?? '—';
+  const vis  = hourly?.visibility?.[h];
+  const uv   = daily?.uv_index_max?.[0];
+  const code = cw.weathercode;
+  const rise = daily?.sunrise?.[0]?.split('T')[1] ?? '—';
+  const set  = daily?.sunset?.[0]?.split('T')[1] ?? '—';
+  const maxT = daily?.temperature_2m_max?.[0];
+  const minT = daily?.temperature_2m_min?.[0];
+  const wind = cw.windspeed;
+  const windBf = wind<1?'Calm':wind<6?'Light air':wind<12?'Light breeze':wind<20?'Gentle breeze':wind<29?'Moderate breeze':wind<38?'Fresh breeze':wind<50?'Strong breeze':'High wind';
+
+  applyBackground(code, rise, set);
+
+  document.getElementById('wx-grid').innerHTML = `
+    <div class="wx-card wx-temp">
+      <span class="wx-card-label">🌡️ Temperature</span>
+      <span class="wx-card-icon">${ICONS[code]??'🌡️'}</span>
+      <span class="wx-card-main">${c2f(cw.temperature)}<span class="wx-card-unit">°F</span></span>
+      <span class="wx-card-sub">${cw.temperature}°C</span>
+      <hr class="wx-divider"/>
+      <div class="wx-row"><span>Feels like</span><strong>${feel!=null?c2f(feel)+'°F':' —'}</strong></div>
+      <div class="wx-row"><span>Feels like °C</span><strong>${feel!=null?feel+'°C':'—'}</strong></div>
+      <div class="wx-row"><span>Today high</span><strong>${maxT!=null?c2f(maxT)+'°F':'—'}</strong></div>
+      <div class="wx-row"><span>Today low</span><strong>${minT!=null?c2f(minT)+'°F':'—'}</strong></div>
+      <div class="wx-row"><span>Humidity</span><strong>${hum}%</strong></div>
+    </div>
+
+    <div class="wx-card wx-rain">
+      <span class="wx-card-label">🌧️ Precipitation</span>
+      <span class="wx-card-icon">💧</span>
+      <span class="wx-card-main">${prec}<span class="wx-card-unit">%</span></span>
+      <span class="wx-card-sub">Chance of rain</span>
+      <hr class="wx-divider"/>
+      <div class="wx-row"><span>Humidity</span><strong>${hum}%</strong></div>
+      <div class="wx-row"><span>Visibility</span><strong>${vis!=null?(vis/1000).toFixed(1)+' km':'—'}</strong></div>
+      <div class="wx-row"><span>Condition</span><strong>${WMO[code]??'—'}</strong></div>
+      <div class="wx-row"><span>Dew point</span><strong>${feel!=null?Math.round(cw.temperature - (100-hum)/5)+'°C':'—'}</strong></div>
+    </div>
+
+    <div class="wx-card wx-wind">
+      <span class="wx-card-label">💨 Wind</span>
+      <span class="wx-card-icon">🌬️</span>
+      <span class="wx-card-main">${wind}<span class="wx-card-unit"> km/h</span></span>
+      <span class="wx-card-sub">${windBf}</span>
+      <hr class="wx-divider"/>
+      <div class="wx-row"><span>Direction</span><strong>${wdir(cw.winddirection)} (${cw.winddirection}°)</strong></div>
+      <div class="wx-row"><span>Speed mph</span><strong>${(wind*0.621).toFixed(1)} mph</strong></div>
+      <div class="wx-row"><span>Speed m/s</span><strong>${(wind/3.6).toFixed(1)} m/s</strong></div>
+      <div class="wx-row"><span>Beaufort</span><strong>${windBf}</strong></div>
+    </div>
+
+    <div class="wx-card wx-cond">
+      <span class="wx-card-label">🌤️ Condition</span>
+      <span class="wx-card-icon">${ICONS[code]??'🌡️'}</span>
+      <span class="wx-card-main">${WMO[code]??'Unknown'}</span>
+      <hr class="wx-divider"/>
+      <div class="wx-row"><span>Visibility</span><strong>${vis!=null?(vis/1000).toFixed(1)+' km':'—'}</strong></div>
+      <div class="wx-row"><span>Humidity</span><strong>${hum}%</strong></div>
+      <div class="wx-row"><span>Precip chance</span><strong>${prec}%</strong></div>
+      <div class="wx-row"><span>Wind</span><strong>${wind} km/h ${wdir(cw.winddirection)}</strong></div>
+    </div>
+
+    <div class="wx-card wx-uv">
+      <span class="wx-card-label">☀️ UV Index</span>
+      <span class="wx-card-icon">🔆</span>
+      <span class="wx-card-main" style="color:${uv!=null?uvColor(uv):'#fde68a'}">${uv!=null?uv:'—'}</span>
+      <span class="wx-card-sub" style="color:${uv!=null?uvColor(uv):'var(--muted)'}; font-weight:700">${uv!=null?uvLv(uv):'No data'}</span>
+      <hr class="wx-divider"/>
+      <div class="wx-row"><span>Sunrise</span><strong>${rise}</strong></div>
+      <div class="wx-row"><span>Sunset</span><strong>${set}</strong></div>
+      <div class="wx-row"><span>Recommendation</span></div>
+      <div style="font-size:0.73rem;color:var(--muted);margin-top:0.2rem">${uv==null?'—':uv<=2?'No protection needed':uv<=5?'Wear sunscreen SPF 30+':uv<=7?'Seek shade midday, SPF 50+':uv<=10?'Minimize sun exposure':'Avoid being outside midday'}</div>
+    </div>
+  `;
+}
+
+// ── Fetch weather ──────────────────────────────────────────────────────────
+async function fetchWeather(lat, lon, label) {
+  try {
+    const [wRes, gRes] = await Promise.all([
+      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=apparent_temperature,relative_humidity_2m,precipitation_probability,visibility&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&timezone=auto&forecast_days=1`),
+      label ? Promise.resolve(null) : fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+    ]);
+    const w = await wRes.json();
+    let place = label;
+    if (!place && gRes) {
+      const g = await gRes.json();
+      const a = g.address ?? {};
+      place = a.city||a.town||a.village||a.hamlet||a.suburb||a.county||'Your Location';
+      if (a.state) place += ', ' + a.state;
+    }
+    renderWeather(w.current_weather, w.hourly, w.daily, place);
+  } catch {
     document.getElementById('wx-loc').textContent = 'Search a city above';
   }
-  </script>
+}
+
+// ── Search ─────────────────────────────────────────────────────────────────
+async function searchCity() {
+  const val = document.getElementById('city-input').value.trim();
+  if (!val) return;
+  document.getElementById('wx-loc').textContent = 'Loading…';
+  hideSug();
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(val)}`);
+    const j = await r.json();
+    if (!j.length) { document.getElementById('wx-loc').textContent = 'Not found'; return; }
+    await fetchWeather(j[0].lat, j[0].lon, j[0].display_name.split(',')[0].trim());
+  } catch { document.getElementById('wx-loc').textContent = 'Error'; }
+}
+
+document.getElementById('city-btn').addEventListener('click', searchCity);
+document.getElementById('city-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { hideSug(); searchCity(); }
+  if (e.key === 'Escape') hideSug();
+});
+
+// ── Suggestions ────────────────────────────────────────────────────────────
+const sugBox = document.getElementById('suggestions');
+let sugTimer;
+function hideSug() { sugBox.style.display='none'; sugBox.innerHTML=''; }
+document.addEventListener('click', e => { if (!e.target.closest('.wx-search')) hideSug(); });
+document.getElementById('city-input').addEventListener('input', () => {
+  clearTimeout(sugTimer);
+  const v = document.getElementById('city-input').value.trim();
+  if (v.length < 2) { hideSug(); return; }
+  sugTimer = setTimeout(async () => {
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=6&addressdetails=1&q=${encodeURIComponent(v)}`);
+      const results = await r.json();
+      if (!results.length) { hideSug(); return; }
+      sugBox.innerHTML = results.map((x,i) => {
+        const a = x.address??{};
+        const name = a.city||a.town||a.village||a.hamlet||a.suburb||x.display_name.split(',')[0];
+        const detail = x.display_name.split(',').slice(1,4).join(',').trim();
+        return `<div class="sug-item" data-i="${i}"><div class="sug-name">${name}</div><div class="sug-detail">${detail}</div></div>`;
+      }).join('');
+      sugBox.style.display = 'block';
+      sugBox.querySelectorAll('.sug-item').forEach((el,i) => {
+        el.addEventListener('click', () => {
+          const x = results[i]; const a = x.address??{};
+          document.getElementById('city-input').value = a.city||a.town||a.village||a.hamlet||a.suburb||x.display_name.split(',')[0];
+          hideSug();
+          fetchWeather(x.lat, x.lon, document.getElementById('city-input').value);
+        });
+      });
+    } catch { hideSug(); }
+  }, 350);
+});
+
+// ── Resize canvas ──────────────────────────────────────────────────────────
+window.addEventListener('resize', () => {
+  const c = document.getElementById('particle-canvas');
+  c.width = window.innerWidth; c.height = window.innerHeight;
+});
+
+// ── Auto-detect ────────────────────────────────────────────────────────────
+if (navigator.geolocation) {
+  navigator.geolocation.getCurrentPosition(
+    pos => fetchWeather(pos.coords.latitude, pos.coords.longitude, null),
+    ()  => { document.getElementById('wx-loc').textContent = 'Search a city above'; document.getElementById('wx-msg')?.remove(); }
+  );
+} else {
+  document.getElementById('wx-loc').textContent = 'Search a city above';
+}
+</script>
 </body>
 </html>
