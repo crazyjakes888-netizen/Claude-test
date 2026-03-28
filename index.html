@@ -67,6 +67,7 @@
       display: flex;
       align-items: center;
       gap: 0.4rem;
+      position: relative;
     }
 
     #city-input {
@@ -76,7 +77,7 @@
       padding: 0.2rem 0.6rem;
       color: var(--text);
       font-size: 0.8rem;
-      width: 140px;
+      width: 180px;
       outline: none;
     }
     #city-input:focus { border-color: var(--accent); }
@@ -92,6 +93,33 @@
       white-space: nowrap;
     }
     #city-btn:hover { opacity: 0.85; }
+
+    #suggestions {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      width: 300px;
+      background: #1e1e2e;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      z-index: 999;
+      display: none;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+    }
+
+    .suggestion-item {
+      padding: 0.5rem 0.8rem;
+      font-size: 0.8rem;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border);
+      line-height: 1.3;
+    }
+    .suggestion-item:last-child { border-bottom: none; }
+    .suggestion-item:hover { background: rgba(124,111,255,0.15); }
+
+    .suggestion-name { color: var(--text); font-weight: 600; }
+    .suggestion-detail { color: var(--muted); font-size: 0.75rem; }
 
     /* NEWS TICKER */
     #news-ticker {
@@ -407,8 +435,9 @@
   <div id="weather-bar" class="loading">
     <span id="weather-info">Detecting your location...</span>
     <div class="weather-search">
-      <input id="city-input" type="text" placeholder="Enter city..." />
+      <input id="city-input" type="text" placeholder="Search city, town, village..." autocomplete="off" />
       <button id="city-btn" onclick="searchCity()">Go</button>
+      <div id="suggestions"></div>
     </div>
   </div>
 
@@ -653,10 +682,64 @@
       }
     }
 
-    // Allow pressing Enter in the input
-    document.getElementById('city-input').addEventListener('keydown', e => {
-      if (e.key === 'Enter') searchCity();
+    // ── Suggestions dropdown ─────────────────────────────────────────────────
+    let suggestTimer = null;
+    const suggestBox = document.getElementById('suggestions');
+    const cityInput  = document.getElementById('city-input');
+
+    cityInput.addEventListener('keydown', e => {
+      if (e.key === 'Enter') { hideSuggestions(); searchCity(); }
+      if (e.key === 'Escape') hideSuggestions();
     });
+
+    cityInput.addEventListener('input', () => {
+      clearTimeout(suggestTimer);
+      const val = cityInput.value.trim();
+      if (val.length < 2) { hideSuggestions(); return; }
+      suggestTimer = setTimeout(() => fetchSuggestions(val), 350);
+    });
+
+    document.addEventListener('click', e => {
+      if (!e.target.closest('.weather-search')) hideSuggestions();
+    });
+
+    function hideSuggestions() {
+      suggestBox.style.display = 'none';
+      suggestBox.innerHTML = '';
+    }
+
+    async function fetchSuggestions(query) {
+      try {
+        const res = await fetch(
+          `https://nominatim.openstreetmap.org/search?format=json&limit=6&addressdetails=1&q=${encodeURIComponent(query)}`
+        );
+        const results = await res.json();
+        if (!results.length) { hideSuggestions(); return; }
+
+        suggestBox.innerHTML = results.map((r, i) => {
+          const addr  = r.address ?? {};
+          const name  = addr.city || addr.town || addr.village || addr.hamlet || addr.suburb || r.display_name.split(',')[0];
+          const parts = r.display_name.split(',').slice(1, 4).join(',').trim();
+          return `<div class="suggestion-item" data-idx="${i}">
+            <div class="suggestion-name">${name}</div>
+            <div class="suggestion-detail">${parts}</div>
+          </div>`;
+        }).join('');
+
+        suggestBox.style.display = 'block';
+
+        suggestBox.querySelectorAll('.suggestion-item').forEach((el, i) => {
+          el.addEventListener('click', () => {
+            const r = results[i];
+            const addr = r.address ?? {};
+            const label = addr.city || addr.town || addr.village || addr.hamlet || addr.suburb || r.display_name.split(',')[0];
+            cityInput.value = label;
+            hideSuggestions();
+            fetchWeatherByCoords(r.lat, r.lon, label);
+          });
+        });
+      } catch { hideSuggestions(); }
+    }
 
     async function loadWeather() {
       if (!navigator.geolocation) {
