@@ -7,475 +7,202 @@
   <link rel="icon" href="assets/favicon.png" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg:       #0a0a0f;
-      --surface:  #111118;
-      --card:     #16161f;
-      --border:   #25253a;
-      --accent:   #6c63ff;
-      --accent2:  #ff4d8d;
-      --green:    #00e5a0;
-      --blue:     #38c6ff;
-      --orange:   #ff9b3a;
-      --red:      #ff5e6c;
-      --lavender: #b39ddb;
-      --text:     #eeeef5;
-      --muted:    #7777a0;
+      --bg: #0a0a0f; --surface: #111118; --card: #16161f; --border: #25253a;
+      --accent: #6c63ff; --accent2: #ff4d8d;
+      --green: #00e5a0; --blue: #38c6ff; --orange: #ff9b3a; --red: #ff5e6c; --lavender: #b39ddb;
+      --text: #eeeef5; --muted: #7777a0;
     }
-
     html { scroll-behavior: smooth; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-top: 36px; }
 
-    body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      /* top offset = news(36) + weather(52) + nav(60) */
-      padding-top: 148px;
-    }
-
-    /* ── BREAKING NEWS ─────────────────────────────────────────── */
+    /* ── BREAKING NEWS ── */
     #news-bar {
-      position: fixed;
-      top: 0; left: 0; right: 0;
-      z-index: 300;
-      height: 36px;
-      display: flex;
-      align-items: center;
-      background: #b91c1c;
-      overflow: hidden;
+      position: fixed; top: 0; left: 0; right: 0; z-index: 300;
+      height: 36px; display: flex; align-items: center;
+      background: #b91c1c; overflow: hidden;
     }
-
     .news-label {
-      flex-shrink: 0;
-      height: 100%;
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0 1rem;
-      background: #7f1d1d;
-      font-size: 0.72rem;
-      font-weight: 800;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #fff;
-      white-space: nowrap;
+      flex-shrink: 0; height: 100%; display: flex; align-items: center;
+      gap: 0.4rem; padding: 0 1rem; background: #7f1d1d;
+      font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em;
+      text-transform: uppercase; color: #fff; white-space: nowrap;
     }
-
     .news-track-wrap { flex: 1; overflow: hidden; }
-
-    .news-track {
-      display: inline-flex;
-      white-space: nowrap;
-      animation: scroll-left 50s linear infinite;
-    }
+    .news-track { display: inline-flex; white-space: nowrap; animation: scroll-left 50s linear infinite; }
     .news-track:hover { animation-play-state: paused; }
-
-    .news-item {
-      font-size: 0.8rem;
-      color: #fff;
-      padding: 0 2.5rem;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
+    .news-item { font-size: 0.8rem; color: #fff; padding: 0 2.5rem; display: inline-flex; align-items: center; gap: 0.5rem; }
     .news-item::before { content: '●'; font-size: 0.45rem; opacity: 0.6; }
+    @keyframes scroll-left { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-    @keyframes scroll-left {
-      from { transform: translateX(0); }
-      to   { transform: translateX(-50%); }
-    }
-
-    /* ── WEATHER BAR ───────────────────────────────────────────── */
-    #wx-bar {
-      position: fixed;
-      top: 36px; left: 0; right: 0;
-      z-index: 299;
-      height: 52px;
-      background: #0d0d18;
+    /* ── NAV ── */
+    nav {
+      position: sticky; top: 0; z-index: 200;
+      height: 56px; display: flex; align-items: center; justify-content: space-between;
+      padding: 0 2rem; background: rgba(10,10,15,0.95); backdrop-filter: blur(16px);
       border-bottom: 1px solid var(--border);
-      display: flex;
-      align-items: stretch;
-      overflow-x: auto;
-      scrollbar-width: none;
     }
-    #wx-bar::-webkit-scrollbar { display: none; }
+    .logo { font-size: 1.2rem; font-weight: 800; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .nav-links { display: flex; gap: 2rem; list-style: none; }
+    .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.88rem; font-weight: 500; transition: color 0.2s; }
+    .nav-links a:hover { color: var(--text); }
+    @media (max-width: 600px) { .nav-links { display: none; } }
 
-    /* loading state */
-    #wx-bar.loading {
-      align-items: center;
-      padding: 0 1rem;
-      gap: 0.75rem;
+    /* ── WEATHER SECTION ── */
+    #weather { background: #0d0d18; border-bottom: 1px solid var(--border); padding: 1.5rem 2rem; }
+    .wx-header {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem; margin-bottom: 1.25rem;
     }
-
-    .wx-col {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      padding: 0 1.1rem;
-      border-right: 1px solid var(--border);
-      min-width: 90px;
-      flex-shrink: 0;
-      gap: 1px;
+    .wx-title { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); }
+    .wx-location-name { font-size: 1.3rem; font-weight: 800; color: #c5beff; margin-top: 0.2rem; }
+    .wx-search {
+      display: flex; align-items: center; gap: 0.5rem; position: relative;
     }
-    .wx-label {
-      font-size: 0.58rem;
-      text-transform: uppercase;
-      letter-spacing: 0.09em;
-      opacity: 0.7;
-    }
-    .wx-val {
-      font-size: 0.88rem;
-      font-weight: 700;
-      line-height: 1;
-    }
-    .wx-sub {
-      font-size: 0.63rem;
-      opacity: 0.55;
-    }
-
-    .wx-loc  { min-width: 140px; background: rgba(108,99,255,0.1); }
-    .wx-loc  .wx-label { color: var(--lavender); }
-    .wx-loc  .wx-val   { color: #c5beff; font-size: 0.8rem; }
-
-    .wx-temp { background: rgba(255,94,108,0.08); }
-    .wx-temp .wx-label { color: var(--red); }
-    .wx-temp .wx-val   { color: #ff9aa3; }
-
-    .wx-feel { background: rgba(255,155,58,0.08); }
-    .wx-feel .wx-label { color: var(--orange); }
-    .wx-feel .wx-val   { color: #ffc07a; }
-
-    .wx-rain { background: rgba(56,198,255,0.08); }
-    .wx-rain .wx-label { color: var(--blue); }
-    .wx-rain .wx-val   { color: #8ddcff; }
-
-    .wx-wind { background: rgba(0,229,160,0.08); }
-    .wx-wind .wx-label { color: var(--green); }
-    .wx-wind .wx-val   { color: #7fffd4; }
-
-    .wx-cond { background: rgba(179,157,219,0.08); min-width: 110px; }
-    .wx-cond .wx-label { color: var(--lavender); }
-    .wx-cond .wx-val   { color: #d8ccff; font-size: 0.77rem; text-align: center; }
-
-    /* search col */
-    .wx-search-col {
-      display: flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0 0.75rem;
-      margin-left: auto;
-      flex-shrink: 0;
-      position: relative;
-    }
-
     #city-input {
-      background: rgba(255,255,255,0.07);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      padding: 0.25rem 0.65rem;
-      color: var(--text);
-      font-size: 0.78rem;
-      width: 170px;
-      outline: none;
-      font-family: inherit;
+      background: rgba(255,255,255,0.07); border: 1px solid var(--border); border-radius: 8px;
+      padding: 0.45rem 0.85rem; color: var(--text); font-size: 0.85rem; width: 210px;
+      outline: none; font-family: inherit;
     }
     #city-input:focus { border-color: var(--accent); }
     #city-input::placeholder { color: var(--muted); }
-
     #city-btn {
-      background: var(--accent);
-      border: none;
-      border-radius: 6px;
-      color: #fff;
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 0.28rem 0.7rem;
-      cursor: pointer;
-      white-space: nowrap;
-      font-family: inherit;
-      transition: opacity 0.15s;
+      background: var(--accent); border: none; border-radius: 8px; color: #fff;
+      font-size: 0.85rem; font-weight: 700; padding: 0.45rem 1rem;
+      cursor: pointer; font-family: inherit; transition: opacity 0.15s;
     }
     #city-btn:hover { opacity: 0.82; }
-
     #suggestions {
-      position: absolute;
-      top: calc(100% + 4px);
-      left: 0;
-      width: 290px;
-      background: #1a1a2e;
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      overflow: hidden;
-      z-index: 999;
-      display: none;
-      box-shadow: 0 12px 32px rgba(0,0,0,0.6);
+      position: absolute; top: calc(100% + 6px); left: 0; width: 300px;
+      background: #1a1a2e; border: 1px solid var(--border); border-radius: 10px;
+      overflow: hidden; z-index: 999; display: none;
+      box-shadow: 0 12px 32px rgba(0,0,0,0.7);
     }
-    .sug-item {
-      padding: 0.55rem 0.9rem;
-      cursor: pointer;
-      border-bottom: 1px solid var(--border);
-      transition: background 0.1s;
-    }
+    .sug-item { padding: 0.6rem 1rem; cursor: pointer; border-bottom: 1px solid var(--border); transition: background 0.1s; }
     .sug-item:last-child { border-bottom: none; }
     .sug-item:hover { background: rgba(108,99,255,0.15); }
-    .sug-name   { font-size: 0.82rem; font-weight: 600; color: var(--text); }
-    .sug-detail { font-size: 0.72rem; color: var(--muted); margin-top: 1px; }
+    .sug-name { font-size: 0.85rem; font-weight: 600; color: var(--text); }
+    .sug-detail { font-size: 0.73rem; color: var(--muted); margin-top: 2px; }
 
-    /* wx loading text */
-    .wx-loading-text { font-size: 0.8rem; color: var(--muted); }
-
-    /* ── NAV ───────────────────────────────────────────────────── */
-    nav {
-      position: fixed;
-      top: 88px; left: 0; right: 0;
-      z-index: 200;
-      height: 60px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 2rem;
-      background: rgba(10,10,15,0.9);
-      backdrop-filter: blur(16px);
-      border-bottom: 1px solid var(--border);
+    /* Weather columns grid */
+    .wx-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 1rem;
     }
-
-    .logo {
-      font-size: 1.2rem;
-      font-weight: 800;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
+    .wx-card {
+      border-radius: 14px; border: 1px solid var(--border);
+      padding: 1.25rem 1.1rem;
+      display: flex; flex-direction: column; gap: 0.5rem;
     }
-
-    .nav-links { display: flex; gap: 2rem; list-style: none; }
-    .nav-links a {
-      color: var(--muted);
-      text-decoration: none;
-      font-size: 0.88rem;
-      font-weight: 500;
-      transition: color 0.2s;
+    .wx-card-label {
+      font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.12em; opacity: 0.7;
     }
-    .nav-links a:hover { color: var(--text); }
+    .wx-card-icon { font-size: 2rem; line-height: 1; }
+    .wx-card-main { font-size: 1.7rem; font-weight: 900; line-height: 1; }
+    .wx-card-sub  { font-size: 0.8rem; opacity: 0.6; }
+    .wx-card-extra { font-size: 0.78rem; margin-top: 0.25rem; }
 
-    /* ── HERO ──────────────────────────────────────────────────── */
+    .wx-temp   { background: rgba(255,94,108,0.1);  border-color: rgba(255,94,108,0.25); }
+    .wx-temp   .wx-card-label { color: var(--red); }
+    .wx-temp   .wx-card-main  { color: #ff9aa3; }
+
+    .wx-feel   { background: rgba(255,155,58,0.1);  border-color: rgba(255,155,58,0.25); }
+    .wx-feel   .wx-card-label { color: var(--orange); }
+    .wx-feel   .wx-card-main  { color: #ffc07a; }
+
+    .wx-rain   { background: rgba(56,198,255,0.1);  border-color: rgba(56,198,255,0.25); }
+    .wx-rain   .wx-card-label { color: var(--blue); }
+    .wx-rain   .wx-card-main  { color: #8ddcff; }
+
+    .wx-wind   { background: rgba(0,229,160,0.1);   border-color: rgba(0,229,160,0.25); }
+    .wx-wind   .wx-card-label { color: var(--green); }
+    .wx-wind   .wx-card-main  { color: #7fffd4; }
+
+    .wx-cond   { background: rgba(179,157,219,0.1); border-color: rgba(179,157,219,0.25); }
+    .wx-cond   .wx-card-label { color: var(--lavender); }
+    .wx-cond   .wx-card-main  { color: #d8ccff; font-size: 1.1rem; }
+
+    .wx-humid  { background: rgba(108,99,255,0.1);  border-color: rgba(108,99,255,0.25); }
+    .wx-humid  .wx-card-label { color: #a59dff; }
+    .wx-humid  .wx-card-main  { color: #c5beff; }
+
+    .wx-loading { color: var(--muted); font-size: 0.9rem; padding: 1rem 0; }
+
+    /* ── HERO ── */
     .hero {
-      min-height: calc(100vh - 148px);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      text-align: center;
-      padding: 4rem 2rem;
-      position: relative;
-      overflow: hidden;
+      min-height: 75vh; display: flex; flex-direction: column;
+      align-items: center; justify-content: center; text-align: center;
+      padding: 4rem 2rem; position: relative; overflow: hidden;
     }
-
     .hero::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background:
-        radial-gradient(ellipse 60% 50% at 50% 40%, rgba(108,99,255,0.12) 0%, transparent 70%),
-        radial-gradient(ellipse 40% 30% at 70% 60%, rgba(255,77,141,0.07) 0%, transparent 60%);
+      content: ''; position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 50% at 50% 40%, rgba(108,99,255,0.12) 0%, transparent 70%),
+                  radial-gradient(ellipse 40% 30% at 70% 60%, rgba(255,77,141,0.07) 0%, transparent 60%);
       pointer-events: none;
     }
-
     .hero-chip {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.4rem;
-      padding: 0.3rem 1rem;
-      background: rgba(108,99,255,0.12);
-      border: 1px solid rgba(108,99,255,0.35);
-      border-radius: 999px;
-      font-size: 0.78rem;
-      color: #a59dff;
-      margin-bottom: 1.5rem;
-      letter-spacing: 0.04em;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      padding: 0.3rem 1rem; background: rgba(108,99,255,0.12);
+      border: 1px solid rgba(108,99,255,0.35); border-radius: 999px;
+      font-size: 0.78rem; color: #a59dff; margin-bottom: 1.5rem; letter-spacing: 0.04em;
     }
-
-    .hero h1 {
-      font-size: clamp(2.8rem, 7vw, 5.5rem);
-      font-weight: 900;
-      line-height: 1.05;
-      letter-spacing: -0.02em;
-      margin-bottom: 1.25rem;
-    }
-
-    .grad {
-      background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .hero p {
-      font-size: 1.1rem;
-      color: var(--muted);
-      max-width: 480px;
-      line-height: 1.7;
-      margin-bottom: 2.5rem;
-    }
-
+    .hero h1 { font-size: clamp(2.8rem, 7vw, 5.5rem); font-weight: 900; line-height: 1.05; letter-spacing: -0.02em; margin-bottom: 1.25rem; }
+    .grad { background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .hero p { font-size: 1.1rem; color: var(--muted); max-width: 480px; line-height: 1.7; margin-bottom: 2.5rem; }
     .btn-row { display: flex; gap: 0.9rem; flex-wrap: wrap; justify-content: center; }
-
-    .btn {
-      padding: 0.7rem 1.6rem;
-      border-radius: 10px;
-      font-size: 0.92rem;
-      font-weight: 700;
-      cursor: pointer;
-      text-decoration: none;
-      border: none;
-      transition: all 0.18s;
-      font-family: inherit;
-    }
-    .btn-primary {
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      color: #fff;
-      box-shadow: 0 4px 18px rgba(108,99,255,0.35);
-    }
+    .btn { padding: 0.7rem 1.6rem; border-radius: 10px; font-size: 0.92rem; font-weight: 700; cursor: pointer; text-decoration: none; border: none; transition: all 0.18s; font-family: inherit; }
+    .btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent2)); color: #fff; box-shadow: 0 4px 18px rgba(108,99,255,0.35); }
     .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(108,99,255,0.45); }
-    .btn-ghost {
-      background: transparent;
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
+    .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
     .btn-ghost:hover { border-color: var(--accent); color: var(--accent); transform: translateY(-2px); }
 
-    /* ── SECTIONS ──────────────────────────────────────────────── */
+    /* ── SECTIONS ── */
     .section { padding: 5rem 2rem; }
     .section-alt { background: var(--surface); }
     .inner { max-width: 1050px; margin: 0 auto; }
-
-    .section-tag {
-      font-size: 0.72rem;
-      text-transform: uppercase;
-      letter-spacing: 0.14em;
-      color: var(--accent);
-      margin-bottom: 0.6rem;
-    }
-    .section-h {
-      font-size: clamp(1.7rem, 4vw, 2.4rem);
-      font-weight: 800;
-      margin-bottom: 0.75rem;
-      letter-spacing: -0.01em;
-    }
+    .section-tag { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--accent); margin-bottom: 0.6rem; }
+    .section-h { font-size: clamp(1.7rem, 4vw, 2.4rem); font-weight: 800; margin-bottom: 0.75rem; }
     .section-sub { color: var(--muted); max-width: 460px; margin-bottom: 3rem; line-height: 1.65; }
-
-    /* ── CARDS ─────────────────────────────────────────────────── */
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
-      gap: 1.25rem;
-    }
-
-    .card {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 14px;
-      padding: 1.75rem;
-      transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s;
-    }
-    .card:hover {
-      border-color: var(--accent);
-      transform: translateY(-4px);
-      box-shadow: 0 8px 28px rgba(108,99,255,0.12);
-    }
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 1.25rem; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 1.75rem; transition: border-color 0.2s, transform 0.2s, box-shadow 0.2s; }
+    .card:hover { border-color: var(--accent); transform: translateY(-4px); box-shadow: 0 8px 28px rgba(108,99,255,0.12); }
     .card-icon { font-size: 2rem; margin-bottom: 1rem; }
     .card h3 { font-size: 1.05rem; font-weight: 700; margin-bottom: 0.45rem; }
-    .card p  { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
+    .card p { font-size: 0.88rem; color: var(--muted); line-height: 1.6; }
 
-    /* ── ABOUT ─────────────────────────────────────────────────── */
-    .about-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4rem;
-      align-items: center;
-    }
-
-    .about-visual {
-      aspect-ratio: 1;
-      max-width: 380px;
-      border-radius: 20px;
-      background: linear-gradient(135deg, rgba(108,99,255,0.18), rgba(255,77,141,0.12));
-      border: 1px solid var(--border);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 5.5rem;
-    }
-
+    /* ── ABOUT ── */
+    .about-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+    .about-visual { aspect-ratio: 1; max-width: 380px; border-radius: 20px; background: linear-gradient(135deg, rgba(108,99,255,0.18), rgba(255,77,141,0.12)); border: 1px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 5.5rem; }
     .stats { display: flex; gap: 2.5rem; margin-top: 2rem; flex-wrap: wrap; }
-    .stat-n {
-      font-size: 2.2rem;
-      font-weight: 900;
-      background: linear-gradient(135deg, var(--accent), var(--accent2));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      line-height: 1;
-    }
+    .stat-n { font-size: 2.2rem; font-weight: 900; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1; }
     .stat-l { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
 
-    /* ── CONTACT ───────────────────────────────────────────────── */
-    .contact-form {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      max-width: 500px;
-    }
+    /* ── CONTACT ── */
+    .contact-form { display: flex; flex-direction: column; gap: 1rem; max-width: 500px; }
     .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-
-    input[type=text], input[type=email], textarea {
-      background: var(--card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0.75rem 1rem;
-      color: var(--text);
-      font-family: inherit;
-      font-size: 0.92rem;
-      width: 100%;
-      transition: border-color 0.2s;
-    }
-    input[type=text]:focus, input[type=email]:focus, textarea:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
+    input[type=text], input[type=email], textarea { background: var(--card); border: 1px solid var(--border); border-radius: 10px; padding: 0.75rem 1rem; color: var(--text); font-family: inherit; font-size: 0.92rem; width: 100%; transition: border-color 0.2s; }
+    input[type=text]:focus, input[type=email]:focus, textarea:focus { outline: none; border-color: var(--accent); }
     textarea { resize: vertical; min-height: 120px; }
-
     .form-ok { font-size: 0.88rem; color: var(--green); display: none; }
 
-    /* ── FOOTER ────────────────────────────────────────────────── */
-    footer {
-      text-align: center;
-      padding: 2rem;
-      font-size: 0.82rem;
-      color: var(--muted);
-      border-top: 1px solid var(--border);
-    }
+    /* ── FOOTER ── */
+    footer { text-align: center; padding: 2rem; font-size: 0.82rem; color: var(--muted); border-top: 1px solid var(--border); }
 
-    /* ── FADE IN ───────────────────────────────────────────────── */
-    .fi {
-      opacity: 0;
-      transform: translateY(22px);
-      transition: opacity 0.55s ease, transform 0.55s ease;
-    }
+    /* ── FADE IN ── */
+    .fi { opacity: 0; transform: translateY(22px); transition: opacity 0.55s ease, transform 0.55s ease; }
     .fi.show { opacity: 1; transform: none; }
 
-    /* ── RESPONSIVE ────────────────────────────────────────────── */
     @media (max-width: 680px) {
       .about-grid { grid-template-columns: 1fr; }
       .about-visual { max-width: 100%; }
       .form-row { grid-template-columns: 1fr; }
-      .nav-links { display: none; }
     }
   </style>
 </head>
 <body>
 
-  <!-- ══ BREAKING NEWS ════════════════════════════════════════════ -->
+  <!-- BREAKING NEWS -->
   <div id="news-bar">
     <div class="news-label">&#128308; Breaking News</div>
     <div class="news-track-wrap">
@@ -483,29 +210,38 @@
     </div>
   </div>
 
-  <!-- ══ WEATHER BAR ══════════════════════════════════════════════ -->
-  <div id="wx-bar" class="loading">
-    <span class="wx-loading-text" id="wx-msg">Detecting your location…</span>
-    <div class="wx-search-col">
-      <input id="city-input" type="text" placeholder="Search city, town, village…" autocomplete="off" />
-      <button id="city-btn">Go</button>
-      <div id="suggestions"></div>
-    </div>
-  </div>
-
-  <!-- ══ NAV ══════════════════════════════════════════════════════ -->
+  <!-- NAV -->
   <nav>
     <span class="logo">MySite</span>
     <ul class="nav-links">
+      <li><a href="#weather">Weather</a></li>
       <li><a href="#features">Features</a></li>
       <li><a href="#about">About</a></li>
       <li><a href="#contact">Contact</a></li>
     </ul>
   </nav>
 
-  <!-- ══ HERO ═════════════════════════════════════════════════════ -->
+  <!-- WEATHER SECTION -->
+  <section id="weather">
+    <div class="wx-header">
+      <div>
+        <div class="wx-title">Local Weather</div>
+        <div class="wx-location-name" id="wx-location-name">Detecting location…</div>
+      </div>
+      <div class="wx-search">
+        <input id="city-input" type="text" placeholder="Search city, town, village…" autocomplete="off" />
+        <button id="city-btn">Go</button>
+        <div id="suggestions"></div>
+      </div>
+    </div>
+    <div class="wx-grid" id="wx-grid">
+      <div class="wx-loading" id="wx-loading">Loading weather data…</div>
+    </div>
+  </section>
+
+  <!-- HERO -->
   <section class="hero">
-    <div class="hero-chip">✦ Welcome to my website</div>
+    <div class="hero-chip">✦ Welcome</div>
     <h1>Build Something<br /><span class="grad">Amazing</span></h1>
     <p>A fast, modern, and beautiful home on the web. Fully customizable — make it yours.</p>
     <div class="btn-row">
@@ -514,7 +250,7 @@
     </div>
   </section>
 
-  <!-- ══ FEATURES ═════════════════════════════════════════════════ -->
+  <!-- FEATURES -->
   <section class="section section-alt" id="features">
     <div class="inner">
       <div class="section-tag fi">Features</div>
@@ -531,19 +267,15 @@
     </div>
   </section>
 
-  <!-- ══ ABOUT ════════════════════════════════════════════════════ -->
+  <!-- ABOUT -->
   <section class="section" id="about">
     <div class="inner">
       <div class="about-grid">
         <div>
           <div class="section-tag fi">About</div>
           <h2 class="section-h fi">Who We Are</h2>
-          <p class="fi" style="color:var(--muted);line-height:1.7;margin-bottom:0.85rem;">
-            We believe great software should also look great. This site is your blank canvas — tell your story, showcase your work, or launch your next idea.
-          </p>
-          <p class="fi" style="color:var(--muted);line-height:1.7;">
-            Edit any text, swap any color, add any section. The possibilities are endless.
-          </p>
+          <p class="fi" style="color:var(--muted);line-height:1.7;margin-bottom:0.85rem;">We believe great software should also look great. This site is your blank canvas — tell your story, showcase your work, or launch your next idea.</p>
+          <p class="fi" style="color:var(--muted);line-height:1.7;">Edit any text, swap any color, add any section. The possibilities are endless.</p>
           <div class="stats fi">
             <div><div class="stat-n">100%</div><div class="stat-l">Pure HTML/CSS/JS</div></div>
             <div><div class="stat-n">0</div><div class="stat-l">Dependencies</div></div>
@@ -557,7 +289,7 @@
     </div>
   </section>
 
-  <!-- ══ CONTACT ══════════════════════════════════════════════════ -->
+  <!-- CONTACT -->
   <section class="section section-alt" id="contact">
     <div class="inner">
       <div class="section-tag fi">Contact</div>
@@ -566,7 +298,7 @@
       <form class="contact-form fi" onsubmit="submitForm(event)">
         <div class="form-row">
           <input type="text" placeholder="First name" required />
-          <input type="text" placeholder="Last name"  required />
+          <input type="text" placeholder="Last name" required />
         </div>
         <input type="email" placeholder="Email address" required />
         <textarea placeholder="Your message…"></textarea>
@@ -576,27 +308,18 @@
     </div>
   </section>
 
-  <!-- ══ FOOTER ════════════════════════════════════════════════════ -->
+  <!-- FOOTER -->
   <footer>
     <p>Built with care &mdash; &copy; <span id="yr"></span> MySite. All rights reserved.</p>
   </footer>
 
   <script>
-  // ── Year ────────────────────────────────────────────────────────
   document.getElementById('yr').textContent = new Date().getFullYear();
 
-  // ── Fade-in on scroll ───────────────────────────────────────────
-  new IntersectionObserver(
-    entries => entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('show'); }),
-    { threshold: 0.1 }
-  ).observe || document.querySelectorAll('.fi').forEach(el =>
-    new IntersectionObserver(([e]) => { if (e.isIntersecting) e.target.classList.add('show'); }, { threshold: 0.1 }).observe(el)
-  );
   document.querySelectorAll('.fi').forEach(el =>
     new IntersectionObserver(([e]) => { if (e.isIntersecting) e.target.classList.add('show'); }, { threshold: 0.1 }).observe(el)
   );
 
-  // ── Form ────────────────────────────────────────────────────────
   function submitForm(e) {
     e.preventDefault();
     const ok = document.getElementById('form-ok');
@@ -605,7 +328,7 @@
     setTimeout(() => { ok.style.display = 'none'; }, 4000);
   }
 
-  // ── Breaking News ───────────────────────────────────────────────
+  // ── Breaking News ──
   const HEADLINES = [
     'Scientists discover new exoplanet that may support liquid water',
     'Global leaders gather for emergency climate summit in Geneva',
@@ -620,114 +343,119 @@
     'New cybersecurity vulnerability found in widely-used software',
     'International team completes first crewed mission around the Moon',
   ];
+  const track = document.getElementById('news-track');
+  track.innerHTML = [...HEADLINES,...HEADLINES].map(h => `<span class="news-item">${h}</span>`).join('');
 
-  (function buildTicker() {
-    const track = document.getElementById('news-track');
-    const doubled = [...HEADLINES, ...HEADLINES];
-    track.innerHTML = doubled.map(h => `<span class="news-item">${h}</span>`).join('');
-  })();
-
-  // ── Weather ─────────────────────────────────────────────────────
+  // ── Weather ──
   const WMO = {
     0:'Clear sky',1:'Mainly clear',2:'Partly cloudy',3:'Overcast',
     45:'Foggy',48:'Icy fog',51:'Light drizzle',53:'Drizzle',55:'Heavy drizzle',
-    61:'Light rain',63:'Rain',65:'Heavy rain',
-    71:'Light snow',73:'Snow',75:'Heavy snow',77:'Snow grains',
-    80:'Light showers',81:'Showers',82:'Heavy showers',
-    85:'Snow showers',86:'Heavy snow showers',
-    95:'Thunderstorm',96:'Thunderstorm+hail',99:'Heavy thunderstorm'
+    61:'Light rain',63:'Rain',65:'Heavy rain',71:'Light snow',73:'Snow',
+    75:'Heavy snow',77:'Snow grains',80:'Light showers',81:'Showers',82:'Heavy showers',
+    85:'Snow showers',86:'Heavy snow showers',95:'Thunderstorm',96:'Thunderstorm+hail',99:'Heavy thunderstorm'
   };
   const ICONS = {
-    0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',
-    51:'🌦️',53:'🌦️',55:'🌧️',61:'🌧️',63:'🌧️',65:'🌧️',
-    71:'🌨️',73:'❄️',75:'❄️',77:'❄️',80:'🌦️',81:'🌦️',82:'⛈️',
-    85:'🌨️',86:'🌨️',95:'⛈️',96:'⛈️',99:'⛈️'
+    0:'☀️',1:'🌤️',2:'⛅',3:'☁️',45:'🌫️',48:'🌫️',51:'🌦️',53:'🌦️',55:'🌧️',
+    61:'🌧️',63:'🌧️',65:'🌧️',71:'🌨️',73:'❄️',75:'❄️',77:'❄️',80:'🌦️',81:'🌦️',
+    82:'⛈️',85:'🌨️',86:'🌨️',95:'⛈️',96:'⛈️',99:'⛈️'
   };
   const WDIRS = ['N','NE','E','SE','S','SW','W','NW'];
+  function wdir(d) { return WDIRS[Math.round(d/45)%8]; }
+  function c2f(c)  { return ((c*9/5)+32).toFixed(1); }
+  function uvLevel(u) { return u<=2?'Low':u<=5?'Moderate':u<=7?'High':u<=10?'Very High':'Extreme'; }
 
-  function wdir(deg) { return WDIRS[Math.round(deg/45)%8]; }
-  function c2f(c)    { return ((c*9/5)+32).toFixed(1); }
-
-  function setMsg(txt) {
-    const el = document.getElementById('wx-msg');
-    if (el) el.textContent = txt;
-  }
-
-  function renderWeather(cw, hourly, place) {
-    const bar  = document.getElementById('wx-bar');
-    const search = bar.querySelector('.wx-search-col');
-    bar.classList.remove('loading');
-    bar.querySelectorAll('.wx-col').forEach(c => c.remove());
-    const msg = document.getElementById('wx-msg');
-    if (msg) msg.remove();
-
+  function renderWeather(cw, hourly, daily, place) {
+    document.getElementById('wx-location-name').textContent = place;
     const h    = new Date().getHours();
     const feel = hourly?.apparent_temperature?.[h];
     const prec = hourly?.precipitation_probability?.[h] ?? '—';
     const hum  = hourly?.relative_humidity_2m?.[h] ?? '—';
+    const vis  = hourly?.visibility?.[h];
+    const uv   = daily?.uv_index_max?.[0];
     const code = cw.weathercode;
+    const sunrise = daily?.sunrise?.[0]?.split('T')[1] ?? '—';
+    const sunset  = daily?.sunset?.[0]?.split('T')[1] ?? '—';
+    const maxT = daily?.temperature_2m_max?.[0];
+    const minT = daily?.temperature_2m_min?.[0];
 
-    const cols = `
-      <div class="wx-col wx-loc">
-        <span class="wx-label">Location</span>
-        <span class="wx-val">${ICONS[code]??'🌡️'} ${place}</span>
+    document.getElementById('wx-grid').innerHTML = `
+      <div class="wx-card wx-temp">
+        <span class="wx-card-label">🌡️ Temperature</span>
+        <span class="wx-card-icon">${ICONS[code]??'🌡️'}</span>
+        <span class="wx-card-main">${c2f(cw.temperature)}°F</span>
+        <span class="wx-card-sub">${cw.temperature}°C</span>
+        <span class="wx-card-extra">High: ${maxT!=null?c2f(maxT)+'°F':'—'} &nbsp;|&nbsp; Low: ${minT!=null?c2f(minT)+'°F':'—'}</span>
       </div>
-      <div class="wx-col wx-temp">
-        <span class="wx-label">Temperature</span>
-        <span class="wx-val">${c2f(cw.temperature)}°F</span>
-        <span class="wx-sub">${cw.temperature}°C</span>
+      <div class="wx-card wx-feel">
+        <span class="wx-card-label">🤔 Feels Like</span>
+        <span class="wx-card-icon">🌡️</span>
+        <span class="wx-card-main">${feel!=null?c2f(feel)+'°F':'—'}</span>
+        <span class="wx-card-sub">${feel!=null?feel+'°C':''}</span>
+        <span class="wx-card-extra">Humidity: ${hum}%</span>
       </div>
-      <div class="wx-col wx-feel">
-        <span class="wx-label">Feels Like</span>
-        <span class="wx-val">${feel!=null?c2f(feel)+'°F':'—'}</span>
-        <span class="wx-sub">${feel!=null?feel+'°C':''}</span>
+      <div class="wx-card wx-rain">
+        <span class="wx-card-label">🌧️ Precipitation</span>
+        <span class="wx-card-icon">💧</span>
+        <span class="wx-card-main">${prec}%</span>
+        <span class="wx-card-sub">chance of rain</span>
+        <span class="wx-card-extra">Humidity: ${hum}%</span>
       </div>
-      <div class="wx-col wx-rain">
-        <span class="wx-label">Precipitation</span>
-        <span class="wx-val">${prec}%</span>
-        <span class="wx-sub">${hum}% humidity</span>
+      <div class="wx-card wx-wind">
+        <span class="wx-card-label">💨 Wind</span>
+        <span class="wx-card-icon">🌬️</span>
+        <span class="wx-card-main">${cw.windspeed}<span style="font-size:1rem"> km/h</span></span>
+        <span class="wx-card-sub">Direction: ${wdir(cw.winddirection)}</span>
+        <span class="wx-card-extra">Gusts vary by region</span>
       </div>
-      <div class="wx-col wx-wind">
-        <span class="wx-label">Wind Speed</span>
-        <span class="wx-val">${cw.windspeed} km/h</span>
-        <span class="wx-sub">${wdir(cw.winddirection)}</span>
+      <div class="wx-card wx-cond">
+        <span class="wx-card-label">🌤️ Condition</span>
+        <span class="wx-card-icon">${ICONS[code]??'🌡️'}</span>
+        <span class="wx-card-main">${WMO[code]??'Unknown'}</span>
+        <span class="wx-card-sub">UV Index: ${uv!=null?uv+' ('+uvLevel(uv)+')':'—'}</span>
+        <span class="wx-card-extra">Visibility: ${vis!=null?(vis/1000).toFixed(1)+' km':'—'}</span>
       </div>
-      <div class="wx-col wx-cond">
-        <span class="wx-label">Condition</span>
-        <span class="wx-val">${WMO[code]??'Unknown'}</span>
+      <div class="wx-card wx-humid">
+        <span class="wx-card-label">🌅 Sun</span>
+        <span class="wx-card-icon">☀️</span>
+        <span class="wx-card-main" style="font-size:1.1rem">Rise ${sunrise}</span>
+        <span class="wx-card-sub">Set ${sunset}</span>
+        <span class="wx-card-extra">UV Max: ${uv!=null?uv:'—'}</span>
       </div>
     `;
-    bar.insertAdjacentHTML('afterbegin', cols);
   }
 
   async function fetchWeather(lat, lon, label) {
-    const [wRes, gRes] = await Promise.all([
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=apparent_temperature,relative_humidity_2m,precipitation_probability&timezone=auto&forecast_days=1`),
-      label ? Promise.resolve(null) : fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
-    ]);
-    const w = await wRes.json();
-    let place = label;
-    if (!place && gRes) {
-      const g = await gRes.json();
-      const a = g.address ?? {};
-      place = a.city||a.town||a.village||a.hamlet||a.suburb||a.county||'Your Location';
-      if (a.state) place += ', ' + a.state;
+    try {
+      const [wRes, gRes] = await Promise.all([
+        fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=apparent_temperature,relative_humidity_2m,precipitation_probability,visibility&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&timezone=auto&forecast_days=1`),
+        label ? Promise.resolve(null) : fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+      ]);
+      const w = await wRes.json();
+      let place = label;
+      if (!place && gRes) {
+        const g = await gRes.json();
+        const a = g.address ?? {};
+        place = a.city||a.town||a.village||a.hamlet||a.suburb||a.county||'Your Location';
+        if (a.state) place += ', ' + a.state;
+      }
+      renderWeather(w.current_weather, w.hourly, w.daily, place);
+    } catch {
+      document.getElementById('wx-loading').textContent = 'Could not load weather. Try searching a city.';
     }
-    renderWeather(w.current_weather, w.hourly, place);
   }
 
   async function searchCity() {
     const val = document.getElementById('city-input').value.trim();
     if (!val) return;
-    setMsg('Loading…');
+    document.getElementById('wx-location-name').textContent = 'Loading…';
     hideSug();
     try {
       const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(val)}`);
       const j = await r.json();
-      if (!j.length) { setMsg('Location not found.'); return; }
+      if (!j.length) { document.getElementById('wx-location-name').textContent = 'Not found'; return; }
       const label = j[0].display_name.split(',')[0].trim();
       await fetchWeather(j[0].lat, j[0].lon, label);
-    } catch { setMsg('Error fetching weather.'); }
+    } catch { document.getElementById('wx-location-name').textContent = 'Error'; }
   }
 
   document.getElementById('city-btn').addEventListener('click', searchCity);
@@ -736,14 +464,11 @@
     if (e.key === 'Escape') hideSug();
   });
 
-  // ── Suggestions ─────────────────────────────────────────────────
+  // Suggestions
   const sugBox = document.getElementById('suggestions');
   let sugTimer;
-
   function hideSug() { sugBox.style.display='none'; sugBox.innerHTML=''; }
-
-  document.addEventListener('click', e => { if (!e.target.closest('#suggestions') && !e.target.closest('.wx-search-col')) hideSug(); });
-
+  document.addEventListener('click', e => { if (!e.target.closest('.wx-search')) hideSug(); });
   document.getElementById('city-input').addEventListener('input', () => {
     clearTimeout(sugTimer);
     const v = document.getElementById('city-input').value.trim();
@@ -759,7 +484,7 @@
           const detail = x.display_name.split(',').slice(1,4).join(',').trim();
           return `<div class="sug-item" data-i="${i}"><div class="sug-name">${name}</div><div class="sug-detail">${detail}</div></div>`;
         }).join('');
-        sugBox.style.display='block';
+        sugBox.style.display = 'block';
         sugBox.querySelectorAll('.sug-item').forEach((el,i) => {
           el.addEventListener('click', () => {
             const x = results[i];
@@ -774,14 +499,14 @@
     }, 350);
   });
 
-  // ── Auto-detect location ─────────────────────────────────────────
+  // Auto-detect
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
-      pos => fetchWeather(pos.coords.latitude, pos.coords.longitude, null).catch(() => setMsg('Enter a city to see weather')),
-      ()  => setMsg('Enter a city, town, or village')
+      pos => fetchWeather(pos.coords.latitude, pos.coords.longitude, null),
+      ()  => { document.getElementById('wx-location-name').textContent = 'Search a city above'; }
     );
   } else {
-    setMsg('Enter a city to see weather');
+    document.getElementById('wx-location-name').textContent = 'Search a city above';
   }
   </script>
 </body>
