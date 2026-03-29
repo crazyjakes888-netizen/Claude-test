@@ -204,6 +204,32 @@
     .city-chip:hover { background: rgba(108,99,255,0.28); border-color: var(--accent); transform: scale(1.04); }
     .city-chip:active { transform: scale(0.97); }
 
+    /* ── MINI SEARCH (weather view) ── */
+    .mini-search-wrap {
+      display: flex; align-items: center;
+      background: rgba(255,255,255,0.07);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 10px;
+      backdrop-filter: blur(12px);
+      transition: border-color 0.2s;
+    }
+    .mini-search-wrap:focus-within { border-color: var(--accent); }
+    #mini-city-input {
+      background: transparent; border: none; outline: none;
+      color: var(--text); font-size: 0.8rem; font-family: inherit;
+      padding: 0.45rem 0.3rem 0.45rem 0;
+      width: 130px;
+    }
+    #mini-city-input::placeholder { color: var(--muted); }
+    #mini-city-btn {
+      background: linear-gradient(135deg, var(--accent), #a855f7);
+      border: none; border-radius: 8px; margin: 3px;
+      color: #fff; font-size: 0.75rem; font-weight: 700;
+      padding: 0.35rem 0.75rem; cursor: pointer; font-family: inherit;
+      transition: opacity 0.15s;
+    }
+    #mini-city-btn:hover { opacity: 0.85; }
+
     /* ── HOME BUTTON ── */
     #home-btn {
       background: rgba(255,255,255,0.08);
@@ -395,7 +421,14 @@
         <div class="wx-loc-name" id="wx-loc"></div>
         <div class="wx-time" id="wx-time"></div>
       </div>
-      <button id="home-btn" onclick="goHome()">⌂ Home</button>
+      <div style="display:flex;align-items:center;gap:0.6rem;flex-shrink:0;">
+        <div class="mini-search-wrap">
+          <span style="font-size:0.85rem;opacity:0.5;padding:0 0.4rem 0 0.7rem;pointer-events:none;">📍</span>
+          <input id="mini-city-input" type="text" placeholder="New city…" autocomplete="off" />
+          <button id="mini-city-btn">Go</button>
+        </div>
+        <button id="home-btn" onclick="goHome()">⌂ Home</button>
+      </div>
     </div>
     <div class="wx-grid" id="wx-grid"></div>
   </section>
@@ -850,6 +883,27 @@ async function searchCity() {
 }
 
 document.getElementById('city-btn').addEventListener('click', searchCity);
+
+// ── Mini search bar ─────────────────────────────────────────────────────────
+async function miniSearch() {
+  const val = document.getElementById('mini-city-input').value.trim();
+  if (!val) return;
+  document.getElementById('wx-loc').textContent = 'Loading…';
+  try {
+    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(val)}`);
+    const j = await r.json();
+    if (!j.length) { document.getElementById('wx-loc').textContent = 'Not found'; return; }
+    const label = j[0].display_name.split(',')[0].trim();
+    await fetchWeather(j[0].lat, j[0].lon, label);
+    loadNews(label);
+    document.getElementById('mini-city-input').value = '';
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  } catch { document.getElementById('wx-loc').textContent = 'Error'; }
+}
+document.getElementById('mini-city-btn').addEventListener('click', miniSearch);
+document.getElementById('mini-city-input').addEventListener('keydown', e => {
+  if (e.key === 'Enter') miniSearch();
+});
 document.getElementById('city-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') { hideSug(); searchCity(); }
   if (e.key === 'Escape') hideSug();
