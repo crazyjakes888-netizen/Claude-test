@@ -76,70 +76,62 @@
     .news-item::before { content: '◆'; font-size: 0.35rem; opacity: 0.4; color: #38c6ff; }
     @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-    /* ── WEATHER SECTION ── */
-    #weather { padding: 1.75rem 1.5rem 2rem; }
-
-    .wx-header {
-      display: flex; align-items: flex-start; justify-content: space-between;
-      flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;
+    /* ── HERO SEARCH ── */
+    #hero {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      padding: 3.5rem 1.5rem 2rem;
+      text-align: center;
     }
-    .wx-loc-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 0.25rem; }
-    .wx-loc-name  { font-size: 1.6rem; font-weight: 800; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,0.6); }
-    .wx-time      { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
+    #hero-title {
+      font-size: 1rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 0.6rem;
+    }
+    #hero-tagline {
+      font-size: 2rem; font-weight: 900; color: #fff;
+      margin-bottom: 2rem; letter-spacing: -0.01em;
+      text-shadow: 0 2px 24px rgba(108,99,255,0.4);
+    }
 
-    .wx-search { display: flex; align-items: center; gap: 0; position: relative; }
-
+    .wx-search { position: relative; width: 100%; max-width: 560px; }
     .wx-search-wrap {
       display: flex; align-items: center;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.15);
-      border-radius: 12px;
+      background: rgba(255,255,255,0.07);
+      border: 1.5px solid rgba(255,255,255,0.18);
+      border-radius: 18px;
       overflow: visible;
       transition: border-color 0.2s, box-shadow 0.2s;
-      backdrop-filter: blur(12px);
-      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
     }
     .wx-search-wrap:focus-within {
       border-color: var(--accent);
-      box-shadow: 0 0 0 3px rgba(108,99,255,0.2), 0 4px 24px rgba(0,0,0,0.4);
+      box-shadow: 0 0 0 4px rgba(108,99,255,0.18), 0 8px 40px rgba(0,0,0,0.5);
     }
-
     .wx-search-icon {
-      padding: 0 0.6rem 0 0.9rem;
-      font-size: 1rem;
-      opacity: 0.5;
-      pointer-events: none;
-      user-select: none;
+      padding: 0 0.75rem 0 1.1rem; font-size: 1.1rem;
+      opacity: 0.5; pointer-events: none; user-select: none;
     }
-
     #city-input {
-      background: transparent;
-      border: none;
-      padding: 0.6rem 0.5rem 0.6rem 0;
-      color: var(--text); font-size: 0.88rem;
-      width: 200px; outline: none; font-family: inherit;
+      background: transparent; border: none;
+      padding: 0.9rem 0.5rem 0.9rem 0;
+      color: var(--text); font-size: 1rem;
+      flex: 1; outline: none; font-family: inherit;
     }
     #city-input::placeholder { color: var(--muted); }
-
     #city-btn {
       background: linear-gradient(135deg, var(--accent), #a855f7);
-      border: none;
-      border-radius: 10px;
-      color: #fff;
-      font-size: 0.82rem; font-weight: 700;
-      padding: 0.55rem 1.1rem;
-      cursor: pointer; font-family: inherit;
+      border: none; border-radius: 14px;
+      color: #fff; font-size: 0.9rem; font-weight: 700;
+      padding: 0.7rem 1.4rem; cursor: pointer; font-family: inherit;
       transition: opacity 0.15s, transform 0.15s;
-      margin: 3px;
-      white-space: nowrap;
-      letter-spacing: 0.03em;
+      margin: 4px; white-space: nowrap; letter-spacing: 0.03em;
     }
     #city-btn:hover { opacity: 0.88; transform: scale(1.03); }
     #city-btn:active { transform: scale(0.97); }
 
     #suggestions {
-      position: absolute; top: calc(100% + 6px); left: 0; width: 290px;
-      background: #111; border: 1px solid rgba(255,255,255,0.12); border-radius: 10px;
+      position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+      background: #111; border: 1px solid rgba(255,255,255,0.12); border-radius: 12px;
       overflow: hidden; z-index: 999; display: none;
       box-shadow: 0 12px 32px rgba(0,0,0,0.9);
     }
@@ -148,6 +140,46 @@
     .sug-item:hover { background: rgba(108,99,255,0.2); }
     .sug-name   { font-size: 0.85rem; font-weight: 600; }
     .sug-detail { font-size: 0.73rem; color: var(--muted); margin-top: 2px; }
+
+    /* ── QUICK CITIES ── */
+    #quick-cities {
+      display: flex; flex-wrap: wrap; gap: 0.6rem;
+      justify-content: center; margin-top: 1.6rem;
+      max-width: 640px;
+      /* horizontal scroll on small screens */
+      overflow-x: auto; flex-wrap: nowrap;
+      padding-bottom: 0.4rem;
+      scrollbar-width: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    #quick-cities::-webkit-scrollbar { display: none; }
+    /* wrap on wider screens */
+    @media (min-width: 640px) {
+      #quick-cities { flex-wrap: wrap; overflow-x: visible; }
+    }
+    .city-chip {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.13);
+      border-radius: 999px;
+      padding: 0.45rem 1.1rem;
+      font-size: 0.82rem; font-weight: 600; color: var(--text);
+      cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.12s;
+      backdrop-filter: blur(8px);
+    }
+    .city-chip:hover { background: rgba(108,99,255,0.22); border-color: var(--accent); transform: scale(1.05); }
+    .city-chip:active { transform: scale(0.97); }
+
+    /* ── WEATHER SECTION ── */
+    #weather { padding: 0 1.5rem 2rem; display: none; }
+
+    .wx-header {
+      display: flex; align-items: flex-start; justify-content: space-between;
+      flex-wrap: wrap; gap: 1rem; margin-bottom: 1.5rem;
+      padding-top: 1.5rem;
+    }
+    .wx-loc-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 0.25rem; }
+    .wx-loc-name  { font-size: 1.6rem; font-weight: 800; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,0.6); }
+    .wx-time      { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
 
     /* Weather grid */
     .wx-grid {
@@ -219,26 +251,48 @@
     </div>
   </div>
 
+  <!-- HERO SEARCH -->
+  <div id="hero">
+    <div id="hero-title">Live Weather</div>
+    <div id="hero-tagline">Where in the world?</div>
+    <div class="wx-search">
+      <div class="wx-search-wrap">
+        <span class="wx-search-icon">📍</span>
+        <input id="city-input" type="text" placeholder="Search any city…" autocomplete="off" />
+        <button id="city-btn">Search</button>
+      </div>
+      <div id="suggestions"></div>
+    </div>
+    <div id="quick-cities">
+      <button class="city-chip" data-city="New York">🗽 New York</button>
+      <button class="city-chip" data-city="Los Angeles">🌴 Los Angeles</button>
+      <button class="city-chip" data-city="Chicago">🌆 Chicago</button>
+      <button class="city-chip" data-city="London">🎡 London</button>
+      <button class="city-chip" data-city="Paris">🗼 Paris</button>
+      <button class="city-chip" data-city="Tokyo">🗾 Tokyo</button>
+      <button class="city-chip" data-city="Dubai">🌇 Dubai</button>
+      <button class="city-chip" data-city="Sydney">🦘 Sydney</button>
+      <button class="city-chip" data-city="Toronto">🍁 Toronto</button>
+      <button class="city-chip" data-city="Miami">🌊 Miami</button>
+      <button class="city-chip" data-city="Berlin">🏛️ Berlin</button>
+      <button class="city-chip" data-city="Mumbai">🇮🇳 Mumbai</button>
+      <button class="city-chip" data-city="Seoul">🇰🇷 Seoul</button>
+      <button class="city-chip" data-city="Mexico City">🌮 Mexico City</button>
+      <button class="city-chip" data-city="Cairo">🏺 Cairo</button>
+      <button class="city-chip" data-city="São Paulo">🇧🇷 São Paulo</button>
+    </div>
+  </div>
+
   <!-- WEATHER -->
   <section id="weather">
     <div class="wx-header">
       <div>
         <div class="wx-loc-label">Local Weather</div>
-        <div class="wx-loc-name" id="wx-loc">Detecting location…</div>
+        <div class="wx-loc-name" id="wx-loc"></div>
         <div class="wx-time" id="wx-time"></div>
       </div>
-      <div class="wx-search">
-        <div class="wx-search-wrap">
-          <span class="wx-search-icon">📍</span>
-          <input id="city-input" type="text" placeholder="Search city, town, village…" autocomplete="off" />
-          <button id="city-btn">Search</button>
-        </div>
-        <div id="suggestions"></div>
-      </div>
     </div>
-    <div class="wx-grid" id="wx-grid">
-      <p class="wx-msg" id="wx-msg">Loading weather…</p>
-    </div>
+    <div class="wx-grid" id="wx-grid"></div>
   </section>
 </div>
 
@@ -614,7 +668,7 @@ async function fetchWeather(lat, lon, label) {
     }
     renderWeather(w.current_weather, w.hourly, w.daily, place, w.timezone);
   } catch {
-    document.getElementById('wx-loc').textContent = 'Search a city above';
+    document.getElementById('wx-loc').textContent = 'Error loading weather';
   }
 }
 
@@ -623,6 +677,7 @@ async function searchCity() {
   const val = document.getElementById('city-input').value.trim();
   if (!val) return;
   document.getElementById('wx-loc').textContent = 'Loading…';
+  document.getElementById('weather').style.display = 'block';
   hideSug();
   try {
     const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(val)}`);
@@ -631,6 +686,7 @@ async function searchCity() {
     const label = j[0].display_name.split(',')[0].trim();
     await fetchWeather(j[0].lat, j[0].lon, label);
     loadNews(label);
+    document.getElementById('weather').scrollIntoView({ behavior: 'smooth' });
   } catch { document.getElementById('wx-loc').textContent = 'Error'; }
 }
 
@@ -638,6 +694,26 @@ document.getElementById('city-btn').addEventListener('click', searchCity);
 document.getElementById('city-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') { hideSug(); searchCity(); }
   if (e.key === 'Escape') hideSug();
+});
+
+// ── Quick city chips ────────────────────────────────────────────────────────
+document.querySelectorAll('.city-chip').forEach(btn => {
+  btn.addEventListener('click', async () => {
+    const city = btn.dataset.city;
+    document.getElementById('city-input').value = city;
+    hideSug();
+    document.getElementById('wx-loc').textContent = 'Loading…';
+    document.getElementById('weather').style.display = 'block';
+    try {
+      const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`);
+      const j = await r.json();
+      if (!j.length) { document.getElementById('wx-loc').textContent = 'Not found'; return; }
+      const label = j[0].display_name.split(',')[0].trim();
+      await fetchWeather(j[0].lat, j[0].lon, label);
+      loadNews(label);
+      document.getElementById('weather').scrollIntoView({ behavior: 'smooth' });
+    } catch { document.getElementById('wx-loc').textContent = 'Error'; }
+  });
 });
 
 // ── Suggestions ────────────────────────────────────────────────────────────
