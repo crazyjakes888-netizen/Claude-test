@@ -213,33 +213,37 @@ function buildTicker(headlines) {
     doubled.map(h => `<span class="news-item">${h}</span>`).join('');
 }
 
+const FALLBACK = [
+  'Scientists discover new exoplanet that may support liquid water',
+  'Global leaders gather for emergency climate summit in Geneva',
+  'Tech giant unveils next-generation AI chip with record performance',
+  'Central banks signal potential rate cuts amid cooling inflation',
+  'Historic peace agreement signed between rival factions',
+  'Space agency confirms successful launch of deep-space telescope',
+  'Stock markets reach all-time high as earnings season begins',
+  'New cybersecurity vulnerability found in widely-used software',
+  'Major earthquake strikes Pacific Rim — tsunami warnings issued',
+  'Researchers develop breakthrough treatment for rare genetic disease',
+];
+
 async function loadNews() {
-  const FEEDS = [
-    'https://feeds.bbci.co.uk/news/rss.xml',
-    'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',
+  // Try multiple CORS-friendly RSS-to-JSON services
+  const attempts = [
+    () => fetch('https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Ffeeds.bbci.co.uk%2Fnews%2Frss.xml&api_key=&count=20')
+            .then(r => r.json()).then(j => j.status==='ok' && j.items.length ? j.items.map(i=>i.title) : null),
+    () => fetch('https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Frss.cnn.com%2Frss%2Fcnn_topstories.rss&count=20')
+            .then(r => r.json()).then(j => j.status==='ok' && j.items.length ? j.items.map(i=>i.title) : null),
+    () => fetch('https://feedsapi.co/get?url=https://feeds.bbci.co.uk/news/rss.xml')
+            .then(r => r.json()).then(j => j.items?.length ? j.items.slice(0,20).map(i=>i.title) : null),
   ];
-  const API = 'https://api.rss2json.com/v1/api.json?rss_url=';
-  for (const feed of FEEDS) {
+
+  for (const attempt of attempts) {
     try {
-      const r = await fetch(API + encodeURIComponent(feed));
-      const j = await r.json();
-      if (j.status === 'ok' && j.items?.length) {
-        buildTicker(j.items.slice(0, 20).map(i => i.title));
-        return;
-      }
-    } catch { /* try next feed */ }
+      const headlines = await attempt();
+      if (headlines && headlines.length) { buildTicker(headlines); return; }
+    } catch { /* try next */ }
   }
-  // fallback if all feeds fail
-  buildTicker([
-    'Scientists discover new exoplanet that may support liquid water',
-    'Global leaders gather for emergency climate summit in Geneva',
-    'Tech giant unveils next-generation AI chip with record performance',
-    'Central banks signal potential rate cuts amid cooling inflation',
-    'Historic peace agreement signed between rival factions',
-    'Space agency confirms successful launch of deep-space telescope',
-    'Stock markets reach all-time high as earnings season begins',
-    'New cybersecurity vulnerability found in widely-used software',
-  ]);
+  buildTicker(FALLBACK);
 }
 
 loadNews();
@@ -264,14 +268,14 @@ const uvLv = u => u<=2?'Low':u<=5?'Moderate':u<=7?'High':u<=10?'Very High':'Extr
 const uvColor = u => u<=2?'#4ade80':u<=5?'#facc15':u<=7?'#fb923c':u<=10?'#f87171':'#c084fc';
 
 function precipType(code) {
-  if ([71,73,75,77].includes(code))  return { label:'Snow',          icon:'❄️',  detail:'Snowfall expected' };
-  if ([85,86].includes(code))        return { label:'Snow Showers',  icon:'🌨️',  detail:'Showery snowfall' };
-  if ([51,53,55].includes(code))     return { label:'Drizzle',       icon:'🌦️',  detail:'Light drizzle' };
-  if ([61,63,65].includes(code))     return { label:'Rain',          icon:'🌧️',  detail:'Rainfall expected' };
-  if ([80,81,82].includes(code))     return { label:'Rain Showers',  icon:'🌦️',  detail:'Showery rainfall' };
-  if ([95,96,99].includes(code))     return { label:'Thunderstorm',  icon:'⛈️',  detail:'Thunder & lightning' };
-  if ([45,48].includes(code))        return { label:'Fog',           icon:'🌫️',  detail:'Reduced visibility' };
-  return { label:'None', icon:'✅', detail:'No precipitation expected' };
+  if ([71,73,75,77].includes(code))  return { label:'Snow',         icon:'❄️',  detail:'Snowfall' };
+  if ([85,86].includes(code))        return { label:'Snow Showers', icon:'🌨️',  detail:'Snow showers' };
+  if ([51,53,55].includes(code))     return { label:'Drizzle',      icon:'🌦️',  detail:'Light drizzle' };
+  if ([61,63,65].includes(code))     return { label:'Rain',         icon:'🌧️',  detail:'Rainfall' };
+  if ([80,81,82].includes(code))     return { label:'Rain Showers', icon:'🌦️',  detail:'Showers' };
+  if ([95,96,99].includes(code))     return { label:'Thunderstorm', icon:'⛈️',  detail:'Thunder & lightning' };
+  if ([45,48].includes(code))        return { label:'Fog',          icon:'🌫️',  detail:'Low visibility' };
+  return { label:'None', icon:'✅', detail:'Clear — no precip' };
 }
 
 // ── Dynamic Background ─────────────────────────────────────────────────────
