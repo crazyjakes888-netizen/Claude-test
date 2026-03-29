@@ -137,7 +137,14 @@
       color: var(--text); font-size: 1rem;
       flex: 1; outline: none; font-family: inherit;
     }
-    #city-input::placeholder { color: var(--muted); }
+    #city-input::placeholder { color: transparent; }
+    #ph-text {
+      position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+      color: var(--muted); font-size: 1rem; font-family: inherit;
+      pointer-events: none; user-select: none;
+      transition: opacity 0.5s ease;
+      white-space: nowrap; overflow: hidden;
+    }
     #city-btn {
       background: linear-gradient(135deg, var(--accent), #a855f7);
       border: none; border-radius: 14px;
@@ -301,7 +308,10 @@
       <div class="wx-search">
         <div class="wx-search-wrap">
           <span class="wx-search-icon">📍</span>
-          <input id="city-input" type="text" placeholder="Search any city…" autocomplete="off" />
+          <div style="position:relative;flex:1;display:flex;align-items:center;">
+            <input id="city-input" type="text" placeholder="" autocomplete="off" style="width:100%;" />
+            <span id="ph-text"></span>
+          </div>
           <button id="city-btn">Search</button>
         </div>
         <div id="suggestions"></div>
@@ -913,17 +923,28 @@ startShootingStars();
 // ── Animated placeholder ────────────────────────────────────────────────────
 const placeholders = ['Search a city…', 'Search a town…', 'Search a country…', 'Search a village…', 'Search anywhere…'];
 let phIdx = 0;
+const phEl = document.getElementById('ph-text');
 const cityInput = document.getElementById('city-input');
+phEl.textContent = placeholders[0];
+
+// Hide overlay when user is typing
+cityInput.addEventListener('input', () => {
+  phEl.style.opacity = cityInput.value ? '0' : '1';
+});
+cityInput.addEventListener('blur', () => {
+  if (!cityInput.value) phEl.style.opacity = '1';
+});
+
 function cyclePlaceholder() {
-  cityInput.style.transition = 'opacity 0.4s';
-  cityInput.style.opacity = '0';
+  if (cityInput.value) return;
+  phEl.style.opacity = '0';
   setTimeout(() => {
     phIdx = (phIdx + 1) % placeholders.length;
-    cityInput.placeholder = placeholders[phIdx];
-    cityInput.style.opacity = '1';
-  }, 400);
+    phEl.textContent = placeholders[phIdx];
+    phEl.style.opacity = '1';
+  }, 500);
 }
-setInterval(cyclePlaceholder, 2500);
+setInterval(cyclePlaceholder, 2800);
 </script>
 </body>
 </html>
