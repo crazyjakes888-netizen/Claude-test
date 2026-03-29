@@ -841,7 +841,7 @@ function renderWeather(cw, hourly, daily, place, timezone) {
   document.getElementById('wx-grid').innerHTML = `
     <div class="wx-card wx-temp">
       <span class="wx-card-label">🌡️ Temperature</span>
-      <span class="wx-card-icon">${ICONS[code]??'🌡️'}</span>
+      <span class="wx-card-icon">${cw.temperature>=35?'🌡️':cw.temperature>=20?'🌡️':cw.temperature>=10?'🌡️':cw.temperature>=0?'🌡️':'❄️'}</span>
       <span class="wx-card-main">${c2f(cw.temperature)}<span class="wx-card-unit">°F</span></span>
       <span class="wx-card-sub">${cw.temperature}°C</span>
       <hr class="wx-divider"/>
