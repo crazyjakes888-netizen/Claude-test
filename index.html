@@ -1023,6 +1023,28 @@ function shuffle(arr) {
   return a;
 }
 
+const ROW_CONFIG = [
+  { id: 'city-row-1', dur: '40s', dir: 'slide-left'  },
+  { id: 'city-row-2', dur: '28s', dir: 'slide-right' },
+  { id: 'city-row-3', dur: '18s', dir: 'slide-left'  },
+];
+
+async function chipClick(city) {
+  document.getElementById('city-input').value = city;
+  hideSug();
+  document.getElementById('wx-loc').textContent = 'Loading…';
+  showWeatherView();
+  try {
+    const r = await fetchT(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`);
+    const j = await r.json();
+    if (!j.length) { document.getElementById('wx-loc').textContent = 'Not found'; return; }
+    const label = j[0].display_name.split(',')[0].trim();
+    await fetchWeather(j[0].lat, j[0].lon, label);
+    loadNews(label);
+    document.getElementById('weather').scrollIntoView({ behavior: 'smooth' });
+  } catch { document.getElementById('wx-loc').textContent = 'Error'; }
+}
+
 function buildCityRows() {
   const shuffled = shuffle(ALL_CITIES);
   const third = Math.ceil(shuffled.length / 3);
@@ -1031,37 +1053,30 @@ function buildCityRows() {
     shuffled.slice(third, third * 2),
     shuffled.slice(third * 2),
   ];
-  [1, 2, 3].forEach(n => {
-    const row = document.getElementById('city-row-' + n);
+
+  ROW_CONFIG.forEach(({ id, dur, dir }, i) => {
+    const row = document.getElementById(id);
     if (!row) return;
+    // Double cities for seamless loop
+    const cities = [...groups[i], ...groups[i]];
     const inner = document.createElement('div');
     inner.className = 'city-row-inner';
-    const cities = [...groups[n-1], ...groups[n-1]];
+    // Set animation directly so it always triggers
+    inner.style.cssText = `animation: ${dir} ${dur} linear infinite;`;
     inner.innerHTML = cities.map(([city, emoji]) =>
       `<button class="city-chip" data-city="${city}">${emoji} ${city}</button>`
     ).join('');
     row.innerHTML = '';
     row.appendChild(inner);
-    inner.querySelectorAll('.city-chip').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        const city = btn.dataset.city;
-        document.getElementById('city-input').value = city;
-        hideSug();
-        document.getElementById('wx-loc').textContent = 'Loading…';
-        showWeatherView();
-        try {
-          const r = await fetchT(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`);
-          const j = await r.json();
-          if (!j.length) { document.getElementById('wx-loc').textContent = 'Not found'; return; }
-          const label = j[0].display_name.split(',')[0].trim();
-          await fetchWeather(j[0].lat, j[0].lon, label);
-          loadNews(label);
-          document.getElementById('weather').scrollIntoView({ behavior: 'smooth' });
-        } catch { document.getElementById('wx-loc').textContent = 'Error'; }
-      });
-    });
   });
+
+  // Single delegated listener on quick-cities container
+  document.getElementById('quick-cities').addEventListener('click', e => {
+    const btn = e.target.closest('.city-chip');
+    if (btn) chipClick(btn.dataset.city);
+  }, { once: false });
 }
+
 buildCityRows();
 
 // ── Animated placeholder ────────────────────────────────────────────────────
