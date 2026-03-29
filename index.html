@@ -143,8 +143,9 @@
     .wx-card-unit  { font-size: 1rem; font-weight: 400; opacity: 0.6; }
     .wx-card-sub   { font-size: 0.82rem; color: var(--muted); margin-top: 0.1rem; }
     .wx-divider    { border: none; border-top: 1px solid var(--border); margin: 0.5rem 0; }
-    .wx-row        { display: flex; justify-content: space-between; align-items: center; font-size: 0.78rem; color: var(--muted); }
-    .wx-row strong { color: var(--text); }
+    .wx-row        { display: flex; justify-content: space-between; align-items: flex-start; gap: 0.5rem; font-size: 0.78rem; color: var(--muted); }
+    .wx-row span   { flex-shrink: 0; }
+    .wx-row strong { color: var(--text); text-align: right; word-break: break-word; }
 
     .wx-temp  { border-color: rgba(255,94,108,0.35); }
     .wx-temp  .wx-card-label { color: var(--red); }
@@ -205,23 +206,43 @@
 </div>
 
 <script>
-// ── Breaking News ──────────────────────────────────────────────────────────
-const HEADLINES = [
-  'Scientists discover new exoplanet that may support liquid water',
-  'Global leaders gather for emergency climate summit in Geneva',
-  'Tech giant unveils next-generation AI chip with record performance',
-  'Central banks signal potential rate cuts amid cooling inflation',
-  'Historic peace agreement signed between rival factions',
-  'Researchers develop breakthrough treatment for rare genetic disease',
-  'Space agency confirms successful launch of deep-space telescope',
-  'Record-breaking heatwave sweeps across multiple continents',
-  'Major earthquake strikes Pacific Rim — tsunami warnings issued',
-  'Stock markets reach all-time high as earnings season begins',
-  'New cybersecurity vulnerability found in widely-used software',
-  'International team completes first crewed mission around the Moon',
-];
-document.getElementById('news-track').innerHTML =
-  [...HEADLINES,...HEADLINES].map(h=>`<span class="news-item">${h}</span>`).join('');
+// ── Breaking News (live RSS via rss2json) ──────────────────────────────────
+function buildTicker(headlines) {
+  const doubled = [...headlines, ...headlines];
+  document.getElementById('news-track').innerHTML =
+    doubled.map(h => `<span class="news-item">${h}</span>`).join('');
+}
+
+async function loadNews() {
+  const FEEDS = [
+    'https://feeds.bbci.co.uk/news/rss.xml',
+    'https://rss.nytimes.com/services/xml/rss/nyt/HomePage.xml',
+  ];
+  const API = 'https://api.rss2json.com/v1/api.json?rss_url=';
+  for (const feed of FEEDS) {
+    try {
+      const r = await fetch(API + encodeURIComponent(feed));
+      const j = await r.json();
+      if (j.status === 'ok' && j.items?.length) {
+        buildTicker(j.items.slice(0, 20).map(i => i.title));
+        return;
+      }
+    } catch { /* try next feed */ }
+  }
+  // fallback if all feeds fail
+  buildTicker([
+    'Scientists discover new exoplanet that may support liquid water',
+    'Global leaders gather for emergency climate summit in Geneva',
+    'Tech giant unveils next-generation AI chip with record performance',
+    'Central banks signal potential rate cuts amid cooling inflation',
+    'Historic peace agreement signed between rival factions',
+    'Space agency confirms successful launch of deep-space telescope',
+    'Stock markets reach all-time high as earnings season begins',
+    'New cybersecurity vulnerability found in widely-used software',
+  ]);
+}
+
+loadNews();
 
 // ── Weather data ────────────────────────────────────────────────────────────
 const WMO = {
