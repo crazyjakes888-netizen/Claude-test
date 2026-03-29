@@ -63,16 +63,6 @@
     }
     @keyframes twinkle { from { opacity: 0.2; } to { opacity: 1; } }
 
-    /* Natural ambient glow on homepage */
-    #home-glow {
-      position: fixed; inset: 0; z-index: 1; pointer-events: none;
-      background:
-        radial-gradient(ellipse 70% 50% at 30% 40%, rgba(80,60,180,0.18) 0%, transparent 70%),
-        radial-gradient(ellipse 50% 40% at 75% 60%, rgba(30,120,200,0.12) 0%, transparent 65%),
-        radial-gradient(ellipse 40% 30% at 55% 20%, rgba(140,80,255,0.1) 0%, transparent 60%);
-      transition: opacity 1s ease;
-    }
-
     /* Shooting stars */
     .shooting-star {
       position: absolute; width: 120px; height: 1.5px;
@@ -335,7 +325,6 @@
 <body>
 
 <div id="bg"></div>
-<div id="home-glow"></div>
 <canvas id="particle-canvas"></canvas>
 <div id="lightning"></div>
 
@@ -919,12 +908,10 @@ function showWeatherView() {
   document.getElementById('quick-cities').style.display = 'none';
   document.getElementById('hero-inner').style.display = 'none';
   document.getElementById('weather').style.display = 'block';
-  document.getElementById('home-glow').style.opacity = '0';
   clearStars();
   clearShootingStars();
 }
 function resetHomeBackground() {
-  document.getElementById('home-glow').style.opacity = '1';
   stopParticles();
   if (lightningTimer) { clearTimeout(lightningTimer); lightningTimer = null; }
   clearStars();
