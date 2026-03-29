@@ -313,6 +313,45 @@
     .wx-uv    .wx-card-main  { color: #fde68a; }
 
     .wx-msg { color: var(--muted); font-size: 0.9rem; padding: 0.5rem 0; }
+
+    /* ── MOBILE ── */
+    @media (max-width: 600px) {
+      /* News bar */
+      .news-label { font-size: 0.6rem; padding: 0 0.6rem; }
+      .news-item  { font-size: 0.72rem; padding: 0 1.2rem; }
+
+      /* Hero */
+      #hero { padding: 2rem 1rem 0; }
+      #hero-tagline { font-size: 1.4rem; margin-bottom: 1.2rem; }
+      #hero-title   { font-size: 0.8rem; }
+      .wx-search { max-width: 100%; }
+      #city-input { font-size: 0.9rem; }
+      #city-btn   { font-size: 0.8rem; padding: 0.55rem 0.9rem; }
+
+      /* City chips */
+      .city-chip  { font-size: 0.82rem; padding: 0.55rem 0.9rem; min-width: 110px; height: 52px; }
+      #quick-cities { gap: 0.5rem; padding: 1rem 0 1.5rem; }
+      .city-row   { gap: 0.5rem; }
+
+      /* Weather header */
+      .wx-header  { flex-direction: column; gap: 0.6rem; padding-top: 1rem; }
+      .wx-loc-name { font-size: 1.25rem; }
+      .wx-time    { font-size: 0.72rem; }
+      #home-btn   { font-size: 0.78rem; padding: 0.4rem 0.85rem; }
+      .mini-search-wrap { display: none; } /* too cramped on phone, use search bar on home */
+
+      /* Weather cards — 2 column grid on phone */
+      .wx-grid { grid-template-columns: repeat(2, 1fr); gap: 0.6rem; }
+      #weather  { padding: 0 0.75rem 1.5rem; }
+      .wx-card  { min-height: 200px; padding: 1rem 0.9rem; }
+      .wx-card-icon { font-size: 1.8rem; }
+      .wx-card-main { font-size: 1.5rem; }
+      .wx-card-label { font-size: 0.55rem; }
+      .wx-row   { font-size: 0.7rem; }
+
+      /* Suggestions */
+      #suggestions { width: 100%; }
+    }
   </style>
 </head>
 <body>
