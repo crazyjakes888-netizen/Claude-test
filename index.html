@@ -430,17 +430,25 @@ async function fetchRSSvia(url) {
 }
 
 async function fetchRSSraw(url) {
-  // Fetch raw RSS via allorigins CORS proxy and parse XML
-  try {
-    const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
-    const r = await fetch(proxy);
-    const text = await r.text();
-    const xml = new DOMParser().parseFromString(text, 'text/xml');
-    const titles = Array.from(xml.querySelectorAll('item title'))
-      .map(el => el.textContent.trim())
-      .filter(t => t && t !== 'Google News' && t.length > 10);
-    if (titles.length) return titles;
-  } catch {}
+  const proxies = [
+    'https://api.allorigins.win/raw?url=',
+    'https://corsproxy.io/?',
+    'https://api.codetabs.com/v1/proxy?quest=',
+  ];
+  for (const proxy of proxies) {
+    try {
+      const controller = new AbortController();
+      const t = setTimeout(() => controller.abort(), 6000);
+      const r = await fetch(proxy + encodeURIComponent(url), { signal: controller.signal });
+      clearTimeout(t);
+      const text = await r.text();
+      const xml = new DOMParser().parseFromString(text, 'text/xml');
+      const titles = Array.from(xml.querySelectorAll('item title'))
+        .map(el => el.textContent.trim())
+        .filter(t => t && t !== 'Google News' && t.length > 10);
+      if (titles.length) return titles;
+    } catch {}
+  }
   return null;
 }
 
@@ -449,16 +457,13 @@ async function loadNews(city) {
 
   if (city) {
     newsLabel.innerHTML = '&#128308; ' + city + ' News';
-    try {
-      const googleRSS = `https://news.google.com/rss/search?q=${encodeURIComponent(city + ' news')}&hl=en-US&gl=US&ceid=US:en`;
-      // Use direct XML parsing since rss2json can't handle Google News
-      const headlines = await fetchRSSraw(googleRSS);
-      if (headlines && headlines.length) { buildTicker(headlines); return; }
-    } catch {}
+    const googleRSS = `https://news.google.com/rss/search?q=${encodeURIComponent(city + ' news')}&hl=en-US&gl=US&ceid=US:en`;
+    const headlines = await fetchRSSraw(googleRSS);
+    if (headlines && headlines.length) { buildTicker(headlines); return; }
+    // If city news failed, keep label but show international as fallback
   }
 
-  // International / default news
-  newsLabel.innerHTML = '&#128308; Breaking News';
+  if (!city) newsLabel.innerHTML = '&#128308; Breaking News';
   const feeds = [
     'https://feeds.bbci.co.uk/news/rss.xml',
     'https://rss.cnn.com/rss/cnn_topstories.rss',
