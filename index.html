@@ -52,6 +52,20 @@
     }
     @keyframes twinkle { from { opacity: 0.2; } to { opacity: 1; } }
 
+    /* Shooting stars */
+    .shooting-star {
+      position: absolute; width: 120px; height: 1.5px;
+      background: linear-gradient(90deg, rgba(255,255,255,0.9), transparent);
+      border-radius: 2px;
+      animation: shoot 1s ease-out forwards;
+      transform-origin: left center;
+      transform: rotate(-30deg);
+    }
+    @keyframes shoot {
+      0%   { opacity: 1; transform: rotate(-30deg) translateX(0); }
+      100% { opacity: 0; transform: rotate(-30deg) translateX(260px); }
+    }
+
     /* ── PAGE CONTENT (above bg) ── */
     #page { position: relative; z-index: 10; }
 
@@ -570,6 +584,25 @@ function clearStars() {
   document.querySelectorAll('.star').forEach(s => s.remove());
 }
 
+// ── Shooting Stars ─────────────────────────────────────────────────────────
+let shootingStarTimer = null;
+function spawnShootingStar() {
+  const bg = document.getElementById('bg');
+  const s = document.createElement('div');
+  s.className = 'shooting-star';
+  s.style.top  = Math.random() * 60 + '%';
+  s.style.left = Math.random() * 80 + '%';
+  bg.appendChild(s);
+  setTimeout(() => s.remove(), 1000);
+}
+function startShootingStars() {
+  shootingStarTimer = setInterval(() => spawnShootingStar(), 2500);
+}
+function clearShootingStars() {
+  if (shootingStarTimer) { clearInterval(shootingStarTimer); shootingStarTimer = null; }
+  document.querySelectorAll('.shooting-star').forEach(s => s.remove());
+}
+
 // ── Rain / Snow particles ──────────────────────────────────────────────────
 function startParticles(type) {
   const canvas = document.getElementById('particle-canvas');
@@ -773,6 +806,14 @@ function goHome() {
   document.getElementById('city-input').value = '';
   window.scrollTo({ top: 0, behavior: 'smooth' });
   loadNews();
+  // Reset background to black with stars + shooting stars
+  stopParticles();
+  if (lightningTimer) { clearInterval(lightningTimer); lightningTimer = null; }
+  clearStars();
+  clearShootingStars();
+  document.getElementById('bg').style.background = '#000';
+  spawnStars(160);
+  startShootingStars();
 }
 
 // ── Search ─────────────────────────────────────────────────────────────────
@@ -860,15 +901,24 @@ window.addEventListener('resize', () => {
   c.width = window.innerWidth; c.height = window.innerHeight;
 });
 
-// ── Auto-detect ────────────────────────────────────────────────────────────
-if (navigator.geolocation) {
-  navigator.geolocation.getCurrentPosition(
-    pos => fetchWeather(pos.coords.latitude, pos.coords.longitude, null),
-    ()  => { document.getElementById('wx-loc').textContent = 'Search a city above'; document.getElementById('wx-msg')?.remove(); }
-  );
-} else {
-  document.getElementById('wx-loc').textContent = 'Search a city above';
+// ── Default home background: black + stars + shooting stars ────────────────
+spawnStars(160);
+startShootingStars();
+
+// ── Animated placeholder ────────────────────────────────────────────────────
+const placeholders = ['Search a city…', 'Search a town…', 'Search a country…', 'Search a village…', 'Search anywhere…'];
+let phIdx = 0;
+const cityInput = document.getElementById('city-input');
+function cyclePlaceholder() {
+  cityInput.style.transition = 'opacity 0.4s';
+  cityInput.style.opacity = '0';
+  setTimeout(() => {
+    phIdx = (phIdx + 1) % placeholders.length;
+    cityInput.placeholder = placeholders[phIdx];
+    cityInput.style.opacity = '1';
+  }, 400);
 }
+setInterval(cyclePlaceholder, 2500);
 </script>
 </body>
 </html>
