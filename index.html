@@ -745,60 +745,51 @@ function initBoltCanvas() {
   boltCtx = boltCanvas.getContext('2d');
 }
 
-function drawBranch(ctx, x1, y1, x2, y2, width, depth) {
-  if (depth <= 0 || width < 0.12) return;
-  const dx = x2 - x1, dy = y2 - y1;
-  const len = Math.sqrt(dx*dx + dy*dy);
-  if (len < 3) return;
-
-  // Build jagged points perpendicular to direction
-  const perpX = -dy / len, perpY = dx / len;
-  const segs = Math.max(3, Math.ceil(len / 20));
+// Build a jagged path from (x1,y1) to (x2,y2)
+function jaggedPath(x1, y1, x2, y2, spread) {
   const pts = [{x: x1, y: y1}];
+  const segs = Math.max(4, Math.ceil(Math.hypot(x2-x1, y2-y1) / 35));
   for (let i = 1; i < segs; i++) {
     const t = i / segs;
-    const jag = (Math.random() - 0.5) * len * 0.4;
-    pts.push({ x: x1 + dx*t + perpX*jag, y: y1 + dy*t + perpY*jag });
+    pts.push({
+      x: x1 + (x2-x1)*t + (Math.random()-0.5) * spread,
+      y: y1 + (y2-y1)*t + (Math.random()-0.5) * spread * 0.25
+    });
   }
   pts.push({x: x2, y: y2});
+  return pts;
+}
 
-  const stroke = () => {
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, pts[0].y);
-    for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
-    ctx.stroke();
-  };
-
+function strokePath(ctx, pts, color, lw) {
+  ctx.beginPath();
+  ctx.moveTo(pts[0].x, pts[0].y);
+  for (let i = 1; i < pts.length; i++) ctx.lineTo(pts[i].x, pts[i].y);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = lw;
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  ctx.stroke();
+}
 
-  // Wide ambient blue glow
-  ctx.strokeStyle = `rgba(60,120,255,${0.07 * Math.min(width, 3)})`;
-  ctx.lineWidth = width * 22; stroke();
+function drawBolt(ctx, x1, y1, x2, y2, width, depth) {
+  if (width < 0.2 || depth < 0) return;
+  const pts = jaggedPath(x1, y1, x2, y2, 60 * width / 3);
 
-  // Mid glow
-  ctx.strokeStyle = `rgba(160,200,255,${0.18 * Math.min(width, 2)})`;
-  ctx.lineWidth = width * 7; stroke();
+  // Glow layers — outer blue, inner white
+  strokePath(ctx, pts, `rgba(60,120,255,${0.06 * Math.min(width,3)})`, width * 18);
+  strokePath(ctx, pts, `rgba(180,215,255,${0.25 * Math.min(width,2)})`, width * 5);
+  strokePath(ctx, pts, 'rgba(230,240,255,0.7)', width * 1.8);
+  strokePath(ctx, pts, 'rgba(255,255,255,0.95)', Math.max(0.4, width * 0.7));
 
-  // Bright inner glow
-  ctx.strokeStyle = `rgba(220,235,255,${0.6})`;
-  ctx.lineWidth = width * 2.5; stroke();
-
-  // White hot core
-  ctx.strokeStyle = 'rgba(255,255,255,0.95)';
-  ctx.lineWidth = Math.max(0.4, width * 0.9); stroke();
-
-  // Spawn branches at random points
-  for (let i = 1; i < pts.length - 1; i++) {
-    if (Math.random() > (depth > 3 ? 0.45 : 0.6)) {
-      const angle = Math.atan2(dy, dx) + (Math.random() > 0.5 ? 1 : -1) * (0.25 + Math.random() * 1.1);
-      const bLen  = len * (0.18 + Math.random() * 0.38);
-      drawBranch(ctx,
-        pts[i].x, pts[i].y,
-        pts[i].x + Math.cos(angle) * bLen,
-        pts[i].y + Math.sin(angle) * bLen,
-        width * (0.28 + Math.random() * 0.22),
-        depth - 1
-      );
+  // Simple branches: spread outward from points along path
+  if (depth > 0) {
+    for (let i = 2; i < pts.length - 1; i++) {
+      if (Math.random() > 0.55) {
+        const side = Math.random() > 0.5 ? 1 : -1;
+        // Branches go mostly sideways + slightly down — never back up
+        const bx = pts[i].x + side * (60 + Math.random() * 140) * width / 3;
+        const by = pts[i].y + (20 + Math.random() * 80) * width / 3;
+        drawBolt(ctx, pts[i].x, pts[i].y, bx, by, width * 0.38, depth - 1);
+      }
     }
   }
 }
@@ -808,38 +799,31 @@ function spawnBolt() {
   const W = boltCanvas.width, H = boltCanvas.height;
   boltCtx.clearRect(0, 0, W, H);
 
-  const startX = W * (0.15 + Math.random() * 0.7);
-  const endX   = startX + (Math.random() - 0.5) * W * 0.25;
-  const endY   = H * (0.55 + Math.random() * 0.4);
+  const sx = W * (0.2 + Math.random() * 0.6);
+  const ex = sx + (Math.random()-0.5) * W * 0.15;
+  const ey = H * (0.6 + Math.random() * 0.35);
 
-  // Ambient cloud glow at origin
-  const grd = boltCtx.createRadialGradient(startX, 0, 0, startX, 0, W * 0.45);
-  grd.addColorStop(0, 'rgba(80,130,255,0.28)');
-  grd.addColorStop(0.4, 'rgba(40,80,200,0.1)');
-  grd.addColorStop(1, 'rgba(0,0,0,0)');
+  // Blue ambient glow where bolt originates
+  const grd = boltCtx.createRadialGradient(sx, 0, 0, sx, 0, W * 0.5);
+  grd.addColorStop(0,   'rgba(70,120,255,0.22)');
+  grd.addColorStop(0.5, 'rgba(30,70,200,0.07)');
+  grd.addColorStop(1,   'rgba(0,0,0,0)');
   boltCtx.fillStyle = grd;
-  boltCtx.fillRect(0, 0, W, H * 0.6);
+  boltCtx.fillRect(0, 0, W, H * 0.5);
 
-  // Draw main bolt (depth 6 = lots of branching)
-  drawBranch(boltCtx, startX, 0, endX, endY, 4, 6);
+  drawBolt(boltCtx, sx, 0, ex, ey, 3, 2);  // depth 2 = main + branches only
 
-  // Screen flash — bright then quick afterglow
-  const flash = document.getElementById('lightning');
-  flash.style.background = 'rgba(255,255,255,0.28)';
-  setTimeout(() => { flash.style.background = 'rgba(255,255,255,0)'; }, 55);
-  setTimeout(() => { flash.style.background = 'rgba(200,220,255,0.14)'; }, 110);
-  setTimeout(() => { flash.style.background = 'rgba(255,255,255,0)'; }, 200);
+  // Screen flash
+  const fl = document.getElementById('lightning');
+  fl.style.background = 'rgba(255,255,255,0.25)';
+  setTimeout(() => fl.style.background = 'rgba(255,255,255,0)', 55);
+  setTimeout(() => { fl.style.background = 'rgba(200,220,255,0.12)'; setTimeout(() => fl.style.background = 'rgba(255,255,255,0)', 90); }, 110);
 
-  // Smooth fade out
+  // Fade out
   let op = 1;
   const fade = setInterval(() => {
-    op -= 0.05;
-    boltCanvas.style.opacity = Math.max(0, op);
-    if (op <= 0) {
-      clearInterval(fade);
-      boltCtx.clearRect(0, 0, W, H);
-      boltCanvas.style.opacity = 1;
-    }
+    op -= 0.055; boltCanvas.style.opacity = Math.max(0, op);
+    if (op <= 0) { clearInterval(fade); boltCtx.clearRect(0,0,W,H); boltCanvas.style.opacity = 1; }
   }, 28);
 }
 
@@ -847,8 +831,7 @@ function startLightning() {
   function scheduleNext() {
     lightningTimer = setTimeout(() => {
       spawnBolt();
-      // Occasional double-strike
-      if (Math.random() > 0.5) setTimeout(spawnBolt, 350);
+      if (Math.random() > 0.5) setTimeout(spawnBolt, 380);
       scheduleNext();
     }, 3500 + Math.random() * 8000);
   }
