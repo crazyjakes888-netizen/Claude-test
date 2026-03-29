@@ -47,13 +47,6 @@
       transition: background 0.05s;
     }
 
-    /* Lightning bolt */
-    .lightning-bolt {
-      position: absolute; z-index: 3; pointer-events: none;
-      opacity: 1; transition: opacity 0.3s ease;
-      filter: drop-shadow(0 0 8px rgba(180,220,255,0.9)) drop-shadow(0 0 20px rgba(150,200,255,0.5));
-    }
-
     /* Stars */
     .star {
       position: absolute;
@@ -741,47 +734,84 @@ function stopParticles() {
 }
 
 // ── Lightning ──────────────────────────────────────────────────────────────
+let boltCanvas, boltCtx;
+function initBoltCanvas() {
+  if (boltCanvas) return;
+  boltCanvas = document.createElement('canvas');
+  boltCanvas.style.cssText = 'position:fixed;inset:0;z-index:4;pointer-events:none;';
+  boltCanvas.width  = window.innerWidth;
+  boltCanvas.height = window.innerHeight;
+  document.body.appendChild(boltCanvas);
+  boltCtx = boltCanvas.getContext('2d');
+}
+
+// Recursive branching bolt
+function drawSegment(ctx, x1, y1, x2, y2, depth, alpha) {
+  if (depth === 0 || alpha < 0.05) return;
+  ctx.beginPath();
+  ctx.moveTo(x1, y1);
+  ctx.lineTo(x2, y2);
+  // Outer glow
+  ctx.strokeStyle = `rgba(180,210,255,${alpha * 0.25})`;
+  ctx.lineWidth = depth * 2.5;
+  ctx.stroke();
+  // Inner bright core
+  ctx.strokeStyle = `rgba(255,255,255,${alpha})`;
+  ctx.lineWidth = Math.max(0.5, depth * 0.6);
+  ctx.stroke();
+
+  const dx = x2 - x1, dy = y2 - y1;
+  const len = Math.sqrt(dx*dx + dy*dy);
+  if (len < 4) return;
+
+  // Main continuation — slight random jag
+  const midX = x1 + dx * 0.45 + (Math.random()-0.5) * len * 0.35;
+  const midY = y1 + dy * 0.45 + (Math.random()-0.5) * len * 0.2;
+  drawSegment(ctx, x1, y1, midX, midY, depth - 1, alpha * 0.92);
+  drawSegment(ctx, midX, midY, x2, y2, depth - 1, alpha * 0.92);
+
+  // Random branch
+  if (depth > 2 && Math.random() > 0.55) {
+    const bx = midX + (Math.random()-0.5) * len * 0.8;
+    const by = midY + dy * (0.3 + Math.random() * 0.5);
+    drawSegment(ctx, midX, midY, bx, by, depth - 2, alpha * 0.5);
+  }
+}
+
 function spawnBolt() {
-  const bolt = document.createElement('div');
-  bolt.className = 'lightning-bolt';
-  // Random horizontal position, always from top
-  const x = 10 + Math.random() * 80; // 10–90% from left
-  bolt.style.left = x + '%';
-  bolt.style.top = '0';
-  // Random bolt path using SVG
-  const h = 40 + Math.random() * 40; // height as % of viewport
-  const w = 40 + Math.random() * 30;
-  const mid = 20 + Math.random() * 30;
-  bolt.innerHTML = `<svg viewBox="0 0 ${w} 100" width="${w * 3}px" height="${h}vh" xmlns="http://www.w3.org/2000/svg">
-    <polyline points="${w*0.6},0 ${w*0.2},${mid} ${w*0.55},${mid} ${w*0.1},100"
-      stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
-    <polyline points="${w*0.6},0 ${w*0.2},${mid} ${w*0.55},${mid} ${w*0.1},100"
-      stroke="#c8e8ff" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"/>
-  </svg>`;
-  document.getElementById('bg').appendChild(bolt);
+  initBoltCanvas();
+  const W = boltCanvas.width, H = boltCanvas.height;
+  const startX = W * (0.1 + Math.random() * 0.8);
+  const endX   = startX + (Math.random() - 0.5) * W * 0.3;
+  const endY   = H * (0.45 + Math.random() * 0.45);
 
-  // Screen flash
+  boltCtx.clearRect(0, 0, W, H);
+  boltCtx.lineCap = 'round';
+  drawSegment(boltCtx, startX, 0, endX, endY, 7, 1);
+
+  // Screen flash — quick double-flicker
   const flash = document.getElementById('lightning');
-  flash.style.background = 'rgba(255,255,255,0.2)';
-  setTimeout(() => { flash.style.background = 'rgba(255,255,255,0)'; }, 60);
-  setTimeout(() => {
-    flash.style.background = 'rgba(255,255,255,0.1)';
-    setTimeout(() => { flash.style.background = 'rgba(255,255,255,0)'; }, 50);
-  }, 120);
+  flash.style.background = 'rgba(255,255,255,0.22)';
+  setTimeout(() => { flash.style.background = 'rgba(255,255,255,0)'; }, 50);
+  setTimeout(() => { flash.style.background = 'rgba(255,255,255,0.12)'; }, 100);
+  setTimeout(() => { flash.style.background = 'rgba(255,255,255,0)'; }, 160);
 
-  // Fade bolt out
-  setTimeout(() => { bolt.style.opacity = '0'; }, 180);
-  setTimeout(() => bolt.remove(), 500);
+  // Fade bolt
+  let op = 1;
+  const fade = setInterval(() => {
+    op -= 0.08;
+    boltCanvas.style.opacity = op;
+    if (op <= 0) { clearInterval(fade); boltCtx.clearRect(0, 0, W, H); boltCanvas.style.opacity = 1; }
+  }, 20);
 }
 
 function startLightning() {
   function scheduleNext() {
     lightningTimer = setTimeout(() => {
       spawnBolt();
-      // Sometimes double-strike
-      if (Math.random() > 0.5) setTimeout(spawnBolt, 250);
+      if (Math.random() > 0.45) setTimeout(spawnBolt, 300);
       scheduleNext();
-    }, 3000 + Math.random() * 7000);
+    }, 3000 + Math.random() * 8000);
   }
   scheduleNext();
 }
