@@ -43,6 +43,13 @@
       transition: background 0.05s;
     }
 
+    /* Lightning bolt */
+    .lightning-bolt {
+      position: absolute; z-index: 3; pointer-events: none;
+      opacity: 1; transition: opacity 0.3s ease;
+      filter: drop-shadow(0 0 8px rgba(180,220,255,0.9)) drop-shadow(0 0 20px rgba(150,200,255,0.5));
+    }
+
     /* Stars */
     .star {
       position: absolute;
@@ -586,7 +593,7 @@ function applyBackground(code, sunrise, sunset) {
   // Clear old particles/lightning
   stopParticles();
   clearStars();
-  if (lightningTimer) { clearInterval(lightningTimer); lightningTimer = null; }
+  if (lightningTimer) { clearTimeout(lightningTimer); lightningTimer = null; }
 
   const gradients = {
     'clear-day':   'linear-gradient(180deg, #0ea5e9 0%, #38bdf8 40%, #7dd3fc 100%)',
@@ -711,17 +718,49 @@ function stopParticles() {
 }
 
 // ── Lightning ──────────────────────────────────────────────────────────────
+function spawnBolt() {
+  const bolt = document.createElement('div');
+  bolt.className = 'lightning-bolt';
+  // Random horizontal position, always from top
+  const x = 10 + Math.random() * 80; // 10–90% from left
+  bolt.style.left = x + '%';
+  bolt.style.top = '0';
+  // Random bolt path using SVG
+  const h = 40 + Math.random() * 40; // height as % of viewport
+  const w = 40 + Math.random() * 30;
+  const mid = 20 + Math.random() * 30;
+  bolt.innerHTML = `<svg viewBox="0 0 ${w} 100" width="${w * 3}px" height="${h}vh" xmlns="http://www.w3.org/2000/svg">
+    <polyline points="${w*0.6},0 ${w*0.2},${mid} ${w*0.55},${mid} ${w*0.1},100"
+      stroke="white" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
+    <polyline points="${w*0.6},0 ${w*0.2},${mid} ${w*0.55},${mid} ${w*0.1},100"
+      stroke="#c8e8ff" stroke-width="6" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity="0.3"/>
+  </svg>`;
+  document.getElementById('bg').appendChild(bolt);
+
+  // Screen flash
+  const flash = document.getElementById('lightning');
+  flash.style.background = 'rgba(255,255,255,0.2)';
+  setTimeout(() => { flash.style.background = 'rgba(255,255,255,0)'; }, 60);
+  setTimeout(() => {
+    flash.style.background = 'rgba(255,255,255,0.1)';
+    setTimeout(() => { flash.style.background = 'rgba(255,255,255,0)'; }, 50);
+  }, 120);
+
+  // Fade bolt out
+  setTimeout(() => { bolt.style.opacity = '0'; }, 180);
+  setTimeout(() => bolt.remove(), 500);
+}
+
 function startLightning() {
-  const el = document.getElementById('lightning');
-  function flash() {
-    el.style.background = 'rgba(255,255,255,0.18)';
-    setTimeout(() => { el.style.background = 'rgba(255,255,255,0)'; }, 80);
-    setTimeout(() => {
-      el.style.background = 'rgba(255,255,255,0.1)';
-      setTimeout(() => { el.style.background = 'rgba(255,255,255,0)'; }, 60);
-    }, 150);
+  function scheduleNext() {
+    lightningTimer = setTimeout(() => {
+      spawnBolt();
+      // Sometimes double-strike
+      if (Math.random() > 0.5) setTimeout(spawnBolt, 250);
+      scheduleNext();
+    }, 3000 + Math.random() * 7000);
   }
-  lightningTimer = setInterval(flash, 4000 + Math.random()*6000);
+  scheduleNext();
 }
 
 // ── Render weather cards ───────────────────────────────────────────────────
@@ -858,7 +897,7 @@ function goHome() {
   loadNews();
   // Reset background to black with stars + shooting stars
   stopParticles();
-  if (lightningTimer) { clearInterval(lightningTimer); lightningTimer = null; }
+  if (lightningTimer) { clearTimeout(lightningTimer); lightningTimer = null; }
   clearStars();
   clearShootingStars();
   document.getElementById('bg').style.background = '#000';
