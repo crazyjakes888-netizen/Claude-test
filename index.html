@@ -348,72 +348,9 @@
       </div>
     </div>
     <div id="quick-cities">
-      <!-- Row 1 — slow (40s) left -->
-      <div class="city-row" style="--dur:40s">
-        <div class="city-row-inner">
-          <button class="city-chip" data-city="New York">🗽 New York</button>
-          <button class="city-chip" data-city="Los Angeles">🌴 Los Angeles</button>
-          <button class="city-chip" data-city="Chicago">🌆 Chicago</button>
-          <button class="city-chip" data-city="London">🎡 London</button>
-          <button class="city-chip" data-city="Paris">🗼 Paris</button>
-          <button class="city-chip" data-city="Tokyo">🗾 Tokyo</button>
-          <button class="city-chip" data-city="Dubai">🌇 Dubai</button>
-          <button class="city-chip" data-city="Sydney">🦘 Sydney</button>
-          <!-- duplicate for seamless loop -->
-          <button class="city-chip" data-city="New York">🗽 New York</button>
-          <button class="city-chip" data-city="Los Angeles">🌴 Los Angeles</button>
-          <button class="city-chip" data-city="Chicago">🌆 Chicago</button>
-          <button class="city-chip" data-city="London">🎡 London</button>
-          <button class="city-chip" data-city="Paris">🗼 Paris</button>
-          <button class="city-chip" data-city="Tokyo">🗾 Tokyo</button>
-          <button class="city-chip" data-city="Dubai">🌇 Dubai</button>
-          <button class="city-chip" data-city="Sydney">🦘 Sydney</button>
-        </div>
-      </div>
-      <!-- Row 2 — medium (28s) right -->
-      <div class="city-row reverse" style="--dur:28s">
-        <div class="city-row-inner">
-          <button class="city-chip" data-city="Toronto">🍁 Toronto</button>
-          <button class="city-chip" data-city="Miami">🌊 Miami</button>
-          <button class="city-chip" data-city="Berlin">🏛️ Berlin</button>
-          <button class="city-chip" data-city="Mumbai">🇮🇳 Mumbai</button>
-          <button class="city-chip" data-city="Seoul">🇰🇷 Seoul</button>
-          <button class="city-chip" data-city="Mexico City">🌮 Mexico City</button>
-          <button class="city-chip" data-city="Cairo">🏺 Cairo</button>
-          <button class="city-chip" data-city="São Paulo">🇧🇷 São Paulo</button>
-          <!-- duplicate -->
-          <button class="city-chip" data-city="Toronto">🍁 Toronto</button>
-          <button class="city-chip" data-city="Miami">🌊 Miami</button>
-          <button class="city-chip" data-city="Berlin">🏛️ Berlin</button>
-          <button class="city-chip" data-city="Mumbai">🇮🇳 Mumbai</button>
-          <button class="city-chip" data-city="Seoul">🇰🇷 Seoul</button>
-          <button class="city-chip" data-city="Mexico City">🌮 Mexico City</button>
-          <button class="city-chip" data-city="Cairo">🏺 Cairo</button>
-          <button class="city-chip" data-city="São Paulo">🇧🇷 São Paulo</button>
-        </div>
-      </div>
-      <!-- Row 3 — fast (18s) left -->
-      <div class="city-row" style="--dur:18s">
-        <div class="city-row-inner">
-          <button class="city-chip" data-city="Amsterdam">🌷 Amsterdam</button>
-          <button class="city-chip" data-city="Singapore">🦁 Singapore</button>
-          <button class="city-chip" data-city="Bangkok">🛕 Bangkok</button>
-          <button class="city-chip" data-city="Istanbul">🕌 Istanbul</button>
-          <button class="city-chip" data-city="Lagos">🌍 Lagos</button>
-          <button class="city-chip" data-city="Buenos Aires">🇦🇷 Buenos Aires</button>
-          <button class="city-chip" data-city="Moscow">❄️ Moscow</button>
-          <button class="city-chip" data-city="Nairobi">🦒 Nairobi</button>
-          <!-- duplicate -->
-          <button class="city-chip" data-city="Amsterdam">🌷 Amsterdam</button>
-          <button class="city-chip" data-city="Singapore">🦁 Singapore</button>
-          <button class="city-chip" data-city="Bangkok">🛕 Bangkok</button>
-          <button class="city-chip" data-city="Istanbul">🕌 Istanbul</button>
-          <button class="city-chip" data-city="Lagos">🌍 Lagos</button>
-          <button class="city-chip" data-city="Buenos Aires">🇦🇷 Buenos Aires</button>
-          <button class="city-chip" data-city="Moscow">❄️ Moscow</button>
-          <button class="city-chip" data-city="Nairobi">🦒 Nairobi</button>
-        </div>
-      </div>
+      <div class="city-row" id="city-row-1" style="--dur:40s"></div>
+      <div class="city-row reverse" id="city-row-2" style="--dur:28s"></div>
+      <div class="city-row" id="city-row-3" style="--dur:18s"></div>
     </div>
   </div>
 
@@ -1030,25 +967,6 @@ document.getElementById('city-input').addEventListener('keydown', e => {
   if (e.key === 'Escape') hideSug();
 });
 
-// ── Quick city chips ────────────────────────────────────────────────────────
-document.querySelectorAll('.city-chip').forEach(btn => {
-  btn.addEventListener('click', async () => {
-    const city = btn.dataset.city;
-    document.getElementById('city-input').value = city;
-    hideSug();
-    document.getElementById('wx-loc').textContent = 'Loading…';
-    showWeatherView();
-    try {
-      const r = await fetchT(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`);
-      const j = await r.json();
-      if (!j.length) { document.getElementById('wx-loc').textContent = 'Not found'; return; }
-      const label = j[0].display_name.split(',')[0].trim();
-      await fetchWeather(j[0].lat, j[0].lon, label);
-      loadNews(label);
-      document.getElementById('weather').scrollIntoView({ behavior: 'smooth' });
-    } catch { document.getElementById('wx-loc').textContent = 'Error'; }
-  });
-});
 
 // ── Suggestions ────────────────────────────────────────────────────────────
 const sugBox = document.getElementById('suggestions');
@@ -1093,6 +1011,60 @@ window.addEventListener('resize', () => {
 
 // ── Default home background ────────────────────────────────────────────────
 resetHomeBackground();
+
+// ── Build randomized city rows ──────────────────────────────────────────────
+const ALL_CITIES = [
+  ['New York','🗽'],['Los Angeles','🌴'],['Chicago','🌆'],['London','🎡'],
+  ['Paris','🗼'],['Tokyo','🗾'],['Dubai','🌇'],['Sydney','🦘'],
+  ['Toronto','🍁'],['Miami','🌊'],['Berlin','🏛️'],['Mumbai','🇮🇳'],
+  ['Seoul','🇰🇷'],['Mexico City','🌮'],['Cairo','🏺'],['São Paulo','🇧🇷'],
+  ['Amsterdam','🌷'],['Singapore','🦁'],['Bangkok','🛕'],['Istanbul','🕌'],
+  ['Lagos','🌍'],['Buenos Aires','🇦🇷'],['Moscow','❄️'],['Nairobi','🦒'],
+];
+
+function buildCityRows() {
+  // Shuffle all cities
+  const shuffled = [...ALL_CITIES].sort(() => Math.random() - 0.5);
+  // Split into 3 roughly equal groups
+  const third = Math.ceil(shuffled.length / 3);
+  const groups = [
+    shuffled.slice(0, third),
+    shuffled.slice(third, third * 2),
+    shuffled.slice(third * 2),
+  ];
+  [1, 2, 3].forEach(n => {
+    const row = document.getElementById('city-row-' + n);
+    const inner = document.createElement('div');
+    inner.className = 'city-row-inner';
+    // Double up for seamless loop
+    const cities = [...groups[n-1], ...groups[n-1]];
+    inner.innerHTML = cities.map(([city, emoji]) =>
+      `<button class="city-chip" data-city="${city}">${emoji} ${city}</button>`
+    ).join('');
+    row.innerHTML = '';
+    row.appendChild(inner);
+  });
+  // Re-attach click listeners
+  document.querySelectorAll('.city-chip').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const city = btn.dataset.city;
+      document.getElementById('city-input').value = city;
+      hideSug();
+      document.getElementById('wx-loc').textContent = 'Loading…';
+      showWeatherView();
+      try {
+        const r = await fetchT(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`);
+        const j = await r.json();
+        if (!j.length) { document.getElementById('wx-loc').textContent = 'Not found'; return; }
+        const label = j[0].display_name.split(',')[0].trim();
+        await fetchWeather(j[0].lat, j[0].lon, label);
+        loadNews(label);
+        document.getElementById('weather').scrollIntoView({ behavior: 'smooth' });
+      } catch { document.getElementById('wx-loc').textContent = 'Error'; }
+    });
+  });
+}
+buildCityRows();
 
 // ── Animated placeholder ────────────────────────────────────────────────────
 const placeholders = ['Search a city…', 'Search a town…', 'Search a country…', 'Search a village…', 'Search anywhere…'];
