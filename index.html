@@ -143,21 +143,27 @@
 
     /* ── QUICK CITIES ── */
     #quick-cities {
-      display: flex; flex-wrap: wrap; gap: 0.6rem;
-      justify-content: center; margin-top: 1.6rem;
-      max-width: 640px;
-      /* horizontal scroll on small screens */
-      overflow-x: auto; flex-wrap: nowrap;
-      padding-bottom: 0.4rem;
-      scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
+      width: 100%; margin-top: 1.8rem;
+      display: flex; flex-direction: column; gap: 0.55rem;
+      overflow: hidden;
     }
-    #quick-cities::-webkit-scrollbar { display: none; }
-    /* wrap on wider screens */
-    @media (min-width: 640px) {
-      #quick-cities { flex-wrap: wrap; overflow-x: visible; }
+    .city-row {
+      display: flex; gap: 0.6rem;
+      overflow: hidden; white-space: nowrap;
     }
+    .city-row-inner {
+      display: inline-flex; gap: 0.6rem;
+      animation: slide-left var(--dur, 30s) linear infinite;
+    }
+    .city-row.reverse .city-row-inner {
+      animation-name: slide-right;
+    }
+    .city-row:hover .city-row-inner { animation-play-state: paused; }
+    @keyframes slide-left  { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+    @keyframes slide-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+
     .city-chip {
+      display: inline-flex; align-items: center; gap: 0.35rem;
       background: rgba(255,255,255,0.06);
       border: 1px solid rgba(255,255,255,0.13);
       border-radius: 999px;
@@ -165,6 +171,7 @@
       font-size: 0.82rem; font-weight: 600; color: var(--text);
       cursor: pointer; transition: background 0.15s, border-color 0.15s, transform 0.12s;
       backdrop-filter: blur(8px);
+      flex-shrink: 0; white-space: nowrap;
     }
     .city-chip:hover { background: rgba(108,99,255,0.22); border-color: var(--accent); transform: scale(1.05); }
     .city-chip:active { transform: scale(0.97); }
@@ -264,22 +271,72 @@
       <div id="suggestions"></div>
     </div>
     <div id="quick-cities">
-      <button class="city-chip" data-city="New York">🗽 New York</button>
-      <button class="city-chip" data-city="Los Angeles">🌴 Los Angeles</button>
-      <button class="city-chip" data-city="Chicago">🌆 Chicago</button>
-      <button class="city-chip" data-city="London">🎡 London</button>
-      <button class="city-chip" data-city="Paris">🗼 Paris</button>
-      <button class="city-chip" data-city="Tokyo">🗾 Tokyo</button>
-      <button class="city-chip" data-city="Dubai">🌇 Dubai</button>
-      <button class="city-chip" data-city="Sydney">🦘 Sydney</button>
-      <button class="city-chip" data-city="Toronto">🍁 Toronto</button>
-      <button class="city-chip" data-city="Miami">🌊 Miami</button>
-      <button class="city-chip" data-city="Berlin">🏛️ Berlin</button>
-      <button class="city-chip" data-city="Mumbai">🇮🇳 Mumbai</button>
-      <button class="city-chip" data-city="Seoul">🇰🇷 Seoul</button>
-      <button class="city-chip" data-city="Mexico City">🌮 Mexico City</button>
-      <button class="city-chip" data-city="Cairo">🏺 Cairo</button>
-      <button class="city-chip" data-city="São Paulo">🇧🇷 São Paulo</button>
+      <!-- Row 1 — slow (40s) left -->
+      <div class="city-row" style="--dur:40s">
+        <div class="city-row-inner">
+          <button class="city-chip" data-city="New York">🗽 New York</button>
+          <button class="city-chip" data-city="Los Angeles">🌴 Los Angeles</button>
+          <button class="city-chip" data-city="Chicago">🌆 Chicago</button>
+          <button class="city-chip" data-city="London">🎡 London</button>
+          <button class="city-chip" data-city="Paris">🗼 Paris</button>
+          <button class="city-chip" data-city="Tokyo">🗾 Tokyo</button>
+          <button class="city-chip" data-city="Dubai">🌇 Dubai</button>
+          <button class="city-chip" data-city="Sydney">🦘 Sydney</button>
+          <!-- duplicate for seamless loop -->
+          <button class="city-chip" data-city="New York">🗽 New York</button>
+          <button class="city-chip" data-city="Los Angeles">🌴 Los Angeles</button>
+          <button class="city-chip" data-city="Chicago">🌆 Chicago</button>
+          <button class="city-chip" data-city="London">🎡 London</button>
+          <button class="city-chip" data-city="Paris">🗼 Paris</button>
+          <button class="city-chip" data-city="Tokyo">🗾 Tokyo</button>
+          <button class="city-chip" data-city="Dubai">🌇 Dubai</button>
+          <button class="city-chip" data-city="Sydney">🦘 Sydney</button>
+        </div>
+      </div>
+      <!-- Row 2 — medium (28s) right -->
+      <div class="city-row reverse" style="--dur:28s">
+        <div class="city-row-inner">
+          <button class="city-chip" data-city="Toronto">🍁 Toronto</button>
+          <button class="city-chip" data-city="Miami">🌊 Miami</button>
+          <button class="city-chip" data-city="Berlin">🏛️ Berlin</button>
+          <button class="city-chip" data-city="Mumbai">🇮🇳 Mumbai</button>
+          <button class="city-chip" data-city="Seoul">🇰🇷 Seoul</button>
+          <button class="city-chip" data-city="Mexico City">🌮 Mexico City</button>
+          <button class="city-chip" data-city="Cairo">🏺 Cairo</button>
+          <button class="city-chip" data-city="São Paulo">🇧🇷 São Paulo</button>
+          <!-- duplicate -->
+          <button class="city-chip" data-city="Toronto">🍁 Toronto</button>
+          <button class="city-chip" data-city="Miami">🌊 Miami</button>
+          <button class="city-chip" data-city="Berlin">🏛️ Berlin</button>
+          <button class="city-chip" data-city="Mumbai">🇮🇳 Mumbai</button>
+          <button class="city-chip" data-city="Seoul">🇰🇷 Seoul</button>
+          <button class="city-chip" data-city="Mexico City">🌮 Mexico City</button>
+          <button class="city-chip" data-city="Cairo">🏺 Cairo</button>
+          <button class="city-chip" data-city="São Paulo">🇧🇷 São Paulo</button>
+        </div>
+      </div>
+      <!-- Row 3 — fast (18s) left -->
+      <div class="city-row" style="--dur:18s">
+        <div class="city-row-inner">
+          <button class="city-chip" data-city="Amsterdam">🌷 Amsterdam</button>
+          <button class="city-chip" data-city="Singapore">🦁 Singapore</button>
+          <button class="city-chip" data-city="Bangkok">🛕 Bangkok</button>
+          <button class="city-chip" data-city="Istanbul">🕌 Istanbul</button>
+          <button class="city-chip" data-city="Lagos">🌍 Lagos</button>
+          <button class="city-chip" data-city="Buenos Aires">🇦🇷 Buenos Aires</button>
+          <button class="city-chip" data-city="Moscow">❄️ Moscow</button>
+          <button class="city-chip" data-city="Nairobi">🦒 Nairobi</button>
+          <!-- duplicate -->
+          <button class="city-chip" data-city="Amsterdam">🌷 Amsterdam</button>
+          <button class="city-chip" data-city="Singapore">🦁 Singapore</button>
+          <button class="city-chip" data-city="Bangkok">🛕 Bangkok</button>
+          <button class="city-chip" data-city="Istanbul">🕌 Istanbul</button>
+          <button class="city-chip" data-city="Lagos">🌍 Lagos</button>
+          <button class="city-chip" data-city="Buenos Aires">🇦🇷 Buenos Aires</button>
+          <button class="city-chip" data-city="Moscow">❄️ Moscow</button>
+          <button class="city-chip" data-city="Nairobi">🦒 Nairobi</button>
+        </div>
+      </div>
     </div>
   </div>
 
