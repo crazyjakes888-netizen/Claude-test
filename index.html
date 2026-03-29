@@ -70,7 +70,7 @@
       border-right: 1px solid rgba(56,198,255,0.2);
     }
     .news-track-wrap { flex: 1; overflow: hidden; }
-    .news-track { display: inline-flex; white-space: nowrap; animation: ticker 10s linear infinite; }
+    .news-track { display: inline-flex; white-space: nowrap; animation: ticker 60s linear infinite; }
     .news-track:hover { animation-play-state: paused; }
     .news-item { font-size: 0.78rem; color: rgba(255,255,255,0.75); padding: 0 2.5rem; display: inline-flex; align-items: center; gap: 0.5rem; }
     .news-item::before { content: ''; }
@@ -381,8 +381,15 @@
 // ── Breaking News (live RSS via rss2json) ──────────────────────────────────
 function buildTicker(headlines) {
   const doubled = [...headlines, ...headlines];
-  document.getElementById('news-track').innerHTML =
-    doubled.map(h => `<span class="news-item">${h}</span>`).join('');
+  const track = document.getElementById('news-track');
+  track.innerHTML = doubled.map(h => `<span class="news-item">${h}</span>`).join('');
+  // Speed: 10s to cross the screen width
+  requestAnimationFrame(() => {
+    const totalWidth = track.scrollWidth;
+    const speed = window.innerWidth / 10; // px per second
+    const duration = (totalWidth / 2) / speed;
+    track.style.animationDuration = duration + 's';
+  });
 }
 
 const FALLBACK = [
