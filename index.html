@@ -1014,10 +1014,17 @@ const ALL_CITIES = [
   ['Lagos','🌍'],['Buenos Aires','🇦🇷'],['Moscow','❄️'],['Nairobi','🦒'],
 ];
 
+function shuffle(arr) {
+  const a = [...arr];
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 function buildCityRows() {
-  // Shuffle all cities
-  const shuffled = [...ALL_CITIES].sort(() => Math.random() - 0.5);
-  // Split into 3 roughly equal groups
+  const shuffled = shuffle(ALL_CITIES);
   const third = Math.ceil(shuffled.length / 3);
   const groups = [
     shuffled.slice(0, third),
@@ -1026,33 +1033,32 @@ function buildCityRows() {
   ];
   [1, 2, 3].forEach(n => {
     const row = document.getElementById('city-row-' + n);
+    if (!row) return;
     const inner = document.createElement('div');
     inner.className = 'city-row-inner';
-    // Double up for seamless loop
     const cities = [...groups[n-1], ...groups[n-1]];
     inner.innerHTML = cities.map(([city, emoji]) =>
       `<button class="city-chip" data-city="${city}">${emoji} ${city}</button>`
     ).join('');
     row.innerHTML = '';
     row.appendChild(inner);
-  });
-  // Re-attach click listeners
-  document.querySelectorAll('.city-chip').forEach(btn => {
-    btn.addEventListener('click', async () => {
-      const city = btn.dataset.city;
-      document.getElementById('city-input').value = city;
-      hideSug();
-      document.getElementById('wx-loc').textContent = 'Loading…';
-      showWeatherView();
-      try {
-        const r = await fetchT(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`);
-        const j = await r.json();
-        if (!j.length) { document.getElementById('wx-loc').textContent = 'Not found'; return; }
-        const label = j[0].display_name.split(',')[0].trim();
-        await fetchWeather(j[0].lat, j[0].lon, label);
-        loadNews(label);
-        document.getElementById('weather').scrollIntoView({ behavior: 'smooth' });
-      } catch { document.getElementById('wx-loc').textContent = 'Error'; }
+    inner.querySelectorAll('.city-chip').forEach(btn => {
+      btn.addEventListener('click', async () => {
+        const city = btn.dataset.city;
+        document.getElementById('city-input').value = city;
+        hideSug();
+        document.getElementById('wx-loc').textContent = 'Loading…';
+        showWeatherView();
+        try {
+          const r = await fetchT(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`);
+          const j = await r.json();
+          if (!j.length) { document.getElementById('wx-loc').textContent = 'Not found'; return; }
+          const label = j[0].display_name.split(',')[0].trim();
+          await fetchWeather(j[0].lat, j[0].lon, label);
+          loadNews(label);
+          document.getElementById('weather').scrollIntoView({ behavior: 'smooth' });
+        } catch { document.getElementById('wx-loc').textContent = 'Error'; }
+      });
     });
   });
 }
