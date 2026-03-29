@@ -87,21 +87,55 @@
     .wx-loc-name  { font-size: 1.6rem; font-weight: 800; color: #fff; text-shadow: 0 2px 12px rgba(0,0,0,0.6); }
     .wx-time      { font-size: 0.8rem; color: var(--muted); margin-top: 0.2rem; }
 
-    .wx-search { display: flex; align-items: center; gap: 0.5rem; position: relative; }
+    .wx-search { display: flex; align-items: center; gap: 0; position: relative; }
+
+    .wx-search-wrap {
+      display: flex; align-items: center;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.15);
+      border-radius: 12px;
+      overflow: visible;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      backdrop-filter: blur(12px);
+      box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+    }
+    .wx-search-wrap:focus-within {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(108,99,255,0.2), 0 4px 24px rgba(0,0,0,0.4);
+    }
+
+    .wx-search-icon {
+      padding: 0 0.6rem 0 0.9rem;
+      font-size: 1rem;
+      opacity: 0.5;
+      pointer-events: none;
+      user-select: none;
+    }
+
     #city-input {
-      background: rgba(0,0,0,0.5); border: 1px solid var(--border); border-radius: 8px;
-      padding: 0.5rem 0.9rem; color: var(--text); font-size: 0.85rem;
-      width: 210px; outline: none; font-family: inherit;
-      backdrop-filter: blur(8px);
+      background: transparent;
+      border: none;
+      padding: 0.6rem 0.5rem 0.6rem 0;
+      color: var(--text); font-size: 0.88rem;
+      width: 200px; outline: none; font-family: inherit;
     }
-    #city-input:focus { border-color: var(--accent); }
     #city-input::placeholder { color: var(--muted); }
+
     #city-btn {
-      background: var(--accent); border: none; border-radius: 8px; color: #fff;
-      font-size: 0.85rem; font-weight: 700; padding: 0.5rem 1rem;
-      cursor: pointer; font-family: inherit; transition: opacity 0.15s;
+      background: linear-gradient(135deg, var(--accent), #a855f7);
+      border: none;
+      border-radius: 10px;
+      color: #fff;
+      font-size: 0.82rem; font-weight: 700;
+      padding: 0.55rem 1.1rem;
+      cursor: pointer; font-family: inherit;
+      transition: opacity 0.15s, transform 0.15s;
+      margin: 3px;
+      white-space: nowrap;
+      letter-spacing: 0.03em;
     }
-    #city-btn:hover { opacity: 0.85; }
+    #city-btn:hover { opacity: 0.88; transform: scale(1.03); }
+    #city-btn:active { transform: scale(0.97); }
 
     #suggestions {
       position: absolute; top: calc(100% + 6px); left: 0; width: 290px;
@@ -194,8 +228,11 @@
         <div class="wx-time" id="wx-time"></div>
       </div>
       <div class="wx-search">
-        <input id="city-input" type="text" placeholder="Search city, town, village…" autocomplete="off" />
-        <button id="city-btn">Go</button>
+        <div class="wx-search-wrap">
+          <span class="wx-search-icon">📍</span>
+          <input id="city-input" type="text" placeholder="Search city, town, village…" autocomplete="off" />
+          <button id="city-btn">Search</button>
+        </div>
         <div id="suggestions"></div>
       </div>
     </div>
@@ -226,22 +263,37 @@ const FALLBACK = [
   'Researchers develop breakthrough treatment for rare genetic disease',
 ];
 
-async function loadNews() {
-  // Try multiple CORS-friendly RSS-to-JSON services
-  const attempts = [
-    () => fetch('https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Ffeeds.bbci.co.uk%2Fnews%2Frss.xml&api_key=&count=20')
-            .then(r => r.json()).then(j => j.status==='ok' && j.items.length ? j.items.map(i=>i.title) : null),
-    () => fetch('https://api.rss2json.com/v1/api.json?rss_url=https%3A%2F%2Frss.cnn.com%2Frss%2Fcnn_topstories.rss&count=20')
-            .then(r => r.json()).then(j => j.status==='ok' && j.items.length ? j.items.map(i=>i.title) : null),
-    () => fetch('https://feedsapi.co/get?url=https://feeds.bbci.co.uk/news/rss.xml')
-            .then(r => r.json()).then(j => j.items?.length ? j.items.slice(0,20).map(i=>i.title) : null),
-  ];
+async function fetchRSS(url) {
+  const r = await fetch('https://api.rss2json.com/v1/api.json?count=20&rss_url=' + encodeURIComponent(url));
+  const j = await r.json();
+  if (j.status === 'ok' && j.items?.length) return j.items.map(i => i.title);
+  return null;
+}
 
-  for (const attempt of attempts) {
+async function loadNews(city) {
+  const newsLabel = document.querySelector('.news-label');
+
+  if (city) {
+    // City-specific news via Google News RSS search
+    newsLabel.innerHTML = '&#128308; ' + city + ' News';
     try {
-      const headlines = await attempt();
+      const googleRSS = `https://news.google.com/rss/search?q=${encodeURIComponent(city)}&hl=en-US&gl=US&ceid=US:en`;
+      const headlines = await fetchRSS(googleRSS);
       if (headlines && headlines.length) { buildTicker(headlines); return; }
-    } catch { /* try next */ }
+    } catch {}
+  }
+
+  // International / default news
+  newsLabel.innerHTML = '&#128308; Breaking News';
+  const feeds = [
+    'https://feeds.bbci.co.uk/news/rss.xml',
+    'https://rss.cnn.com/rss/cnn_topstories.rss',
+  ];
+  for (const feed of feeds) {
+    try {
+      const headlines = await fetchRSS(feed);
+      if (headlines && headlines.length) { buildTicker(headlines); return; }
+    } catch {}
   }
   buildTicker(FALLBACK);
 }
@@ -548,7 +600,9 @@ async function searchCity() {
     const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(val)}`);
     const j = await r.json();
     if (!j.length) { document.getElementById('wx-loc').textContent = 'Not found'; return; }
-    await fetchWeather(j[0].lat, j[0].lon, j[0].display_name.split(',')[0].trim());
+    const label = j[0].display_name.split(',')[0].trim();
+    await fetchWeather(j[0].lat, j[0].lon, label);
+    loadNews(label);
   } catch { document.getElementById('wx-loc').textContent = 'Error'; }
 }
 
@@ -582,9 +636,11 @@ document.getElementById('city-input').addEventListener('input', () => {
       sugBox.querySelectorAll('.sug-item').forEach((el,i) => {
         el.addEventListener('click', () => {
           const x = results[i]; const a = x.address??{};
-          document.getElementById('city-input').value = a.city||a.town||a.village||a.hamlet||a.suburb||x.display_name.split(',')[0];
+          const lbl = a.city||a.town||a.village||a.hamlet||a.suburb||x.display_name.split(',')[0];
+          document.getElementById('city-input').value = lbl;
           hideSug();
-          fetchWeather(x.lat, x.lon, document.getElementById('city-input').value);
+          fetchWeather(x.lat, x.lon, lbl);
+          loadNews(lbl);
         });
       });
     } catch { hideSug(); }
