@@ -3,6 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!-- Preconnect to speed up first requests on slow connections -->
+  <link rel="preconnect" href="https://api.open-meteo.com" />
+  <link rel="preconnect" href="https://nominatim.openstreetmap.org" />
+  <link rel="preconnect" href="https://api.allorigins.win" />
   <title>MySite</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌤️</text></svg>" />
   <style>
@@ -469,10 +473,16 @@ const FALLBACK = [
   'Researchers develop breakthrough treatment for rare genetic disease',
 ];
 
+// ── Fetch with timeout helper ──────────────────────────────────────────────
+function fetchT(url, ms = 8000) {
+  const c = new AbortController();
+  const t = setTimeout(() => c.abort(), ms);
+  return fetch(url, { signal: c.signal }).finally(() => clearTimeout(t));
+}
+
 async function fetchRSSvia(url) {
-  // Try rss2json proxy first
   try {
-    const r = await fetch('https://api.rss2json.com/v1/api.json?count=20&rss_url=' + encodeURIComponent(url));
+    const r = await fetchT('https://api.rss2json.com/v1/api.json?count=20&rss_url=' + encodeURIComponent(url));
     const j = await r.json();
     if (j.status === 'ok' && j.items?.length) return j.items.map(i => i.title);
   } catch {}
@@ -487,10 +497,7 @@ async function fetchRSSraw(url) {
   ];
   for (const proxy of proxies) {
     try {
-      const controller = new AbortController();
-      const t = setTimeout(() => controller.abort(), 6000);
-      const r = await fetch(proxy + encodeURIComponent(url), { signal: controller.signal });
-      clearTimeout(t);
+      const r = await fetchT(proxy + encodeURIComponent(url), 7000);
       const text = await r.text();
       const xml = new DOMParser().parseFromString(text, 'text/xml');
       const titles = Array.from(xml.querySelectorAll('item title'))
@@ -504,13 +511,23 @@ async function fetchRSSraw(url) {
 
 async function loadNews(city) {
   const newsLabel = document.querySelector('.news-label');
+  const cacheKey = city ? 'news_city_' + city : 'news_intl';
+  const cached = JSON.parse(localStorage.getItem(cacheKey) || 'null');
+
+  // Show cached instantly while fetching fresh
+  if (cached && cached.headlines) {
+    newsLabel.innerHTML = '&#128308; ' + (city ? city + ' News' : 'Breaking News');
+    buildTicker(cached.headlines);
+  }
 
   if (city) {
     newsLabel.innerHTML = '&#128308; ' + city + ' News';
     const googleRSS = `https://news.google.com/rss/search?q=${encodeURIComponent(city + ' news')}&hl=en-US&gl=US&ceid=US:en`;
     const headlines = await fetchRSSraw(googleRSS);
-    if (headlines && headlines.length) { buildTicker(headlines); return; }
-    // If city news failed, keep label but show international as fallback
+    if (headlines && headlines.length) {
+      localStorage.setItem(cacheKey, JSON.stringify({ headlines, ts: Date.now() }));
+      buildTicker(headlines); return;
+    }
   }
 
   if (!city) newsLabel.innerHTML = '&#128308; Breaking News';
@@ -521,11 +538,17 @@ async function loadNews(city) {
   for (const feed of feeds) {
     try {
       const h = await fetchRSSvia(feed) || await fetchRSSraw(feed);
-      if (h && h.length) { buildTicker(h); return; }
+      if (h && h.length) {
+        localStorage.setItem(cacheKey, JSON.stringify({ headlines: h, ts: Date.now() }));
+        buildTicker(h); return;
+      }
     } catch {}
   }
-  buildTicker(FALLBACK);
+  if (!cached) buildTicker(FALLBACK);
 }
+
+// Auto-refresh news every 5 minutes
+setInterval(() => loadNews(document.querySelector('.news-label')?.textContent?.includes('Breaking') ? null : undefined), 5 * 60 * 1000);
 
 setTimeout(loadNews, 100);
 
@@ -863,8 +886,8 @@ function renderWeather(cw, hourly, daily, place, timezone) {
 async function fetchWeather(lat, lon, label) {
   try {
     const [wRes, gRes] = await Promise.all([
-      fetch(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=apparent_temperature,relative_humidity_2m,precipitation_probability,visibility&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&timezone=auto&forecast_days=1`),
-      label ? Promise.resolve(null) : fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
+      fetchT(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=apparent_temperature,relative_humidity_2m,precipitation_probability,visibility&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&timezone=auto&forecast_days=1`),
+      label ? Promise.resolve(null) : fetchT(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
     ]);
     const w = await wRes.json();
     let place = label;
@@ -913,7 +936,7 @@ async function searchCity() {
   showWeatherView();
   hideSug();
   try {
-    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(val)}`);
+    const r = await fetchT(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(val)}`);
     const j = await r.json();
     if (!j.length) { document.getElementById('wx-loc').textContent = 'Not found'; return; }
     const label = j[0].display_name.split(',')[0].trim();
@@ -931,7 +954,7 @@ async function miniSearch() {
   if (!val) return;
   document.getElementById('wx-loc').textContent = 'Loading…';
   try {
-    const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(val)}`);
+    const r = await fetchT(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(val)}`);
     const j = await r.json();
     if (!j.length) { document.getElementById('wx-loc').textContent = 'Not found'; return; }
     const label = j[0].display_name.split(',')[0].trim();
@@ -959,7 +982,7 @@ document.querySelectorAll('.city-chip').forEach(btn => {
     document.getElementById('wx-loc').textContent = 'Loading…';
     showWeatherView();
     try {
-      const r = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`);
+      const r = await fetchT(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(city)}&format=json&limit=1`);
       const j = await r.json();
       if (!j.length) { document.getElementById('wx-loc').textContent = 'Not found'; return; }
       const label = j[0].display_name.split(',')[0].trim();
@@ -981,7 +1004,7 @@ document.getElementById('city-input').addEventListener('input', () => {
   if (v.length < 2) { hideSug(); return; }
   sugTimer = setTimeout(async () => {
     try {
-      const r = await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=6&addressdetails=1&q=${encodeURIComponent(v)}`);
+      const r = await fetchT(`https://nominatim.openstreetmap.org/search?format=json&limit=6&addressdetails=1&q=${encodeURIComponent(v)}`, 5000);
       const results = await r.json();
       if (!results.length) { hideSug(); return; }
       sugBox.innerHTML = results.map((x,i) => {
