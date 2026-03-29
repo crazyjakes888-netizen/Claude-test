@@ -78,9 +78,15 @@
 
     /* ── HERO SEARCH ── */
     #hero {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      padding: 3.5rem 1.5rem 2rem;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 3.5rem 1.5rem 0;
       text-align: center;
+      width: 100%;
+    }
+    #hero-inner {
+      display: flex; flex-direction: column; align-items: center;
+      width: 100%; max-width: 640px;
+      margin-bottom: 2rem;
     }
     #hero-title {
       font-size: 1rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase;
@@ -143,7 +149,7 @@
 
     /* ── QUICK CITIES ── */
     #quick-cities {
-      width: 100%; margin-top: 1.8rem;
+      width: 100vw; margin-top: 0; padding: 1.5rem 0 2rem;
       display: flex; flex-direction: column; gap: 0.55rem;
       overflow: hidden;
     }
@@ -260,15 +266,17 @@
 
   <!-- HERO SEARCH -->
   <div id="hero">
-    <div id="hero-title">Live Weather</div>
-    <div id="hero-tagline">Where in the world?</div>
-    <div class="wx-search">
-      <div class="wx-search-wrap">
-        <span class="wx-search-icon">📍</span>
-        <input id="city-input" type="text" placeholder="Search any city…" autocomplete="off" />
-        <button id="city-btn">Search</button>
+    <div id="hero-inner">
+      <div id="hero-title">Live Weather</div>
+      <div id="hero-tagline">Where in the world?</div>
+      <div class="wx-search">
+        <div class="wx-search-wrap">
+          <span class="wx-search-icon">📍</span>
+          <input id="city-input" type="text" placeholder="Search any city…" autocomplete="off" />
+          <button id="city-btn">Search</button>
+        </div>
+        <div id="suggestions"></div>
       </div>
-      <div id="suggestions"></div>
     </div>
     <div id="quick-cities">
       <!-- Row 1 — slow (40s) left -->
