@@ -13,7 +13,7 @@
       --green: #00e5a0; --blue: #38c6ff; --orange: #ff9b3a; --red: #ff5e6c; --lavender: #b39ddb;
       --text: #eeeef5; --muted: rgba(255,255,255,0.45);
     }
-    html { scroll-behavior: smooth; }
+    html { scroll-behavior: smooth; background: #000; }
 
     body {
       font-family: 'Segoe UI', system-ui, sans-serif;
@@ -58,20 +58,22 @@
     /* ── BREAKING NEWS ── */
     #news-bar {
       position: sticky; top: 0; z-index: 300;
-      height: 38px; display: flex; align-items: center;
-      background: #b91c1c; overflow: hidden;
+      height: 36px; display: flex; align-items: center;
+      background: #0f1b2d; overflow: hidden;
+      border-bottom: 1px solid rgba(56,198,255,0.2);
     }
     .news-label {
       flex-shrink: 0; height: 100%; display: flex; align-items: center;
-      padding: 0 1rem; background: #7f1d1d;
-      font-size: 0.72rem; font-weight: 800; letter-spacing: 0.12em;
-      text-transform: uppercase; color: #fff; white-space: nowrap; gap: 0.4rem;
+      padding: 0 1rem; background: #0a1628;
+      font-size: 0.68rem; font-weight: 700; letter-spacing: 0.14em;
+      text-transform: uppercase; color: #38c6ff; white-space: nowrap; gap: 0.5rem;
+      border-right: 1px solid rgba(56,198,255,0.2);
     }
     .news-track-wrap { flex: 1; overflow: hidden; }
     .news-track { display: inline-flex; white-space: nowrap; animation: ticker 50s linear infinite; }
     .news-track:hover { animation-play-state: paused; }
-    .news-item { font-size: 0.8rem; color: #fff; padding: 0 2.5rem; display: inline-flex; align-items: center; gap: 0.5rem; }
-    .news-item::before { content: '●'; font-size: 0.45rem; opacity: 0.6; }
+    .news-item { font-size: 0.78rem; color: rgba(255,255,255,0.75); padding: 0 2.5rem; display: inline-flex; align-items: center; gap: 0.5rem; }
+    .news-item::before { content: '◆'; font-size: 0.35rem; opacity: 0.4; color: #38c6ff; }
     @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
     /* ── WEATHER SECTION ── */
@@ -239,6 +241,17 @@ const wdir = d => WDIRS[Math.round(d/45)%8];
 const c2f  = c => ((c*9/5)+32).toFixed(1);
 const uvLv = u => u<=2?'Low':u<=5?'Moderate':u<=7?'High':u<=10?'Very High':'Extreme';
 const uvColor = u => u<=2?'#4ade80':u<=5?'#facc15':u<=7?'#fb923c':u<=10?'#f87171':'#c084fc';
+
+function precipType(code) {
+  if ([71,73,75,77].includes(code))  return { label:'Snow',          icon:'❄️',  detail:'Snowfall expected' };
+  if ([85,86].includes(code))        return { label:'Snow Showers',  icon:'🌨️',  detail:'Showery snowfall' };
+  if ([51,53,55].includes(code))     return { label:'Drizzle',       icon:'🌦️',  detail:'Light drizzle' };
+  if ([61,63,65].includes(code))     return { label:'Rain',          icon:'🌧️',  detail:'Rainfall expected' };
+  if ([80,81,82].includes(code))     return { label:'Rain Showers',  icon:'🌦️',  detail:'Showery rainfall' };
+  if ([95,96,99].includes(code))     return { label:'Thunderstorm',  icon:'⛈️',  detail:'Thunder & lightning' };
+  if ([45,48].includes(code))        return { label:'Fog',           icon:'🌫️',  detail:'Reduced visibility' };
+  return { label:'None', icon:'✅', detail:'No precipitation expected' };
+}
 
 // ── Dynamic Background ─────────────────────────────────────────────────────
 let particleAnim = null;
@@ -411,6 +424,7 @@ function renderWeather(cw, hourly, daily, place) {
   const minT = daily?.temperature_2m_min?.[0];
   const wind = cw.windspeed;
   const windBf = wind<1?'Calm':wind<6?'Light air':wind<12?'Light breeze':wind<20?'Gentle breeze':wind<29?'Moderate breeze':wind<38?'Fresh breeze':wind<50?'Strong breeze':'High wind';
+  const pt = precipType(code);
 
   applyBackground(code, rise, set);
 
@@ -430,14 +444,15 @@ function renderWeather(cw, hourly, daily, place) {
 
     <div class="wx-card wx-rain">
       <span class="wx-card-label">🌧️ Precipitation</span>
-      <span class="wx-card-icon">💧</span>
+      <span class="wx-card-icon">${pt.icon}</span>
       <span class="wx-card-main">${prec}<span class="wx-card-unit">%</span></span>
-      <span class="wx-card-sub">Chance of rain</span>
+      <span class="wx-card-sub">Chance of precipitation</span>
       <hr class="wx-divider"/>
+      <div class="wx-row"><span>Type</span><strong>${pt.label}</strong></div>
+      <div class="wx-row"><span>Detail</span><strong>${pt.detail}</strong></div>
       <div class="wx-row"><span>Humidity</span><strong>${hum}%</strong></div>
       <div class="wx-row"><span>Visibility</span><strong>${vis!=null?(vis/1000).toFixed(1)+' km':'—'}</strong></div>
-      <div class="wx-row"><span>Condition</span><strong>${WMO[code]??'—'}</strong></div>
-      <div class="wx-row"><span>Dew point</span><strong>${feel!=null?Math.round(cw.temperature - (100-hum)/5)+'°C':'—'}</strong></div>
+      <div class="wx-row"><span>Dew point</span><strong>${feel!=null?Math.round(cw.temperature-(100-hum)/5)+'°C':'—'}</strong></div>
     </div>
 
     <div class="wx-card wx-wind">
