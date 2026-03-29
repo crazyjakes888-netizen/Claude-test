@@ -263,10 +263,28 @@ const FALLBACK = [
   'Researchers develop breakthrough treatment for rare genetic disease',
 ];
 
-async function fetchRSS(url) {
-  const r = await fetch('https://api.rss2json.com/v1/api.json?count=20&rss_url=' + encodeURIComponent(url));
-  const j = await r.json();
-  if (j.status === 'ok' && j.items?.length) return j.items.map(i => i.title);
+async function fetchRSSvia(url) {
+  // Try rss2json proxy first
+  try {
+    const r = await fetch('https://api.rss2json.com/v1/api.json?count=20&rss_url=' + encodeURIComponent(url));
+    const j = await r.json();
+    if (j.status === 'ok' && j.items?.length) return j.items.map(i => i.title);
+  } catch {}
+  return null;
+}
+
+async function fetchRSSraw(url) {
+  // Fetch raw RSS via allorigins CORS proxy and parse XML
+  try {
+    const proxy = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(url);
+    const r = await fetch(proxy);
+    const text = await r.text();
+    const xml = new DOMParser().parseFromString(text, 'text/xml');
+    const titles = Array.from(xml.querySelectorAll('item title'))
+      .map(el => el.textContent.trim())
+      .filter(t => t && t !== 'Google News' && t.length > 10);
+    if (titles.length) return titles;
+  } catch {}
   return null;
 }
 
@@ -274,11 +292,11 @@ async function loadNews(city) {
   const newsLabel = document.querySelector('.news-label');
 
   if (city) {
-    // City-specific news via Google News RSS search
     newsLabel.innerHTML = '&#128308; ' + city + ' News';
     try {
-      const googleRSS = `https://news.google.com/rss/search?q=${encodeURIComponent(city)}&hl=en-US&gl=US&ceid=US:en`;
-      const headlines = await fetchRSS(googleRSS);
+      const googleRSS = `https://news.google.com/rss/search?q=${encodeURIComponent(city + ' news')}&hl=en-US&gl=US&ceid=US:en`;
+      // Use direct XML parsing since rss2json can't handle Google News
+      const headlines = await fetchRSSraw(googleRSS);
       if (headlines && headlines.length) { buildTicker(headlines); return; }
     } catch {}
   }
@@ -291,8 +309,8 @@ async function loadNews(city) {
   ];
   for (const feed of feeds) {
     try {
-      const headlines = await fetchRSS(feed);
-      if (headlines && headlines.length) { buildTicker(headlines); return; }
+      const h = await fetchRSSvia(feed) || await fetchRSSraw(feed);
+      if (h && h.length) { buildTicker(h); return; }
     } catch {}
   }
   buildTicker(FALLBACK);
