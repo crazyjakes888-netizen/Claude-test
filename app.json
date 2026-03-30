@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Weather & News",
-    "slug": "weather-news-app",
+    "name": "JJweather",
+    "slug": "jjweather",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -13,14 +13,14 @@
     },
     "ios": {
       "supportsTablet": false,
-      "bundleIdentifier": "com.yourname.weathernews"
+      "bundleIdentifier": "com.yourname.jjweather"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#1a1a2e"
       },
-      "package": "com.yourname.weathernews"
+      "package": "com.yourname.jjweather"
     },
     "web": {
       "favicon": "./assets/favicon.png"
