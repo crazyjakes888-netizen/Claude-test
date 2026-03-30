@@ -466,6 +466,20 @@
     <div id="alerts-container"></div>
   </div>
 
+  <!-- LOCATION PERMISSION MODAL -->
+  <div id="location-modal" style="display: none; position: fixed; inset: 0; z-index: 999; background: rgba(0,0,0,0.7); align-items: center; justify-content: center;">
+    <div style="background: #111; border: 1px solid rgba(108,99,255,0.3); border-radius: 16px; padding: 2rem; max-width: 380px; text-align: center; box-shadow: 0 20px 60px rgba(0,0,0,0.8);">
+      <div style="font-size: 3rem; margin-bottom: 1rem;">📍</div>
+      <div style="font-size: 1.3rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem;">JJweather</div>
+      <div style="font-size: 1rem; color: rgba(255,255,255,0.8); margin-bottom: 1.5rem;">wants to access your location</div>
+      <div style="font-size: 0.9rem; color: rgba(255,255,255,0.6); margin-bottom: 2rem; line-height: 1.5;">We use your location to show weather for your exact location.</div>
+      <div style="display: flex; gap: 1rem; justify-content: center;">
+        <button id="location-deny" style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; padding: 0.7rem 1.5rem; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; font-family: inherit; transition: all 0.2s;">Don't Allow</button>
+        <button id="location-allow" style="background: linear-gradient(135deg, #00e5a0, #38c6ff); border: none; color: #fff; padding: 0.7rem 1.5rem; border-radius: 8px; cursor: pointer; font-size: 0.95rem; font-weight: 600; font-family: inherit; transition: all 0.2s;">Allow</button>
+      </div>
+    </div>
+  </div>
+
   <!-- HERO SEARCH -->
   <div id="hero">
     <div id="hero-inner">
@@ -1281,38 +1295,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function attachLocationHandler() {
     const locBtn = document.getElementById('location-btn');
+    const modal = document.getElementById('location-modal');
+    const allowBtn = document.getElementById('location-allow');
+    const denyBtn = document.getElementById('location-deny');
+
     if (locBtn) {
       locBtn.onclick = function handleLocationClick() {
         if (navigator.geolocation) {
-          this.textContent = '📍 Finding location...';
-          this.disabled = true;
-          navigator.geolocation.getCurrentPosition(
-            (position) => {
-              const lat = position.coords.latitude;
-              const lon = position.coords.longitude;
-              const btn = document.getElementById('location-btn');
-              if (btn) {
-                btn.textContent = '📍 Use My Location';
-                btn.disabled = false;
-              }
-              fetchWeather(lat, lon, 'Your Location');
-            },
-            (error) => {
-              const btn = document.getElementById('location-btn');
-              if (btn) {
-                btn.textContent = '📍 Use My Location';
-                btn.disabled = false;
-              }
-              let msg = 'Unable to get location';
-              if (error.code === 1) msg = 'Permission denied. Enable location access.';
-              else if (error.code === 2) msg = 'Location unavailable. Try again.';
-              else if (error.code === 3) msg = 'Location request timed out.';
-              alert(msg);
-            }
-          );
+          modal.style.display = 'flex';
         } else {
           alert('Geolocation is not supported by your browser');
         }
+      };
+    }
+
+    if (allowBtn) {
+      allowBtn.onclick = function() {
+        modal.style.display = 'none';
+        const btn = document.getElementById('location-btn');
+        if (btn) {
+          btn.textContent = '📍 Finding location...';
+          btn.disabled = true;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const lat = position.coords.latitude;
+            const lon = position.coords.longitude;
+            const btn = document.getElementById('location-btn');
+            if (btn) {
+              btn.textContent = '📍 Use My Location';
+              btn.disabled = false;
+            }
+            fetchWeather(lat, lon, 'Your Location');
+          },
+          (error) => {
+            const btn = document.getElementById('location-btn');
+            if (btn) {
+              btn.textContent = '📍 Use My Location';
+              btn.disabled = false;
+            }
+            let msg = 'Unable to get location';
+            if (error.code === 1) msg = 'Permission denied. Enable location access.';
+            else if (error.code === 2) msg = 'Location unavailable. Try again.';
+            else if (error.code === 3) msg = 'Location request timed out.';
+            alert(msg);
+          }
+        );
+      };
+    }
+
+    if (denyBtn) {
+      denyBtn.onclick = function() {
+        modal.style.display = 'none';
       };
     }
   }
