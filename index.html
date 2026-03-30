@@ -1315,82 +1315,67 @@ const WEATHER_ALERTS = [
   },
 ];
 
-function showAlert(alert) {
-  const alertsBar = document.getElementById('alerts-bar');
+function displayAlert(alert) {
   const container = document.getElementById('alerts-container');
+  if (!container || !alert) return;
 
-  if (!alert) {
-    alertsBar.style.display = 'none';
-    return;
-  }
-
-  alertsBar.style.display = 'block';
-
-  const card = document.createElement('div');
-  card.className = `alert-card ${alert.severity} active`;
-  card.innerHTML = `
-    <div class="alert-header">
-      <span class="alert-type">${alert.type}</span>
-      <span class="alert-severity">${alert.severity}</span>
+  container.innerHTML = `
+    <div class="alert-card ${alert.severity} active" style="width: 100%; height: 100%;">
+      <div class="alert-header">
+        <span class="alert-type">${alert.type}</span>
+        <span class="alert-severity">${alert.severity}</span>
+      </div>
+      <div class="alert-location">📍 ${alert.location}</div>
+      <div class="alert-description">${alert.description}</div>
+      <div class="alert-time">${alert.time}</div>
     </div>
-    <div class="alert-location">📍 ${alert.location}</div>
-    <div class="alert-description">${alert.description}</div>
-    <div class="alert-time">${alert.time}</div>
   `;
-
-  container.innerHTML = '';
-  container.appendChild(card);
 }
 
-function getCurrentAlert() {
-  const saved = localStorage.getItem('currentAlert');
-  return saved ? JSON.parse(saved) : (WEATHER_ALERTS.length > 0 ? WEATHER_ALERTS[0] : null);
-}
+function loadAlerts() {
+  try {
+    const saved = localStorage.getItem('currentAlert');
+    let alert = saved ? JSON.parse(saved) : null;
 
-function setCurrentAlert(alert) {
-  localStorage.setItem('currentAlert', JSON.stringify(alert));
-}
+    if (!alert && WEATHER_ALERTS.length > 0) {
+      alert = WEATHER_ALERTS[0];
+      localStorage.setItem('currentAlert', JSON.stringify(alert));
+    }
 
-function initializeAlerts() {
-  const currentAlert = getCurrentAlert();
-  if (currentAlert) {
-    showAlert(currentAlert);
-  } else if (WEATHER_ALERTS.length > 0) {
-    setCurrentAlert(WEATHER_ALERTS[0]);
-    showAlert(WEATHER_ALERTS[0]);
+    if (alert) {
+      displayAlert(alert);
+      const alertsBar = document.getElementById('alerts-bar');
+      if (alertsBar) alertsBar.style.display = 'block';
+    }
+  } catch (e) {
+    console.error('Error loading alerts:', e);
   }
 }
 
-function hideAlerts() {
-  const alertsBar = document.getElementById('alerts-bar');
-  alertsBar.style.display = 'none';
-}
-
-function toggleAlertsVisibility() {
+function updateAlertsVisibility() {
   const hero = document.getElementById('hero');
   const weather = document.getElementById('weather');
+  const alertsBar = document.getElementById('alerts-bar');
 
-  // Only show alerts on home page (when hero is visible and weather is not)
-  if (hero.style.display !== 'none' && weather.style.display === 'none') {
-    const currentAlert = getCurrentAlert();
-    if (currentAlert) {
-      showAlert(currentAlert);
-    }
+  if (!alertsBar) return;
+
+  // Show alerts only on home page
+  const isHome = hero && weather &&
+                 window.getComputedStyle(hero).display !== 'none' &&
+                 window.getComputedStyle(weather).display === 'none';
+
+  if (isHome) {
+    alertsBar.style.display = 'block';
   } else {
-    hideAlerts();
+    alertsBar.style.display = 'none';
   }
 }
 
-// Initialize alerts after DOM is ready
-if (document.readyState === 'loading') {
-  document.addEventListener('DOMContentLoaded', () => {
-    initializeAlerts();
-    setInterval(toggleAlertsVisibility, 500);
-  });
-} else {
-  initializeAlerts();
-  setInterval(toggleAlertsVisibility, 500);
-}
+// Load alerts when DOM is ready
+setTimeout(() => {
+  loadAlerts();
+  setInterval(updateAlertsVisibility, 500);
+}, 100);
 </script>
 <div style="position:fixed;bottom:1rem;left:1rem;z-index:999;font-size:0.72rem;color:rgba(255,255,255,0.35);pointer-events:none;letter-spacing:0.04em;">Powered by Claude.ai</div>
 </body>
