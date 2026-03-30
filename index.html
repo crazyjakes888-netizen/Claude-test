@@ -97,29 +97,43 @@
     /* ── WEATHER ALERTS ── */
     #alerts-bar {
       position: relative; z-index: 250;
-      background: linear-gradient(135deg, rgba(255,94,108,0.1), rgba(255,155,58,0.1));
+      background: linear-gradient(135deg, rgba(255,94,108,0.08), rgba(255,155,58,0.08));
       border-bottom: 1px solid rgba(255,94,108,0.2);
       padding: 0;
     }
     #alerts-container {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 1rem;
+      width: 320px;
+      height: 140px;
     }
     .alert-card {
-      background: rgba(30,30,50,0.8);
+      background: rgba(30,30,50,0.85);
       border: 1px solid rgba(255,94,108,0.3);
       border-left: 4px solid #ff5e6c;
       border-radius: 10px;
-      padding: 1rem;
+      padding: 1.2rem;
       backdrop-filter: blur(12px);
       cursor: pointer;
-      transition: all 0.2s;
+      transition: all 0.4s ease;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      overflow: hidden;
+      position: absolute;
+      opacity: 0;
+    }
+    .alert-card.active {
+      opacity: 1;
+      animation: slideIn 0.4s ease;
+    }
+    @keyframes slideIn {
+      from { transform: translateX(20px); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
     }
     .alert-card:hover {
       background: rgba(40,40,60,0.9);
       border-color: rgba(255,94,108,0.5);
-      transform: translateY(-2px);
     }
     .alert-card.high {
       border-left-color: #e17055;
@@ -141,38 +155,31 @@
       color: #fff;
     }
     .alert-severity {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       font-weight: 700;
       text-transform: uppercase;
-      padding: 0.25rem 0.5rem;
+      padding: 0.2rem 0.45rem;
       border-radius: 4px;
-      background: rgba(255,94,108,0.2);
+      background: rgba(255,94,108,0.25);
       color: #ff9aa3;
     }
     .alert-location {
-      font-size: 0.85rem;
-      color: rgba(255,255,255,0.7);
-      margin-bottom: 0.5rem;
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.8);
+      margin-bottom: 0.4rem;
+      font-weight: 500;
     }
     .alert-description {
-      font-size: 0.8rem;
-      color: rgba(255,255,255,0.6);
-      line-height: 1.4;
-      max-height: 0;
-      overflow: hidden;
-      transition: max-height 0.3s;
-    }
-    .alert-card.expanded .alert-description {
-      max-height: 200px;
+      font-size: 0.75rem;
+      color: rgba(255,255,255,0.65);
+      line-height: 1.3;
+      flex-grow: 1;
     }
     .alert-time {
-      font-size: 0.7rem;
+      font-size: 0.65rem;
       color: rgba(255,255,255,0.4);
       margin-top: 0.5rem;
-      display: none;
-    }
-    .alert-card.expanded .alert-time {
-      display: block;
+      font-weight: 500;
     }
 
     /* ── HERO SEARCH ── */
@@ -452,7 +459,7 @@
 
   <!-- WEATHER ALERTS -->
   <div id="alerts-bar" style="display: none;">
-    <div id="alerts-container" style="padding: 1rem 1.5rem; max-width: 1200px; margin: 0 auto;"></div>
+    <div id="alerts-container" style="padding: 1rem 1.5rem;"></div>
   </div>
 
   <!-- HERO SEARCH -->
@@ -1230,7 +1237,7 @@ function cyclePlaceholder() {
 }
 setInterval(cyclePlaceholder, 2800);
 
-// Weather Alerts
+// Weather Alerts Carousel
 const WEATHER_ALERTS = [
   {
     id: '1',
@@ -1266,7 +1273,10 @@ const WEATHER_ALERTS = [
   },
 ];
 
-function renderAlerts() {
+let alertIndex = 0;
+let alertInterval;
+
+function showAlert(index) {
   const alertsBar = document.getElementById('alerts-bar');
   const container = document.getElementById('alerts-container');
 
@@ -1275,30 +1285,39 @@ function renderAlerts() {
     return;
   }
 
+  const alert = WEATHER_ALERTS[index];
   alertsBar.style.display = 'block';
-  container.innerHTML = '';
 
-  WEATHER_ALERTS.forEach(alert => {
-    const card = document.createElement('div');
-    card.className = `alert-card ${alert.severity}`;
-    card.innerHTML = `
-      <div class="alert-header">
-        <span class="alert-type">${alert.type}</span>
-        <span class="alert-severity">${alert.severity}</span>
-      </div>
-      <div class="alert-location">📍 ${alert.location}</div>
-      <div class="alert-description">${alert.description}</div>
-      <div class="alert-time">${alert.time}</div>
-    `;
-    card.addEventListener('click', () => {
-      card.classList.toggle('expanded');
-    });
-    container.appendChild(card);
-  });
+  const card = document.createElement('div');
+  card.className = `alert-card ${alert.severity} active`;
+  card.innerHTML = `
+    <div class="alert-header">
+      <span class="alert-type">${alert.type}</span>
+      <span class="alert-severity">${alert.severity}</span>
+    </div>
+    <div class="alert-location">📍 ${alert.location}</div>
+    <div class="alert-description">${alert.description}</div>
+    <div class="alert-time">${alert.time}</div>
+  `;
+
+  container.innerHTML = '';
+  container.appendChild(card);
+}
+
+function initializeAlerts() {
+  if (WEATHER_ALERTS.length === 0) return;
+
+  showAlert(0);
+
+  // Auto-rotate alerts every 6 seconds
+  alertInterval = setInterval(() => {
+    alertIndex = (alertIndex + 1) % WEATHER_ALERTS.length;
+    showAlert(alertIndex);
+  }, 6000);
 }
 
 // Initialize alerts on page load
-renderAlerts();
+initializeAlerts();
 </script>
 <div style="position:fixed;bottom:1rem;left:1rem;z-index:999;font-size:0.72rem;color:rgba(255,255,255,0.35);pointer-events:none;letter-spacing:0.04em;">Powered by Claude.ai</div>
 </body>
