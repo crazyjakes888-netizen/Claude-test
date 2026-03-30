@@ -94,6 +94,87 @@
     .news-item::before { content: ''; }
     @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
+    /* ── WEATHER ALERTS ── */
+    #alerts-bar {
+      position: relative; z-index: 250;
+      background: linear-gradient(135deg, rgba(255,94,108,0.1), rgba(255,155,58,0.1));
+      border-bottom: 1px solid rgba(255,94,108,0.2);
+      padding: 0;
+    }
+    #alerts-container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1rem;
+    }
+    .alert-card {
+      background: rgba(30,30,50,0.8);
+      border: 1px solid rgba(255,94,108,0.3);
+      border-left: 4px solid #ff5e6c;
+      border-radius: 10px;
+      padding: 1rem;
+      backdrop-filter: blur(12px);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .alert-card:hover {
+      background: rgba(40,40,60,0.9);
+      border-color: rgba(255,94,108,0.5);
+      transform: translateY(-2px);
+    }
+    .alert-card.high {
+      border-left-color: #e17055;
+      border-color: rgba(225,112,85,0.3);
+    }
+    .alert-card.moderate {
+      border-left-color: #fdcb6e;
+      border-color: rgba(253,203,110,0.3);
+    }
+    .alert-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.5rem;
+    }
+    .alert-type {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #fff;
+    }
+    .alert-severity {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      background: rgba(255,94,108,0.2);
+      color: #ff9aa3;
+    }
+    .alert-location {
+      font-size: 0.85rem;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 0.5rem;
+    }
+    .alert-description {
+      font-size: 0.8rem;
+      color: rgba(255,255,255,0.6);
+      line-height: 1.4;
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s;
+    }
+    .alert-card.expanded .alert-description {
+      max-height: 200px;
+    }
+    .alert-time {
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.4);
+      margin-top: 0.5rem;
+      display: none;
+    }
+    .alert-card.expanded .alert-time {
+      display: block;
+    }
+
     /* ── HERO SEARCH ── */
     #hero {
       display: flex; flex-direction: column; align-items: center;
@@ -367,6 +448,11 @@
     <div class="news-track-wrap">
       <div class="news-track" id="news-track"></div>
     </div>
+  </div>
+
+  <!-- WEATHER ALERTS -->
+  <div id="alerts-bar" style="display: none;">
+    <div id="alerts-container" style="padding: 1rem 1.5rem; max-width: 1200px; margin: 0 auto;"></div>
   </div>
 
   <!-- HERO SEARCH -->
@@ -1143,6 +1229,76 @@ function cyclePlaceholder() {
   }, 500);
 }
 setInterval(cyclePlaceholder, 2800);
+
+// Weather Alerts
+const WEATHER_ALERTS = [
+  {
+    id: '1',
+    type: 'Earthquake',
+    severity: 'critical',
+    location: 'Japan (Honshu)',
+    description: 'Major earthquake with magnitude 7.2 detected. Potential tsunami warning in effect. Residents in coastal areas advised to evacuate immediately.',
+    time: '2 hours ago',
+  },
+  {
+    id: '2',
+    type: 'Tornado Warning',
+    severity: 'high',
+    location: 'Oklahoma, USA',
+    description: 'Severe tornado warning issued for multiple counties. Seek shelter in basement immediately. Do not attempt to outrun tornadoes.',
+    time: '45 minutes ago',
+  },
+  {
+    id: '3',
+    type: 'Flooding',
+    severity: 'high',
+    location: 'Bangladesh (Dhaka Region)',
+    description: 'Heavy monsoon rains causing severe flooding. River levels rising rapidly. Evacuation orders in effect for low-lying areas.',
+    time: '3 hours ago',
+  },
+  {
+    id: '4',
+    type: 'Severe Storm',
+    severity: 'moderate',
+    location: 'Central Europe',
+    description: 'Hailstorms and strong winds expected. Gusts up to 80 km/h. Prepare for potential damage to agriculture and property.',
+    time: '1 hour ago',
+  },
+];
+
+function renderAlerts() {
+  const alertsBar = document.getElementById('alerts-bar');
+  const container = document.getElementById('alerts-container');
+
+  if (WEATHER_ALERTS.length === 0) {
+    alertsBar.style.display = 'none';
+    return;
+  }
+
+  alertsBar.style.display = 'block';
+  container.innerHTML = '';
+
+  WEATHER_ALERTS.forEach(alert => {
+    const card = document.createElement('div');
+    card.className = `alert-card ${alert.severity}`;
+    card.innerHTML = `
+      <div class="alert-header">
+        <span class="alert-type">${alert.type}</span>
+        <span class="alert-severity">${alert.severity}</span>
+      </div>
+      <div class="alert-location">📍 ${alert.location}</div>
+      <div class="alert-description">${alert.description}</div>
+      <div class="alert-time">${alert.time}</div>
+    `;
+    card.addEventListener('click', () => {
+      card.classList.toggle('expanded');
+    });
+    container.appendChild(card);
+  });
+}
+
+// Initialize alerts on page load
+renderAlerts();
 </script>
 <div style="position:fixed;bottom:1rem;left:1rem;z-index:999;font-size:0.72rem;color:rgba(255,255,255,0.35);pointer-events:none;letter-spacing:0.04em;">Powered by Claude.ai</div>
 </body>
