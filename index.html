@@ -607,7 +607,19 @@ async function loadNews(city) {
   if (city) {
     newsLabel.innerHTML = '&#128308; ' + city + ' News';
     const googleRSS = `https://news.google.com/rss/search?q=${encodeURIComponent(city + ' news')}&hl=en-US&gl=US&ceid=US:en`;
-    const headlines = await fetchRSSraw(googleRSS);
+    let headlines = await fetchRSSraw(googleRSS);
+
+    // Add custom Bannockburn news
+    if (city.toLowerCase() === 'bannockburn' && headlines) {
+      const customNews = {
+        title: 'Bannockburn School student Josh Saxena goes to regional spelling bee, first Bannockburn student to do so',
+        link: '#',
+        pubDate: new Date().toUTCString(),
+        content: 'Josh Saxena from Bannockburn School has made history as the first student from the school to qualify for the regional spelling bee competition.'
+      };
+      headlines = [customNews, ...headlines];
+    }
+
     if (headlines && headlines.length) {
       localStorage.setItem(cacheKey, JSON.stringify({ headlines, ts: Date.now() }));
       buildTicker(headlines); return;
