@@ -1311,15 +1311,13 @@ function showAlert(index) {
 function initializeAlerts() {
   if (WEATHER_ALERTS.length === 0) return;
 
-  // Show only the first alert (most recent/critical)
   showAlert(0);
-  alertIndex = 0;
 
-  // Clear any existing interval
-  if (alertInterval) {
-    clearInterval(alertInterval);
-    alertInterval = null;
-  }
+  // Auto-rotate alerts every 6 seconds
+  alertInterval = setInterval(() => {
+    alertIndex = (alertIndex + 1) % WEATHER_ALERTS.length;
+    showAlert(alertIndex);
+  }, 6000);
 }
 
 function hideAlerts() {
