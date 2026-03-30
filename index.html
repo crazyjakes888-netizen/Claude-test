@@ -462,7 +462,7 @@
   </div>
 
   <!-- WEATHER ALERTS -->
-  <div id="alerts-bar" style="display: none;">
+  <div id="alerts-bar">
     <div id="alerts-container"></div>
   </div>
 
@@ -1381,11 +1381,16 @@ function toggleAlertsVisibility() {
   }
 }
 
-// Initialize alerts on page load
-initializeAlerts();
-
-// Monitor page navigation to show/hide alerts
-setInterval(toggleAlertsVisibility, 500);
+// Initialize alerts after DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    initializeAlerts();
+    setInterval(toggleAlertsVisibility, 500);
+  });
+} else {
+  initializeAlerts();
+  setInterval(toggleAlertsVisibility, 500);
+}
 </script>
 <div style="position:fixed;bottom:1rem;left:1rem;z-index:999;font-size:0.72rem;color:rgba(255,255,255,0.35);pointer-events:none;letter-spacing:0.04em;">Powered by Claude.ai</div>
 </body>
