@@ -711,9 +711,9 @@ function applyBackground(code, sunrise, sunset) {
     'fog':         'linear-gradient(180deg, #6b7280 0%, #9ca3af 100%)',
   };
   if (isDusk && cat.includes('clear')) {
-    bg.style.background = 'linear-gradient(180deg, #7c3aed 0%, #db2777 40%, #ea580c 70%, #1c1917 100%)';
+    bg.style.background = 'linear-gradient(180deg, #4b5563 0%, #64748b 40%, #94a3b8 70%, #0f172a 100%)';
   } else if (isDawn && cat.includes('clear')) {
-    bg.style.background = 'linear-gradient(180deg, #1c1917 0%, #9a3412 30%, #fb923c 60%, #fde68a 100%)';
+    bg.style.background = 'linear-gradient(180deg, #1e293b 0%, #475569 30%, #64748b 60%, #94a3b8 100%)';
   } else {
     bg.style.background = gradients[cat] || gradients['clear-night'];
   }
