@@ -1279,35 +1279,44 @@ document.addEventListener('DOMContentLoaded', () => {
     updateUnitButton();
   }
 
-  const locBtn = document.getElementById('location-btn');
-  if (locBtn) {
-    locBtn.addEventListener('click', () => {
-      if (navigator.geolocation) {
-        locBtn.textContent = '📍 Finding location...';
-        locBtn.disabled = true;
-        navigator.geolocation.getCurrentPosition(
-          (position) => {
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
-            locBtn.textContent = '📍 Use My Location';
-            locBtn.disabled = false;
-            fetchWeather(lat, lon, 'Your Location');
-          },
-          (error) => {
-            locBtn.textContent = '📍 Use My Location';
-            locBtn.disabled = false;
-            let msg = 'Unable to get location';
-            if (error.code === 1) msg = 'Permission denied. Enable location access.';
-            else if (error.code === 2) msg = 'Location unavailable. Try again.';
-            else if (error.code === 3) msg = 'Location request timed out.';
-            alert(msg);
-          }
-        );
-      } else {
-        alert('Geolocation is not supported by your browser');
-      }
-    });
+  function attachLocationHandler() {
+    const locBtn = document.getElementById('location-btn');
+    if (locBtn) {
+      locBtn.onclick = function handleLocationClick() {
+        if (navigator.geolocation) {
+          this.textContent = '📍 Finding location...';
+          this.disabled = true;
+          navigator.geolocation.getCurrentPosition(
+            (position) => {
+              const lat = position.coords.latitude;
+              const lon = position.coords.longitude;
+              const btn = document.getElementById('location-btn');
+              if (btn) {
+                btn.textContent = '📍 Use My Location';
+                btn.disabled = false;
+              }
+              fetchWeather(lat, lon, 'Your Location');
+            },
+            (error) => {
+              const btn = document.getElementById('location-btn');
+              if (btn) {
+                btn.textContent = '📍 Use My Location';
+                btn.disabled = false;
+              }
+              let msg = 'Unable to get location';
+              if (error.code === 1) msg = 'Permission denied. Enable location access.';
+              else if (error.code === 2) msg = 'Location unavailable. Try again.';
+              else if (error.code === 3) msg = 'Location request timed out.';
+              alert(msg);
+            }
+          );
+        } else {
+          alert('Geolocation is not supported by your browser');
+        }
+      };
+    }
   }
+  attachLocationHandler();
 });
 
 // Weather Alerts Carousel
