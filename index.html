@@ -471,6 +471,9 @@
     <div id="hero-inner">
       <div id="hero-title">Live Weather</div>
       <div id="hero-tagline">Where in the world?</div>
+      <div style="display: flex; gap: 0.5rem; margin-bottom: 1.5rem; justify-content: center;">
+        <button id="unit-toggle" style="background: linear-gradient(135deg, var(--accent), #a855f7); border: none; border-radius: 8px; color: #fff; font-size: 0.85rem; font-weight: 700; padding: 0.5rem 1rem; cursor: pointer; font-family: inherit; transition: opacity 0.15s, transform 0.15s;">°C / km/h</button>
+      </div>
       <div class="wx-search">
         <div class="wx-search-wrap">
           <span class="wx-search-icon">📍</span>
@@ -939,13 +942,12 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
     <div class="wx-card wx-temp">
       <span class="wx-card-label">🌡️ Temperature</span>
       <span class="wx-card-icon">${cw.temperature>=35?'🌡️':cw.temperature>=20?'🌡️':cw.temperature>=10?'🌡️':cw.temperature>=0?'🌡️':'❄️'}</span>
-      <span class="wx-card-main">${c2f(cw.temperature)}<span class="wx-card-unit">°F</span></span>
-      <span class="wx-card-sub">${cw.temperature}°C</span>
+      <span class="wx-card-main">${isMetric?cw.temperature:c2f(cw.temperature)}<span class="wx-card-unit">${isMetric?'°C':'°F'}</span></span>
+      <span class="wx-card-sub">${isMetric?c2f(cw.temperature)+'°F':cw.temperature+'°C'}</span>
       <hr class="wx-divider"/>
-      <div class="wx-row"><span>Feels like</span><strong>${feel!=null?c2f(feel)+'°F':' —'}</strong></div>
-      <div class="wx-row"><span>Feels like °C</span><strong>${feel!=null?feel+'°C':'—'}</strong></div>
-      <div class="wx-row"><span>Today high</span><strong>${maxT!=null?c2f(maxT)+'°F':'—'}</strong></div>
-      <div class="wx-row"><span>Today low</span><strong>${minT!=null?c2f(minT)+'°F':'—'}</strong></div>
+      <div class="wx-row"><span>Feels like</span><strong>${feel!=null?(isMetric?feel+'°C':c2f(feel)+'°F'):'—'}</strong></div>
+      <div class="wx-row"><span>Today high</span><strong>${maxT!=null?(isMetric?maxT+'°C':c2f(maxT)+'°F'):'—'}</strong></div>
+      <div class="wx-row"><span>Today low</span><strong>${minT!=null?(isMetric?minT+'°C':c2f(minT)+'°F'):'—'}</strong></div>
       <div class="wx-row"><span>Humidity</span><strong>${hum}%</strong></div>
     </div>
 
@@ -958,18 +960,18 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
       <div class="wx-row"><span>Type</span><strong>${pt.label}</strong></div>
       <div class="wx-row"><span>Detail</span><strong>${pt.detail}</strong></div>
       <div class="wx-row"><span>Humidity</span><strong>${hum}%</strong></div>
-      <div class="wx-row"><span>Visibility</span><strong>${vis!=null?(vis/1000).toFixed(1)+' km':'—'}</strong></div>
+      <div class="wx-row"><span>Visibility</span><strong>${vis!=null?(isMetric?(vis/1000).toFixed(1)+' km':(vis/1609).toFixed(1)+' mi'):'—'}</strong></div>
       <div class="wx-row"><span>Dew point</span><strong>${feel!=null?Math.round(cw.temperature-(100-hum)/5)+'°C':'—'}</strong></div>
     </div>
 
     <div class="wx-card wx-wind">
       <span class="wx-card-label">💨 Wind & Air Quality</span>
       <span class="wx-card-icon">🌬️</span>
-      <span class="wx-card-main">${wind}<span class="wx-card-unit"> km/h</span></span>
+      <span class="wx-card-main">${isMetric?wind:(wind*0.621).toFixed(1)}<span class="wx-card-unit"> ${isMetric?'km/h':'mph'}</span></span>
       <span class="wx-card-sub">${windBf}</span>
       <hr class="wx-divider"/>
       <div class="wx-row"><span>Direction</span><strong>${wdir(cw.winddirection)} (${cw.winddirection}°)</strong></div>
-      <div class="wx-row"><span>Speed mph</span><strong>${(wind*0.621).toFixed(1)} mph</strong></div>
+      <div class="wx-row"><span>Speed ${isMetric?'mph':'km/h'}</span><strong>${isMetric?(wind*0.621).toFixed(1):wind} ${isMetric?'mph':'km/h'}</strong></div>
       <div class="wx-row"><span>Speed m/s</span><strong>${(wind/3.6).toFixed(1)} m/s</strong></div>
       <div class="wx-row"><span>Beaufort</span><strong>${windBf}</strong></div>
       ${aq ? `<hr class="wx-divider"/><div class="wx-row"><span>PM2.5</span><strong>${aq.pm2_5?.toFixed(1) || '—'} µg/m³</strong></div>
@@ -982,10 +984,10 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
       <span class="wx-card-icon">${ICONS[code]??'🌡️'}</span>
       <span class="wx-card-main">${WMO[code]??'Unknown'}</span>
       <hr class="wx-divider"/>
-      <div class="wx-row"><span>Visibility</span><strong>${vis!=null?(vis/1000).toFixed(1)+' km':'—'}</strong></div>
+      <div class="wx-row"><span>Visibility</span><strong>${vis!=null?(isMetric?(vis/1000).toFixed(1)+' km':(vis/1609).toFixed(1)+' mi'):'—'}</strong></div>
       <div class="wx-row"><span>Humidity</span><strong>${hum}%</strong></div>
       <div class="wx-row"><span>Precip chance</span><strong>${prec}%</strong></div>
-      <div class="wx-row"><span>Wind</span><strong>${wind} km/h ${wdir(cw.winddirection)}</strong></div>
+      <div class="wx-row"><span>Wind</span><strong>${isMetric?wind+' km/h':(wind*0.621).toFixed(1)+' mph'} ${wdir(cw.winddirection)}</strong></div>
     </div>
 
     <div class="wx-card wx-uv">
@@ -1245,6 +1247,37 @@ function cyclePlaceholder() {
   }, 500);
 }
 setInterval(cyclePlaceholder, 2800);
+
+// Unit System Toggle
+let isMetric = JSON.parse(localStorage.getItem('isMetric') ?? 'true');
+
+function updateUnitButton() {
+  const btn = document.getElementById('unit-toggle');
+  if (btn) {
+    btn.textContent = isMetric ? '°C / km/h' : '°F / mph';
+  }
+}
+
+function toggleUnits() {
+  isMetric = !isMetric;
+  localStorage.setItem('isMetric', JSON.stringify(isMetric));
+  updateUnitButton();
+  // Refresh weather if displayed
+  const weather = document.getElementById('weather');
+  if (weather.style.display !== 'none') {
+    // Re-render current weather with new units
+    const title = document.getElementById('wx-loc');
+    if (title) location.reload();
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const btn = document.getElementById('unit-toggle');
+  if (btn) {
+    btn.addEventListener('click', toggleUnits);
+    updateUnitButton();
+  }
+});
 
 // Weather Alerts Carousel
 const WEATHER_ALERTS = [
