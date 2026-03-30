@@ -904,7 +904,7 @@ function startLightning() {
 }
 
 // ── Render weather cards ───────────────────────────────────────────────────
-function renderWeather(cw, hourly, daily, place, timezone) {
+function renderWeather(cw, hourly, daily, place, timezone, aq) {
   document.getElementById('wx-loc').textContent = place;
 
   const tz = timezone || Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -963,7 +963,7 @@ function renderWeather(cw, hourly, daily, place, timezone) {
     </div>
 
     <div class="wx-card wx-wind">
-      <span class="wx-card-label">💨 Wind</span>
+      <span class="wx-card-label">💨 Wind & Air Quality</span>
       <span class="wx-card-icon">🌬️</span>
       <span class="wx-card-main">${wind}<span class="wx-card-unit"> km/h</span></span>
       <span class="wx-card-sub">${windBf}</span>
@@ -972,6 +972,9 @@ function renderWeather(cw, hourly, daily, place, timezone) {
       <div class="wx-row"><span>Speed mph</span><strong>${(wind*0.621).toFixed(1)} mph</strong></div>
       <div class="wx-row"><span>Speed m/s</span><strong>${(wind/3.6).toFixed(1)} m/s</strong></div>
       <div class="wx-row"><span>Beaufort</span><strong>${windBf}</strong></div>
+      ${aq ? `<hr class="wx-divider"/><div class="wx-row"><span>PM2.5</span><strong>${aq.pm2_5?.toFixed(1) || '—'} µg/m³</strong></div>
+      <div class="wx-row"><span>PM10</span><strong>${aq.pm10?.toFixed(1) || '—'} µg/m³</strong></div>
+      <div class="wx-row"><span>US AQI</span><strong>${aq.us_aqi?.toFixed(0) || '—'}</strong></div>` : ''}
     </div>
 
     <div class="wx-card wx-cond">
@@ -1002,11 +1005,13 @@ function renderWeather(cw, hourly, daily, place, timezone) {
 // ── Fetch weather ──────────────────────────────────────────────────────────
 async function fetchWeather(lat, lon, label) {
   try {
-    const [wRes, gRes] = await Promise.all([
+    const [wRes, aqRes, gRes] = await Promise.all([
       fetchT(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=apparent_temperature,relative_humidity_2m,precipitation_probability,visibility&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&timezone=auto&forecast_days=1`),
+      fetchT(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm10,pm2_5,us_aqi&timezone=auto`),
       label ? Promise.resolve(null) : fetchT(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
     ]);
     const w = await wRes.json();
+    const aq = await aqRes.json();
     let place = label;
     if (!place && gRes) {
       const g = await gRes.json();
@@ -1014,7 +1019,7 @@ async function fetchWeather(lat, lon, label) {
       place = a.city||a.town||a.village||a.hamlet||a.suburb||a.county||'Your Location';
       if (a.state) place += ', ' + a.state;
     }
-    renderWeather(w.current_weather, w.hourly, w.daily, place, w.timezone);
+    renderWeather(w.current_weather, w.hourly, w.daily, place, w.timezone, aq.current);
   } catch {
     document.getElementById('wx-loc').textContent = 'Error loading weather';
   }
