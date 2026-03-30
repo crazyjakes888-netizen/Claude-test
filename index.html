@@ -1282,19 +1282,15 @@ const WEATHER_ALERTS = [
   },
 ];
 
-let alertIndex = 0;
-let alertInterval;
-
-function showAlert(index) {
+function showAlert(alert) {
   const alertsBar = document.getElementById('alerts-bar');
   const container = document.getElementById('alerts-container');
 
-  if (WEATHER_ALERTS.length === 0) {
+  if (!alert) {
     alertsBar.style.display = 'none';
     return;
   }
 
-  const alert = WEATHER_ALERTS[index];
   alertsBar.style.display = 'block';
 
   const card = document.createElement('div');
@@ -1313,33 +1309,39 @@ function showAlert(index) {
   container.appendChild(card);
 }
 
+function getCurrentAlert() {
+  const saved = localStorage.getItem('currentAlert');
+  return saved ? JSON.parse(saved) : (WEATHER_ALERTS.length > 0 ? WEATHER_ALERTS[0] : null);
+}
+
+function setCurrentAlert(alert) {
+  localStorage.setItem('currentAlert', JSON.stringify(alert));
+}
+
 function initializeAlerts() {
-  if (WEATHER_ALERTS.length === 0) return;
-
-  showAlert(0);
-
-  // Auto-rotate alerts every 6 seconds
-  alertInterval = setInterval(() => {
-    alertIndex = (alertIndex + 1) % WEATHER_ALERTS.length;
-    showAlert(alertIndex);
-  }, 6000);
+  const currentAlert = getCurrentAlert();
+  if (currentAlert) {
+    showAlert(currentAlert);
+  } else if (WEATHER_ALERTS.length > 0) {
+    setCurrentAlert(WEATHER_ALERTS[0]);
+    showAlert(WEATHER_ALERTS[0]);
+  }
 }
 
 function hideAlerts() {
   const alertsBar = document.getElementById('alerts-bar');
   alertsBar.style.display = 'none';
-  if (alertInterval) clearInterval(alertInterval);
 }
 
 function toggleAlertsVisibility() {
   const hero = document.getElementById('hero');
   const weather = document.getElementById('weather');
-  const alertsBar = document.getElementById('alerts-bar');
 
   // Only show alerts on home page (when hero is visible and weather is not)
   if (hero.style.display !== 'none' && weather.style.display === 'none') {
-    if (!alertInterval) {
-      initializeAlerts();
+    const currentAlert = getCurrentAlert();
+    if (currentAlert) {
+      showAlert(currentAlert);
     }
   } else {
     hideAlerts();
