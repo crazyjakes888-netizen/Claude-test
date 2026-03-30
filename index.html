@@ -96,47 +96,39 @@
 
     /* ── WEATHER ALERTS ── */
     #alerts-bar {
-      position: relative; z-index: 250;
-      width: 100%;
-      height: 120px;
-      background: linear-gradient(135deg, rgba(255,94,108,0.12), rgba(255,155,58,0.12));
-      border-bottom: 1px solid rgba(255,94,108,0.25);
-      padding: 0;
-      display: flex;
-      align-items: center;
+      position: fixed; top: 36px; left: 0; z-index: 250;
+      padding: 1rem;
     }
     #alerts-container {
-      width: 100%;
-      height: 80px;
-      padding: 0 1.5rem;
-      display: flex;
-      align-items: center;
+      width: 340px;
+      height: 140px;
+      position: relative;
     }
     .alert-card {
-      background: rgba(30,30,50,0.9);
+      background: rgba(30,30,50,0.95);
       border: 1px solid rgba(255,94,108,0.4);
       border-left: 5px solid #ff5e6c;
-      border-radius: 8px;
-      padding: 1rem 1.5rem;
+      border-radius: 10px;
+      padding: 1.2rem;
       backdrop-filter: blur(16px);
       cursor: pointer;
-      transition: all 0.4s ease;
+      transition: all 0.5s ease;
       width: 100%;
-      max-width: 100%;
       height: 100%;
       display: flex;
       flex-direction: column;
       justify-content: space-between;
       overflow: hidden;
-      position: relative;
+      position: absolute;
       opacity: 0;
+      box-shadow: 0 8px 32px rgba(0,0,0,0.4);
     }
     .alert-card.active {
       opacity: 1;
-      animation: slideIn 0.4s ease;
+      animation: slideIn 0.5s ease;
     }
     @keyframes slideIn {
-      from { transform: translateX(20px); opacity: 0; }
+      from { transform: translateX(-20px); opacity: 0; }
       to { transform: translateX(0); opacity: 1; }
     }
     .alert-card:hover {
