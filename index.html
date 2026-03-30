@@ -1320,8 +1320,32 @@ function initializeAlerts() {
   }, 6000);
 }
 
+function hideAlerts() {
+  const alertsBar = document.getElementById('alerts-bar');
+  alertsBar.style.display = 'none';
+  if (alertInterval) clearInterval(alertInterval);
+}
+
+function toggleAlertsVisibility() {
+  const hero = document.getElementById('hero');
+  const weather = document.getElementById('weather');
+  const alertsBar = document.getElementById('alerts-bar');
+
+  // Only show alerts on home page (when hero is visible and weather is not)
+  if (hero.style.display !== 'none' && weather.style.display === 'none') {
+    if (!alertInterval) {
+      initializeAlerts();
+    }
+  } else {
+    hideAlerts();
+  }
+}
+
 // Initialize alerts on page load
 initializeAlerts();
+
+// Monitor page navigation to show/hide alerts
+setInterval(toggleAlertsVisibility, 500);
 </script>
 <div style="position:fixed;bottom:1rem;left:1rem;z-index:999;font-size:0.72rem;color:rgba(255,255,255,0.35);pointer-events:none;letter-spacing:0.04em;">Powered by Claude.ai</div>
 </body>
