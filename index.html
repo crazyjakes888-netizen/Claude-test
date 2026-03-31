@@ -49,7 +49,11 @@
 
     /* Clouds */
     #clouds {
+      display: none !important;
       animation: float 25s ease-in-out infinite;
+    }
+    #clouds[data-show="true"] {
+      display: block !important;
     }
     @keyframes float {
       0%, 100% { transform: translateX(0px); }
@@ -752,8 +756,8 @@ function applyBackground(code, sunrise, sunset) {
   }
 
   if (cat === 'clear-night') spawnStars(120);
-  if (cat === 'cloudy-day' || cat === 'overcast') document.getElementById('clouds').style.display = 'block';
-  else document.getElementById('clouds').style.display = 'none';
+  if (cat === 'cloudy-day' || cat === 'overcast') document.getElementById('clouds').setAttribute('data-show', 'true');
+  else document.getElementById('clouds').removeAttribute('data-show');
   if (cat === 'rain')  startParticles('rain');
   if (cat === 'storm') { startParticles('rain'); startLightning(); }
   if (cat === 'snow')  startParticles('snow');
@@ -1419,11 +1423,8 @@ function updateAlertsVisibility() {
   }
 }
 
-// Load alerts when DOM is ready
-setTimeout(() => {
-  loadAlerts();
-  setInterval(updateAlertsVisibility, 500);
-}, 100);
+// Initialize clouds - hide by default
+document.getElementById('clouds').style.display = 'none';
 </script>
 <div style="position:fixed;bottom:1rem;left:1rem;z-index:999;font-size:0.72rem;color:rgba(255,255,255,0.35);pointer-events:none;letter-spacing:0.04em;">Powered by Claude.ai</div>
 </body>
