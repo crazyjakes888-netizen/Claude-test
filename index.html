@@ -1179,9 +1179,9 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
       <div class="wx-row"><span>Precip chance</span><strong>${prec}%</strong></div>
       <div class="wx-row"><span>Wind</span><strong>${isMetric?wind+' km/h':(wind*0.621).toFixed(1)+' mph'} ${wdir(cw.winddirection)}</strong></div>
       <hr class="wx-divider"/>
-      <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 0.5rem; font-weight: 700;">Next 5 Hours</div>
+      <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 0.5rem; font-weight: 700;">Next 12 Hours</div>
       <div style="display: flex; gap: 0.4rem; overflow-x: auto;">
-        ${[...Array(5)].map((_, i) => {
+        ${[...Array(12)].map((_, i) => {
           const hIndex = h + i;
           const hourTime = new Date(now.getTime() + i * 3600000).toLocaleString('en-US', { timeZone: tz, hour: 'numeric', hour12: true });
           const temp = hourly?.apparent_temperature?.[hIndex];
