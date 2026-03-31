@@ -419,8 +419,9 @@
       font-size: 0.6rem; text-transform: uppercase;
       letter-spacing: 0.14em; margin-bottom: 0.2rem;
       font-weight: 700;
+      display: flex; align-items: center; gap: 0.5rem;
     }
-    .wx-card-icon  { font-size: 2.6rem; line-height: 1; margin: 0.4rem 0; }
+    .wx-card-icon  { display: none; }
     .wx-card-main  { font-size: 2rem; font-weight: 900; line-height: 1; }
     .wx-card-unit  { font-size: 1rem; font-weight: 400; opacity: 0.6; }
     .wx-card-sub   { font-size: 0.82rem; color: var(--muted); margin-top: 0.1rem; }
@@ -1165,8 +1166,7 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
 
   document.getElementById('wx-grid').innerHTML = `
     <div class="wx-card wx-temp">
-      <span class="wx-card-label">🌡️ Temperature</span>
-      <span class="wx-card-icon">${cw.temperature>=35?'🌡️':cw.temperature>=20?'🌡️':cw.temperature>=10?'🌡️':cw.temperature>=0?'🌡️':'❄️'}</span>
+      <span class="wx-card-label">Temperature <span style="margin-left: auto;">🌡️</span></span>
       <span class="wx-card-main">${isMetric?cw.temperature:c2f(cw.temperature)}<span class="wx-card-unit">${isMetric?'°C':'°F'}</span></span>
       <span class="wx-card-sub">${isMetric?c2f(cw.temperature)+'°F':cw.temperature+'°C'}</span>
       <hr class="wx-divider"/>
@@ -1177,8 +1177,7 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
     </div>
 
     <div class="wx-card wx-rain">
-      <span class="wx-card-label">🌧️ Precipitation</span>
-      <span class="wx-card-icon">${pt.icon}</span>
+      <span class="wx-card-label">Precipitation <span style="margin-left: auto;">🌧️</span></span>
       <span class="wx-card-main">${prec}<span class="wx-card-unit">%</span></span>
       <span class="wx-card-sub">Chance of precipitation</span>
       <hr class="wx-divider"/>
@@ -1205,8 +1204,7 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
     </div>
 
     <div class="wx-card wx-temp-forecast">
-      <span class="wx-card-label">🌡️ Temperature Forecast</span>
-      <span class="wx-card-icon">📈</span>
+      <span class="wx-card-label">Temperature Forecast <span style="margin-left: auto;">📈</span></span>
       <span class="wx-card-main">${maxT!=null?(isMetric?Math.round(maxT):Math.round(c2f(maxT))):'—'}<span class="wx-card-unit">°</span></span>
       <span class="wx-card-sub">Next 12 hours</span>
       <hr class="wx-divider" style="margin-top: auto; margin-bottom: 0.5rem;"/>
@@ -1228,8 +1226,7 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
     </div>
 
     <div class="wx-card wx-wind">
-      <span class="wx-card-label">💨 Wind & Air Quality</span>
-      <span class="wx-card-icon">🌬️</span>
+      <span class="wx-card-label">Wind & Air Quality <span style="margin-left: auto;">💨</span></span>
       <span class="wx-card-main">${isMetric?wind:(wind*0.621).toFixed(1)}<span class="wx-card-unit"> ${isMetric?'km/h':'mph'}</span></span>
       <span class="wx-card-sub">${windBf}</span>
       <hr class="wx-divider"/>
@@ -1243,8 +1240,7 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
     </div>
 
     <div class="wx-card wx-cond">
-      <span class="wx-card-label">🌤️ Condition</span>
-      <span class="wx-card-icon">${ICONS[code]??'🌡️'}</span>
+      <span class="wx-card-label">Condition <span style="margin-left: auto;">${ICONS[code]??'🌤️'}</span></span>
       <span class="wx-card-main">${WMO[code]??'Unknown'}</span>
       <hr class="wx-divider"/>
       <div class="wx-row"><span>Visibility</span><strong>${vis!=null?(isMetric?(vis/1000).toFixed(1)+' km':(vis/1609).toFixed(1)+' mi'):'—'}</strong></div>
@@ -1271,8 +1267,7 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
     </div>
 
     <div class="wx-card wx-uv">
-      <span class="wx-card-label">☀️ UV Index</span>
-      <span class="wx-card-icon">🔆</span>
+      <span class="wx-card-label">UV Index <span style="margin-left: auto;">🔆</span></span>
       <span class="wx-card-main" style="color:${uv!=null?uvColor(uv):'#fde68a'}">${uv!=null?uv:'—'}</span>
       <span class="wx-card-sub" style="color:${uv!=null?uvColor(uv):'var(--muted)'}; font-weight:700">${uv!=null?uvLv(uv):'No data'}</span>
       <hr class="wx-divider"/>
@@ -1298,7 +1293,7 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
     </div>
 
     <div class="wx-card wx-forecast" style="grid-column: 1 / -1;">
-      <span class="wx-card-label">📅 7-Day Forecast</span>
+      <span class="wx-card-label">7-Day Forecast <span style="margin-left: auto;">📅</span></span>
       <div style="display: flex; gap: 0.8rem; margin-top: 1rem; padding-bottom: 0.5rem; flex-wrap: wrap;">
         ${[...Array(7)].map((_, i) => {
           const forecastDate = new Date(now.getTime() + i * 86400000);
