@@ -679,6 +679,12 @@ function getWeatherCategory(code, isNight) {
   return isNight ? 'clear-night' : 'clear-day';
 }
 
+// ── HOMEPAGE CHECK - PREVENTS ELEMENTS FROM APPEARING ON HOMEPAGE ──
+function isHomepageView() {
+  const hero = document.getElementById('hero');
+  return !hero || hero.style.display !== 'none';
+}
+
 function applyBackground(code, sunrise, sunset) {
   const now = new Date();
   const riseH = parseInt(sunrise.split(':')[0]);
@@ -732,21 +738,21 @@ function applyBackground(code, sunrise, sunset) {
   }
 
   // Spawn stars and moon only for night conditions in city view (not homepage)
-  const hero = document.getElementById('hero');
-  const isHomepage = hero && hero.style.display !== 'none';
-
-  if (isNight && !isHomepage) {
-    spawnStars(150);
-    spawnMoon();
-    if (Math.random() > 0.7) startShootingStars();
+  if (!isHomepageView()) {
+    if (isNight) {
+      spawnStars(150);
+      spawnMoon();
+      if (Math.random() > 0.7) startShootingStars();
+    }
+    if (cat === 'rain')  startParticles('rain');
+    if (cat === 'storm') { startParticles('rain'); startLightning(); }
+    if (cat === 'snow')  startParticles('snow');
   }
-  if (cat === 'rain')  startParticles('rain');
-  if (cat === 'storm') { startParticles('rain'); startLightning(); }
-  if (cat === 'snow')  startParticles('snow');
 }
 
 // ── Stars ──────────────────────────────────────────────────────────────────
 function spawnStars(count) {
+  if (isHomepageView()) return; // Don't add to homepage
   const bg = document.getElementById('bg');
   for (let i = 0; i < count; i++) {
     const s = document.createElement('div');
@@ -767,6 +773,7 @@ function clearStars() {
 
 // ── Moon ────────────────────────────────────────────────────────────────────
 function spawnMoon() {
+  if (isHomepageView()) return; // Don't add to homepage
   const moon = document.getElementById('moon') || document.createElement('div');
   if (!moon.id) {
     moon.id = 'moon';
@@ -826,6 +833,7 @@ function clearMoon() {
 // ── Shooting Stars ─────────────────────────────────────────────────────────
 let shootingStarTimer = null;
 function spawnShootingStar() {
+  if (isHomepageView()) return; // Don't add to homepage
   const bg = document.getElementById('bg');
   const s = document.createElement('div');
   s.className = 'shooting-star';
@@ -844,6 +852,7 @@ function clearShootingStars() {
 
 // ── Rain / Snow particles ──────────────────────────────────────────────────
 function startParticles(type) {
+  if (isHomepageView()) return; // Don't add to homepage
   const canvas = document.getElementById('particle-canvas');
   canvas.width  = window.innerWidth;
   canvas.height = window.innerHeight;
@@ -988,6 +997,7 @@ function spawnBolt() {
 }
 
 function startLightning() {
+  if (isHomepageView()) return; // Don't add to homepage
   function scheduleNext() {
     lightningTimer = setTimeout(() => {
       spawnBolt();
