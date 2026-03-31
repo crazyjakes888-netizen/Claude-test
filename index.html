@@ -1458,8 +1458,10 @@ function loadRadarMap(lat, lon, locName) {
           const map = this._map;
 
           // Clear canvas
-          ctx.fillStyle = 'rgba(0,0,0,0)';
-          ctx.fillRect(0, 0, w, h);
+          ctx.clearRect(0, 0, w, h);
+
+          // Get center point for radius calculation
+          const center = map.getCenter();
 
           // Precipitation areas with map-based positioning
           const areas = [
@@ -1477,29 +1479,20 @@ function loadRadarMap(lat, lon, locName) {
             // Convert lat/lng to screen pixels
             const point = map.latLngToContainerPoint([area.lat, area.lng]);
 
-            // Calculate pixel radius based on zoom
-            const radiusPixels = this._latLngToPixels(area.radius, map);
+            // Calculate pixel radius - use center as reference
+            const centerPt = map.latLngToContainerPoint(center);
+            const radiusPt = map.latLngToContainerPoint([center.lat + area.radius, center.lng]);
+            const radiusPixels = Math.abs(radiusPt.y - centerPt.y);
 
             // Draw radial gradient
             const gradient = ctx.createRadialGradient(point.x, point.y, 0, point.x, point.y, radiusPixels);
-            gradient.addColorStop(0, this._colorWithAlpha(area.color, area.intensity * 0.8));
-            gradient.addColorStop(0.6, this._colorWithAlpha(area.color, area.intensity * 0.4));
+            gradient.addColorStop(0, this._colorWithAlpha(area.color, area.intensity));
+            gradient.addColorStop(0.7, this._colorWithAlpha(area.color, area.intensity * 0.5));
             gradient.addColorStop(1, this._colorWithAlpha(area.color, 0));
 
             ctx.fillStyle = gradient;
             ctx.fillRect(point.x - radiusPixels, point.y - radiusPixels, radiusPixels * 2, radiusPixels * 2);
           });
-
-          // Apply slight blur
-          ctx.filter = 'blur(3px)';
-          ctx.drawImage(this._canvas, 0, 0);
-          ctx.filter = 'none';
-        },
-        _latLngToPixels: function(latLngDelta, map) {
-          // Convert a lat/lng distance to pixels at current zoom
-          const c1 = map.latLngToContainerPoint([0, 0]);
-          const c2 = map.latLngToContainerPoint([latLngDelta, 0]);
-          return Math.abs(c2.x - c1.x);
         },
         _colorWithAlpha: function(hexColor, alpha) {
           // Convert hex color to rgba
