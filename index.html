@@ -704,16 +704,27 @@ function applyBackground(code, sunrise, sunset) {
     'clear-day':   'linear-gradient(180deg, #0ea5e9 0%, #38bdf8 40%, #7dd3fc 100%)',
     'clear-night': 'linear-gradient(180deg, #020617 0%, #0f172a 50%, #1e1b4b 100%)',
     'cloudy-day':  'linear-gradient(180deg, #e2e8f0 0%, #f1f5f9 40%, #dbeafe 70%, #cbd5e1 100%)',
+    'cloudy-night': 'linear-gradient(180deg, #1e293b 0%, #0f172a 50%, #020617 100%)',
     'overcast':    'linear-gradient(180deg, #cbd5e1 0%, #e2e8f0 50%, #f1f5f9 100%)',
+    'overcast-night': 'linear-gradient(180deg, #1e293b 0%, #0f172a 50%, #0c0c1f 100%)',
     'rain':        'linear-gradient(180deg, #0c1a2e 0%, #1e3a5f 50%, #0f2d47 100%)',
     'storm':       'linear-gradient(180deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)',
     'snow':        'linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 50%, #94a3b8 100%)',
+    'snow-night':  'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #1a1a2e 100%)',
     'fog':         'linear-gradient(180deg, #6b7280 0%, #9ca3af 100%)',
+    'fog-night':   'linear-gradient(180deg, #1f2937 0%, #111827 100%)',
   };
   if (isDusk && cat.includes('clear')) {
     bg.style.background = 'linear-gradient(180deg, #fde68a 0%, #fcd34d 40%, #fbbf24 70%, #daa520 100%)';
   } else if (isDawn && cat.includes('clear')) {
     bg.style.background = 'linear-gradient(180deg, #fef3c7 0%, #fde68a 30%, #fcd34d 60%, #fbbf24 100%)';
+  } else if (isNight) {
+    // Apply dark variants for night conditions
+    const nightCat = cat === 'cloudy-day' ? 'cloudy-night' :
+                     cat === 'overcast' ? 'overcast-night' :
+                     cat === 'snow' ? 'snow-night' :
+                     cat === 'fog' ? 'fog-night' : cat;
+    bg.style.background = gradients[nightCat] || gradients['clear-night'];
   } else {
     bg.style.background = gradients[cat] || gradients['clear-night'];
   }
