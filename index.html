@@ -358,24 +358,35 @@
 
     /* ── WEATHER SECTION ── */
     #weather { padding: 0 1.5rem 2rem; display: none; }
-    #radar-btn, #alerts-btn {
-      padding: 0.5rem 0.8rem;
-      background: rgba(56, 198, 255, 0.15);
-      border: 1px solid rgba(56, 198, 255, 0.3);
-      border-radius: 6px;
-      color: #38c6ff;
+    #radar-btn {
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 12px;
+      color: var(--text); font-size: 0.88rem; font-weight: 600;
+      padding: 0.55rem 1.2rem; cursor: pointer; font-family: inherit;
+      transition: background 0.15s, transform 0.12s;
+      backdrop-filter: blur(8px);
+      align-self: flex-start; margin-top: 0.3rem;
+    }
+    #radar-btn:hover { background: rgba(108,99,255,0.25); transform: scale(1.04); }
+    #radar-btn:active { transform: scale(0.97); }
+
+    #alerts-btn {
+      padding: 0.55rem 1.2rem;
+      background: transparent;
+      border: 2px solid #ff5e6c;
+      border-radius: 12px;
+      color: #ff5e6c;
       font-weight: 600;
       cursor: pointer;
-      font-size: 0.85rem;
+      font-size: 0.88rem;
+      font-family: inherit;
       transition: all 0.2s ease;
+      backdrop-filter: blur(8px);
+      align-self: flex-start; margin-top: 0.3rem;
     }
-    #radar-btn:hover, #alerts-btn:hover {
-      background: rgba(56, 198, 255, 0.25);
-      border-color: rgba(56, 198, 255, 0.5);
-    }
-    #radar-btn:active, #alerts-btn:active {
-      opacity: 0.8;
-    }
+    #alerts-btn:hover { background: rgba(255,94,108,0.12); border-color: #ff7a89; transform: scale(1.04); }
+    #alerts-btn:active { transform: scale(0.97); }
 
     .wx-header {
       display: flex; align-items: flex-start; justify-content: space-between;
