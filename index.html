@@ -1208,7 +1208,7 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
 
     <div class="wx-card wx-forecast" style="grid-column: 1 / -1;">
       <span class="wx-card-label">📅 7-Day Forecast</span>
-      <div style="display: flex; gap: 0.8rem; margin-top: 1rem; overflow-x: auto; padding-bottom: 0.5rem;">
+      <div style="display: flex; gap: 0; margin-top: 1rem; padding-bottom: 0.5rem;">
         ${[...Array(7)].map((_, i) => {
           const forecastDate = new Date(now.getTime() + i * 86400000);
           const dateStr = forecastDate.toLocaleString('en-US', { timeZone: tz, weekday: 'short', month: 'short', day: 'numeric' });
@@ -1217,7 +1217,7 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
           const code = daily?.weather_code?.[i] || 0;
           const pt = precipType(code);
           return `
-            <div style="flex-shrink: 0; text-align: center; padding: 0.8rem; background: rgba(100,200,255,0.08); border-radius: 10px; border: 1px solid rgba(100,200,255,0.15); min-width: 100px;">
+            <div style="flex: 1; text-align: center; padding: 0.8rem 0.4rem; background: rgba(100,200,255,0.08); border: 1px solid rgba(100,200,255,0.15); border-right: none; margin-right: -1px;">
               <div style="font-size: 0.75rem; color: var(--muted); margin-bottom: 0.3rem;">${dateStr}</div>
               <div style="font-size: 1.8rem; margin-bottom: 0.2rem;">${pt.icon}</div>
               <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem;">${maxT!=null?(isMetric?Math.round(maxT):Math.round(c2f(maxT)))+'°':'—'}</div>
