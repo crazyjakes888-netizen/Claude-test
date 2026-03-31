@@ -94,11 +94,12 @@
     .news-item::before { content: ''; }
     @keyframes ticker { from { transform: translateX(0); } to { transform: translateX(-50%); } }
 
-    /* ── WEATHER ALERTS ── */
+    /* ── WEATHER ALERTS ── DISABLED */
     #alerts-bar {
       position: fixed; top: 40px; left: 0; z-index: 240;
       padding: 1rem;
       pointer-events: none;
+      display: none !important;
     }
     #alerts-bar .alert-card {
       pointer-events: auto;
@@ -1747,41 +1748,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Weather Alerts Carousel
-const WEATHER_ALERTS = [
-  {
-    id: '1',
-    type: 'Earthquake',
-    severity: 'critical',
-    location: 'Japan (Honshu)',
-    description: 'Major earthquake with magnitude 7.2 detected. Potential tsunami warning in effect. Residents in coastal areas advised to evacuate immediately.',
-    time: '2 hours ago',
-  },
-  {
-    id: '2',
-    type: 'Tornado Warning',
-    severity: 'high',
-    location: 'Oklahoma, USA',
-    description: 'Severe tornado warning issued for multiple counties. Seek shelter in basement immediately. Do not attempt to outrun tornadoes.',
-    time: '45 minutes ago',
-  },
-  {
-    id: '3',
-    type: 'Flooding',
-    severity: 'high',
-    location: 'Bangladesh (Dhaka Region)',
-    description: 'Heavy monsoon rains causing severe flooding. River levels rising rapidly. Evacuation orders in effect for low-lying areas.',
-    time: '3 hours ago',
-  },
-  {
-    id: '4',
-    type: 'Severe Storm',
-    severity: 'moderate',
-    location: 'Central Europe',
-    description: 'Hailstorms and strong winds expected. Gusts up to 80 km/h. Prepare for potential damage to agriculture and property.',
-    time: '1 hour ago',
-  },
-];
+// Weather Alerts Carousel - DISABLED
+const WEATHER_ALERTS = [];
 
 function displayAlert(alert) {
   const container = document.getElementById('alerts-container');
