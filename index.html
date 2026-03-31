@@ -720,6 +720,14 @@ function precipType(code) {
   return { label:'None', icon:'✅', detail:'Clear — no precip' };
 }
 
+function getHourlyIcon(temp, precipChance) {
+  if (precipChance > 70) return '⛈️';
+  if (precipChance > 50) return '🌧️';
+  if (precipChance > 30) return '🌦️';
+  if (temp != null) return temp >= 20 ? '☀️' : temp >= 10 ? '🌤️' : '❄️';
+  return '🌡️';
+}
+
 // ── Dynamic Background ─────────────────────────────────────────────────────
 let particleAnim = null;
 let lightningTimer = null;
@@ -1165,6 +1173,28 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
       <div class="wx-row"><span>Sunset</span><strong>${set}</strong></div>
       <div class="wx-row"><span>Recommendation</span></div>
       <div style="font-size:0.73rem;color:var(--muted);margin-top:0.2rem">${uv==null?'—':uv<=2?'No protection needed':uv<=5?'Wear sunscreen SPF 30+':uv<=7?'Seek shade midday, SPF 50+':uv<=10?'Minimize sun exposure':'Avoid being outside midday'}</div>
+    </div>
+
+    <div class="wx-card wx-forecast" style="grid-column: 1 / -1;">
+      <span class="wx-card-label">⏰ Next 5 Hours Forecast</span>
+      <div style="display: flex; gap: 0.8rem; margin-top: 1rem; overflow-x: auto; padding-bottom: 0.5rem;">
+        ${[...Array(5)].map((_, i) => {
+          const hIndex = h + i;
+          const hourTime = new Date(now.getTime() + i * 3600000).toLocaleString('en-US', { timeZone: tz, hour: 'numeric', hour12: true });
+          const temp = hourly?.apparent_temperature?.[hIndex];
+          const precip = hourly?.precipitation_probability?.[hIndex] ?? 0;
+          const code = hourly?.weather_code?.[hIndex] || 0;
+          const icon = getHourlyIcon(temp, precip);
+          return `
+            <div style="flex-shrink: 0; text-align: center; padding: 0.8rem; background: rgba(100,200,255,0.08); border-radius: 10px; border: 1px solid rgba(100,200,255,0.15); min-width: 90px;">
+              <div style="font-size: 0.75rem; color: var(--muted); margin-bottom: 0.3rem;">${hourTime}</div>
+              <div style="font-size: 1.8rem; margin-bottom: 0.2rem;">${icon}</div>
+              <div style="font-size: 1rem; font-weight: 600;">${temp!=null?(isMetric?Math.round(temp):Math.round(c2f(temp)))+'°':'—'}</div>
+              <div style="font-size: 0.7rem; color: ${precip > 50 ? '#ff9b3a' : 'var(--muted)'}; margin-top: 0.2rem;">${precip}%</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
     </div>
   `;
 }
