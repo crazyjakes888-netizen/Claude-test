@@ -1176,10 +1176,17 @@ function showRadarView() {
 
   // Get the current location from the weather display
   const locName = document.getElementById('wx-loc').textContent;
+  const weatherSection = document.getElementById('weather');
 
-  // Check if a city has been successfully searched
-  if (!radarReady || !locName) {
+  // Check if weather section is visible and location name exists
+  if (!weatherSection || weatherSection.style.display === 'none' || !locName || locName === 'Loading…' || locName === 'Error' || locName === 'Not found') {
     alert('Please search for a city first');
+    return;
+  }
+
+  // Check if we have valid coordinates
+  if (!lastRadarLat || !lastRadarLon) {
+    alert('City coordinates not available');
     return;
   }
 
