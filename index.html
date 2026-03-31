@@ -47,19 +47,6 @@
       transition: background 0.05s;
     }
 
-    /* Clouds */
-    #clouds {
-      display: none !important;
-      animation: float 25s ease-in-out infinite;
-    }
-    #clouds[data-show="true"] {
-      display: block !important;
-    }
-    @keyframes float {
-      0%, 100% { transform: translateX(0px); }
-      50% { transform: translateX(30px); }
-    }
-
     /* Stars */
     .star {
       position: absolute;
@@ -462,30 +449,6 @@
 <body>
 
 <div id="bg"></div>
-<div id="clouds" style="position: fixed; inset: 0; z-index: 5; pointer-events: none; display: none !important;">
-  <svg style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;" viewBox="0 0 1200 600" preserveAspectRatio="none">
-    <!-- Cloud 1 -->
-    <ellipse cx="150" cy="120" rx="80" ry="50" fill="rgba(255,255,255,0.6)" />
-    <ellipse cx="100" cy="130" rx="60" ry="45" fill="rgba(255,255,255,0.5)" />
-    <ellipse cx="200" cy="135" rx="70" ry="48" fill="rgba(255,255,255,0.5)" />
-    <ellipse cx="250" cy="120" rx="65" ry="50" fill="rgba(255,255,255,0.6)" />
-
-    <!-- Cloud 2 -->
-    <ellipse cx="700" cy="180" rx="90" ry="55" fill="rgba(255,255,255,0.5)" />
-    <ellipse cx="630" cy="195" rx="70" ry="50" fill="rgba(255,255,255,0.4)" />
-    <ellipse cx="780" cy="200" rx="80" ry="52" fill="rgba(255,255,255,0.4)" />
-
-    <!-- Cloud 3 -->
-    <ellipse cx="1000" cy="100" rx="75" ry="48" fill="rgba(255,255,255,0.55)" />
-    <ellipse cx="950" cy="115" rx="65" ry="45" fill="rgba(255,255,255,0.45)" />
-    <ellipse cx="1050" cy="120" rx="70" ry="48" fill="rgba(255,255,255,0.45)" />
-
-    <!-- Cloud 4 -->
-    <ellipse cx="400" cy="280" rx="85" ry="52" fill="rgba(255,255,255,0.4)" />
-    <ellipse cx="340" cy="295" rx="70" ry="48" fill="rgba(255,255,255,0.35)" />
-    <ellipse cx="480" cy="300" rx="75" ry="50" fill="rgba(255,255,255,0.35)" />
-  </svg>
-</div>
 <canvas id="particle-canvas"></canvas>
 <div id="lightning"></div>
 
@@ -756,8 +719,6 @@ function applyBackground(code, sunrise, sunset) {
   }
 
   if (cat === 'clear-night') spawnStars(120);
-  if (cat === 'cloudy-day' || cat === 'overcast') document.getElementById('clouds').setAttribute('data-show', 'true');
-  else document.getElementById('clouds').removeAttribute('data-show');
   if (cat === 'rain')  startParticles('rain');
   if (cat === 'storm') { startParticles('rain'); startLightning(); }
   if (cat === 'snow')  startParticles('snow');
@@ -1422,9 +1383,6 @@ function updateAlertsVisibility() {
     alertsBar.style.display = 'none';
   }
 }
-
-// Initialize clouds - hide by default
-document.getElementById('clouds').style.display = 'none';
 </script>
 <div style="position:fixed;bottom:1rem;left:1rem;z-index:999;font-size:0.72rem;color:rgba(255,255,255,0.35);pointer-events:none;letter-spacing:0.04em;">Powered by Claude.ai</div>
 </body>
