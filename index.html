@@ -1161,6 +1161,24 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
       <div class="wx-row"><span>Humidity</span><strong>${hum}%</strong></div>
       <div class="wx-row"><span>Precip chance</span><strong>${prec}%</strong></div>
       <div class="wx-row"><span>Wind</span><strong>${isMetric?wind+' km/h':(wind*0.621).toFixed(1)+' mph'} ${wdir(cw.winddirection)}</strong></div>
+      <hr class="wx-divider"/>
+      <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 0.5rem; font-weight: 700;">Next 5 Hours</div>
+      <div style="display: flex; gap: 0.4rem; overflow-x: auto;">
+        ${[...Array(5)].map((_, i) => {
+          const hIndex = h + i;
+          const hourTime = new Date(now.getTime() + i * 3600000).toLocaleString('en-US', { timeZone: tz, hour: 'numeric', hour12: true });
+          const temp = hourly?.apparent_temperature?.[hIndex];
+          const precip = hourly?.precipitation_probability?.[hIndex] ?? 0;
+          const icon = getHourlyIcon(temp, precip);
+          return `
+            <div style="flex-shrink: 0; text-align: center; padding: 0.4rem 0.5rem; background: rgba(179,157,219,0.1); border-radius: 6px; border: 1px solid rgba(179,157,219,0.2); font-size: 0.7rem; min-width: 55px;">
+              <div style="margin-bottom: 0.2rem; color: var(--muted);">${hourTime}</div>
+              <div style="font-size: 1.2rem; margin-bottom: 0.1rem;">${icon}</div>
+              <div style="font-weight: 600;">${temp!=null?(isMetric?Math.round(temp):Math.round(c2f(temp)))+'°':'—'}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
     </div>
 
     <div class="wx-card wx-uv">
