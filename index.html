@@ -345,34 +345,41 @@
     #weather { padding: 0 1.5rem 2rem; display: none; }
     #radar-btn, #alerts-btn {
       display: none;
-      position: fixed;
-      bottom: 40px;
-      padding: 0.85rem 1.4rem;
+      flex: 1;
+      padding: 1rem 1.4rem;
       background: rgba(56, 198, 255, 0.1);
       border: 1px solid rgba(56, 198, 255, 0.3);
-      border-radius: 10px;
+      border-radius: 0;
       color: #38c6ff;
       font-weight: 600;
       cursor: pointer;
-      z-index: 100;
       font-size: 0.95rem;
       transition: all 0.3s ease;
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       letter-spacing: 0.02em;
-      box-shadow: 0 2px 8px rgba(56, 198, 255, 0.1);
+      box-shadow: none;
     }
     #radar-btn:hover, #alerts-btn:hover {
       background: rgba(56, 198, 255, 0.2);
       border-color: rgba(56, 198, 255, 0.5);
-      transform: translateY(-2px);
-      box-shadow: 0 6px 16px rgba(56, 198, 255, 0.2);
     }
     #radar-btn:active, #alerts-btn:active {
-      transform: translateY(0);
+      background: rgba(56, 198, 255, 0.15);
     }
-    #radar-btn { left: 40px; }
-    #alerts-btn { left: 240px; }
+    #buttons-container {
+      display: flex;
+      gap: 0;
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      border-top: 1px solid rgba(56, 198, 255, 0.2);
+    }
+    #buttons-container.hidden {
+      display: none;
+    }
 
     .wx-header {
       display: flex; align-items: flex-start; justify-content: space-between;
@@ -543,8 +550,10 @@
       </div>
     </div>
     <div class="wx-grid" id="wx-grid"></div>
-    <button id="radar-btn">📡 Radar View</button>
-    <button id="alerts-btn">⚠️ Alerts</button>
+    <div id="buttons-container" class="hidden">
+      <button id="radar-btn">📡 Radar View</button>
+      <button id="alerts-btn">⚠️ Alerts</button>
+    </div>
   </section>
 
   <!-- RADAR MODAL -->
@@ -717,7 +726,7 @@ function precipType(code) {
   if ([80,81,82].includes(code))     return { label:'Rain Showers', icon:'🌦️',  detail:'Showers' };
   if ([95,96,99].includes(code))     return { label:'Thunderstorm', icon:'⛈️',  detail:'Thunder & lightning' };
   if ([45,48].includes(code))        return { label:'Fog',          icon:'🌫️',  detail:'Low visibility' };
-  return { label:'None', icon:'✅', detail:'Clear — no precip' };
+  return { label:'None', icon:'☀️', detail:'Clear — no precip' };
 }
 
 function getHourlyIcon(temp, precipChance) {
@@ -725,7 +734,7 @@ function getHourlyIcon(temp, precipChance) {
   if (precipChance > 50) return '🌧️';
   if (precipChance > 30) return '🌦️';
   if (temp != null) return temp >= 20 ? '☀️' : temp >= 10 ? '🌤️' : '❄️';
-  return '🌡️';
+  return '🌤️';
 }
 
 // ── Dynamic Background ─────────────────────────────────────────────────────
@@ -1245,8 +1254,7 @@ function showWeatherView() {
   document.getElementById('quick-cities').style.display = 'none';
   document.getElementById('hero-inner').style.display = 'none';
   document.getElementById('weather').style.display = 'block';
-  document.getElementById('radar-btn').style.display = 'block';
-  document.getElementById('alerts-btn').style.display = 'block';
+  document.getElementById('buttons-container').classList.remove('hidden');
   clearStars();
   clearShootingStars();
 }
