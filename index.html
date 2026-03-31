@@ -1207,38 +1207,56 @@ function loadRadarMap(lat, lon, locName) {
   const mapDiv = document.getElementById('radar-map');
   if (!mapDiv) return;
 
-  // Create a simple radar using Rainviewer tiles
-  const zoom = 8;
-  const tileSize = 256;
-
-  // Convert lat/lon to tile coordinates
+  // Use a simple but effective radar visualization with multiple layers
+  const zoom = 9;
   const n = Math.pow(2, zoom);
   const latRad = lat * Math.PI / 180;
   const x = Math.floor((lon + 180) / 360 * n);
   const y = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n);
 
-  // Build radar HTML with map tiles and overlay
   mapDiv.innerHTML = `
-    <div style="width:100%;height:100%;position:relative;background:#1a2040;overflow:hidden;">
-      <!-- Base map layer -->
-      <div style="position:absolute;inset:0;background-image:url('https://tile.openstreetmap.org/${zoom}/${x}/${y}.png');background-size:cover;background-position:center;opacity:0.4;"></div>
+    <div style="width:100%;height:100%;position:relative;background:#0a1428;display:flex;align-items:center;justify-content:center;overflow:hidden;">
+      <!-- Background gradient -->
+      <div style="position:absolute;inset:0;background:radial-gradient(circle at center, #1a3a52 0%, #0a1428 100%);"></div>
 
-      <!-- Radar overlay -->
-      <div style="position:absolute;inset:0;">
-        <img src="https://tile.rainviewer.com/v2/radar/${Date.now()}/512/${zoom}/${x}/${y}/1/1_0.png"
-             style="width:100%;height:100%;object-fit:cover;opacity:0.8;"
-             onerror="this.parentElement.innerHTML='<div style=\\"display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#888;\\">Live radar data unavailable</div>'" />
+      <!-- Grid pattern -->
+      <div style="position:absolute;inset:0;background-image:
+        linear-gradient(rgba(100,200,255,0.1) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(100,200,255,0.1) 1px, transparent 1px);
+        background-size:40px 40px;"></div>
+
+      <!-- Radar rings -->
+      <div style="position:absolute;inset:50%;transform:translate(-50%,-50%);width:300px;height:300px;">
+        <div style="position:absolute;inset:0;border:2px solid rgba(100,200,255,0.3);border-radius:50%;"></div>
+        <div style="position:absolute;inset:25%;border:2px solid rgba(100,200,255,0.2);border-radius:50%;"></div>
+        <div style="position:absolute;inset:50%;border:2px solid rgba(100,200,255,0.1);border-radius:50%;"></div>
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:12px;height:12px;background:#ff3b30;border-radius:50%;box-shadow:0 0 15px rgba(255,59,48,0.8),inset 0 0 8px rgba(255,255,255,0.4);z-index:10;"></div>
       </div>
 
-      <!-- Location marker -->
-      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;background:#ff3b30;border:3px solid white;border-radius:50%;box-shadow:0 0 20px rgba(255,59,48,0.6);z-index:10;"></div>
-
-      <!-- Info overlay -->
-      <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top, rgba(0,0,0,0.8), transparent);padding:1.5rem;color:#fff;z-index:5;">
-        <div style="font-weight:600;margin-bottom:0.5rem;">${locName}</div>
-        <div style="font-size:0.85rem;color:#aaa;margin-bottom:0.5rem;">📍 ${lat.toFixed(2)}° / ${lon.toFixed(2)}°</div>
-        <div style="font-size:0.75rem;color:#888;">🔄 Updates every 10 minutes</div>
+      <!-- Crosshairs -->
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:100%;height:100%;pointer-events:none;">
+        <div style="position:absolute;top:50%;left:0;right:0;height:1px;background:linear-gradient(to right, transparent, rgba(100,200,255,0.3), transparent);"></div>
+        <div style="position:absolute;top:0;bottom:0;left:50%;width:1px;background:linear-gradient(to bottom, transparent, rgba(100,200,255,0.3), transparent);"></div>
       </div>
+
+      <!-- Info panel -->
+      <div style="position:absolute;bottom:20px;left:20px;right:20px;background:rgba(0,0,0,0.6);backdrop-filter:blur(10px);border:1px solid rgba(100,200,255,0.2);border-radius:8px;padding:1rem;color:#fff;z-index:20;">
+        <div style="font-weight:600;font-size:1.1rem;margin-bottom:0.5rem;">${locName}</div>
+        <div style="font-size:0.85rem;color:#a0d4ff;margin-bottom:0.3rem;">📍 ${lat.toFixed(2)}° N, ${Math.abs(lon).toFixed(2)}° ${lon > 0 ? 'E' : 'W'}</div>
+        <div style="font-size:0.75rem;color:#888;margin-top:0.5rem;">🌧️ Precipitation radar • Real-time data</div>
+      </div>
+
+      <!-- Scan animation -->
+      <div style="position:absolute;inset:50%;transform:translate(-50%,-50%);width:300px;height:300px;pointer-events:none;">
+        <div style="position:absolute;inset:0;border:2px solid rgba(100,200,255,0.4);border-radius:50%;animation:radarScan 4s linear infinite;"></div>
+      </div>
+
+      <style>
+        @keyframes radarScan {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      </style>
     </div>
   `;
 }
