@@ -1173,7 +1173,6 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
       <div class="wx-row"><span>Visibility</span><strong>${vis!=null?(isMetric?(vis/1000).toFixed(1)+' km':(vis/1609).toFixed(1)+' mi'):'—'}</strong></div>
       <div class="wx-row"><span>Dew point</span><strong>${feel!=null?Math.round(cw.temperature-(100-hum)/5)+'°C':'—'}</strong></div>
       <hr class="wx-divider"/>
-      <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 0.5rem; font-weight: 700;">Next 12 Hours</div>
       <div style="display: flex; gap: 0.4rem; overflow-x: auto;">
         ${[...Array(12)].map((_, i) => {
           const hIndex = h + i;
@@ -1215,7 +1214,6 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
       <div class="wx-row"><span>Precip chance</span><strong>${prec}%</strong></div>
       <div class="wx-row"><span>Wind</span><strong>${isMetric?wind+' km/h':(wind*0.621).toFixed(1)+' mph'} ${wdir(cw.winddirection)}</strong></div>
       <hr class="wx-divider"/>
-      <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 0.5rem; font-weight: 700;">Next 12 Hours</div>
       <div style="display: flex; gap: 0.4rem; overflow-x: auto;">
         ${[...Array(12)].map((_, i) => {
           const hIndex = h + i;
@@ -1245,7 +1243,6 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
       <div class="wx-row"><span>Recommendation</span></div>
       <div style="font-size:0.73rem;color:var(--muted);margin-top:0.2rem">${uv==null?'—':uv<=2?'No protection needed':uv<=5?'Wear sunscreen SPF 30+':uv<=7?'Seek shade midday, SPF 50+':uv<=10?'Minimize sun exposure':'Avoid being outside midday'}</div>
       <hr class="wx-divider"/>
-      <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 0.5rem; font-weight: 700;">Next 12 Hours</div>
       <div style="display: flex; gap: 0.4rem; overflow-x: auto;">
         ${[...Array(12)].map((_, i) => {
           const hIndex = h + i;
