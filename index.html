@@ -438,10 +438,6 @@
     .wx-rain  .wx-card-label { color: var(--blue); }
     .wx-rain  .wx-card-main  { color: #8ddcff; }
 
-    .wx-temp-forecast { border-color: rgba(255,150,100,0.35); }
-    .wx-temp-forecast .wx-card-label { color: #ff9666; }
-    .wx-temp-forecast .wx-card-main { color: #ffb399; }
-
     .wx-wind  { border-color: rgba(0,229,160,0.35); }
     .wx-wind  .wx-card-label { color: var(--green); }
     .wx-wind  .wx-card-main  { color: #7fffd4; }
@@ -1197,28 +1193,6 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
               <div style="margin-bottom: 0.2rem; color: var(--muted);">${hourTime}</div>
               <div style="font-size: 1rem; margin-bottom: 0.1rem;">${precip > 70 ? '⛈️' : precip > 50 ? '🌧️' : precip > 30 ? '🌦️' : '☀️'}</div>
               <div style="font-weight: 600;">${precip}%</div>
-            </div>
-          `;
-        }).join('')}
-      </div>
-    </div>
-
-    <div class="wx-card wx-temp-forecast">
-      <span class="wx-card-label">Temperature Forecast</span>
-      <span class="wx-card-main">${maxT!=null?(isMetric?Math.round(maxT):Math.round(c2f(maxT))):'—'}<span class="wx-card-unit">°</span></span>
-      <span class="wx-card-sub">Next 12 hours</span>
-      <hr class="wx-divider" style="margin-top: auto; margin-bottom: 0.5rem;"/>
-      <div style="display: flex; gap: 0.4rem; overflow-x: auto;">
-        ${[...Array(12)].map((_, i) => {
-          const hIndex = h + i;
-          const hourTime = new Date(now.getTime() + i * 3600000).toLocaleString('en-US', { timeZone: tz, hour: 'numeric', hour12: true });
-          const temp = hourly?.apparent_temperature?.[hIndex];
-          const tempColor = temp!=null ? (temp>25 ? '#ff6b6b' : temp>15 ? '#ffd43b' : temp>5 ? '#51cf66' : '#4dabf7') : '#999';
-          return `
-            <div style="flex-shrink: 0; text-align: center; padding: 0.4rem 0.5rem; background: rgba(255,150,100,0.1); border-radius: 6px; border: 1px solid rgba(255,150,100,0.2); font-size: 0.7rem; min-width: 55px;">
-              <div style="margin-bottom: 0.2rem; color: var(--muted);">${hourTime}</div>
-              <div style="font-size: 1.2rem; margin-bottom: 0.1rem;">${temp!=null?(temp>25?'🔥':temp>15?'☀️':temp>5?'🌤️':'❄️'):'—'}</div>
-              <div style="font-weight: 600; color: ${tempColor};">${temp!=null?(isMetric?Math.round(temp):Math.round(c2f(temp)))+'°':'—'}</div>
             </div>
           `;
         }).join('')}
