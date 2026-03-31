@@ -353,37 +353,36 @@
     /* ── WEATHER SECTION ── */
     #weather { padding: 0 1.5rem 2rem; display: none; }
     #radar-btn, #alerts-btn {
-      flex: 1;
-      padding: 1rem 1.4rem;
+      padding: 0.75rem 1.2rem;
       background: rgba(56, 198, 255, 0.1);
       border: 1px solid rgba(56, 198, 255, 0.3);
-      border-radius: 0;
+      border-radius: 8px;
       color: #38c6ff;
       font-weight: 600;
       cursor: pointer;
-      font-size: 0.95rem;
+      font-size: 0.9rem;
       transition: all 0.3s ease;
       backdrop-filter: blur(8px);
       -webkit-backdrop-filter: blur(8px);
       letter-spacing: 0.02em;
-      box-shadow: none;
+      box-shadow: 0 2px 8px rgba(56, 198, 255, 0.1);
     }
     #radar-btn:hover, #alerts-btn:hover {
       background: rgba(56, 198, 255, 0.2);
       border-color: rgba(56, 198, 255, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(56, 198, 255, 0.2);
     }
     #radar-btn:active, #alerts-btn:active {
-      background: rgba(56, 198, 255, 0.15);
+      transform: translateY(0);
     }
     #buttons-container {
       display: flex;
-      gap: 0;
+      gap: 0.8rem;
       position: fixed;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      z-index: 100;
-      border-top: 1px solid rgba(56, 198, 255, 0.2);
+      top: 50px;
+      left: 1.5rem;
+      z-index: 200;
     }
     #buttons-container.hidden {
       display: none;
