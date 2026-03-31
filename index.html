@@ -1150,15 +1150,8 @@ function resetHomeBackground() {
   startShootingStars();
 }
 function goHome() {
-  document.getElementById('weather').style.display = 'none';
-  document.getElementById('quick-cities').style.display = 'flex';
-  document.getElementById('hero-inner').style.display = 'flex';
-  document.getElementById('city-input').value = '';
-  // Clear all city news cache to force fresh breaking news
-  localStorage.removeItem('news_city_' + document.querySelector('.news-label')?.textContent?.split(' News')[0]);
-  window.scrollTo({ top: 0, behavior: 'smooth' });
-  loadNews();
-  resetHomeBackground();
+  // Simple refresh to clear all dynamic elements and reset to clean homepage
+  location.reload();
 }
 
 // ── Search ─────────────────────────────────────────────────────────────────
