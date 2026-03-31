@@ -1261,7 +1261,7 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
 
     <div class="wx-card wx-forecast" style="grid-column: 1 / -1;">
       <span class="wx-card-label">📅 7-Day Forecast</span>
-      <div style="display: flex; gap: 0; margin-top: 1rem; padding-bottom: 0.5rem;">
+      <div style="display: flex; gap: 0.8rem; margin-top: 1rem; padding-bottom: 0.5rem; flex-wrap: wrap;">
         ${[...Array(7)].map((_, i) => {
           const forecastDate = new Date(now.getTime() + i * 86400000);
           const dateStr = forecastDate.toLocaleString('en-US', { timeZone: tz, weekday: 'short', month: 'short', day: 'numeric' });
@@ -1269,12 +1269,20 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
           const minT = daily?.temperature_2m_min?.[i];
           const code = daily?.weather_code?.[i] || 0;
           const pt = precipType(code);
+          const precip = daily?.precipitation_sum?.[i] ?? 0;
+          const tempColor = maxT!=null ? (maxT>25 ? '#ff6b6b' : maxT>15 ? '#ffd43b' : maxT>5 ? '#51cf66' : '#4dabf7') : '#999';
           return `
-            <div style="flex: 1; text-align: center; padding: 0.8rem 0.4rem; background: rgba(100,200,255,0.08); border: 1px solid rgba(100,200,255,0.15); border-right: none; margin-right: -1px;">
-              <div style="font-size: 0.75rem; color: var(--muted); margin-bottom: 0.3rem;">${dateStr}</div>
-              <div style="font-size: 1.8rem; margin-bottom: 0.2rem;">${pt.icon}</div>
-              <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem;">${maxT!=null?(isMetric?Math.round(maxT):Math.round(c2f(maxT)))+'°':'—'}</div>
-              <div style="font-size: 0.7rem; color: var(--muted);">${minT!=null?(isMetric?Math.round(minT):Math.round(c2f(minT)))+'°':'—'}</div>
+            <div style="flex: 1; min-width: 90px; text-align: center; padding: 1rem 0.6rem; background: linear-gradient(135deg, rgba(${maxT>20?'255,107,107':'100,200,255'},0.15), rgba(${maxT>20?'255,107,107':'100,200,255'},0.05)); border: 1px solid rgba(${maxT>20?'255,107,107':'100,200,255'},0.25); border-radius: 12px; backdrop-filter: blur(10px); transition: all 0.3s ease; cursor: pointer; position: relative; overflow: hidden;">
+              <div style="position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, transparent, ${tempColor}, transparent);"></div>
+              <div style="font-size: 0.7rem; color: var(--muted); margin-bottom: 0.4rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;">${dateStr}</div>
+              <div style="font-size: 2rem; margin-bottom: 0.3rem; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));">${pt.icon}</div>
+              <div style="font-size: 0.75rem; color: var(--muted); margin-bottom: 0.3rem;">${pt.label}</div>
+              <div style="display: flex; justify-content: center; align-items: center; gap: 0.4rem; margin-bottom: 0.4rem;">
+                <div style="font-size: 0.9rem; font-weight: 700; color: ${tempColor};">${maxT!=null?(isMetric?Math.round(maxT):Math.round(c2f(maxT)))+'°':'—'}</div>
+                <div style="width: 1px; height: 16px; background: rgba(255,255,255,0.1);"></div>
+                <div style="font-size: 0.8rem; font-weight: 600; color: rgba(255,255,255,0.6);">${minT!=null?(isMetric?Math.round(minT):Math.round(c2f(minT)))+'°':'—'}</div>
+              </div>
+              ${precip > 0 ? `<div style="font-size: 0.65rem; color: var(--blue); font-weight: 600;">💧 ${precip.toFixed(1)}${isMetric?'mm':'in'}</div>` : ''}
             </div>
           `;
         }).join('')}
