@@ -1370,6 +1370,8 @@ async function chipClick(city) {
     const j = await r.json();
     if (!j.length) { document.getElementById('wx-loc').textContent = 'Not found'; return; }
     const label = j[0].display_name.split(',')[0].trim();
+    lastRadarLat = parseFloat(j[0].lat);
+    lastRadarLon = parseFloat(j[0].lon);
     await fetchWeather(j[0].lat, j[0].lon, label);
     loadNews(label);
     document.getElementById('weather').scrollIntoView({ behavior: 'smooth' });
