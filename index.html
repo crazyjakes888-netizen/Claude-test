@@ -1320,6 +1320,7 @@ async function fetchWeather(lat, lon, label) {
       if (a.state) place += ', ' + a.state;
     }
     renderWeather(w.current_weather, w.hourly, w.daily, place, w.timezone, aq.current);
+    fetchLocationAlerts(lat, lon, place);
   } catch {
     document.getElementById('wx-loc').textContent = 'Error loading weather';
   }
@@ -1883,8 +1884,11 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// Weather Alerts Carousel - DISABLED
-const WEATHER_ALERTS = [];
+// Weather Alerts Carousel
+const WEATHER_ALERTS = [
+  // These are example alerts that can be customized per location
+  // In production, these would come from an API based on user location
+];
 
 function displayAlert(alert) {
   const container = document.getElementById('alerts-container');
@@ -1903,6 +1907,86 @@ function displayAlert(alert) {
   `;
 }
 
+function updateAlertsBadge() {
+  const alertsBtn = document.getElementById('alerts-btn');
+  if (!alertsBtn) return;
+
+  const storedAlerts = localStorage.getItem('weatherAlerts');
+  const alerts = storedAlerts ? JSON.parse(storedAlerts) : WEATHER_ALERTS;
+
+  // Remove existing badge
+  const existingBadge = alertsBtn.querySelector('.alert-badge');
+  if (existingBadge) existingBadge.remove();
+
+  // Add badge if there are alerts
+  if (alerts.length > 0) {
+    const badge = document.createElement('span');
+    badge.className = 'alert-badge';
+    badge.style.cssText = `
+      position: absolute;
+      top: -8px;
+      right: -8px;
+      width: 24px;
+      height: 24px;
+      background: #ff5e6c;
+      color: white;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 700;
+      border: 2px solid #0a0e27;
+      box-shadow: 0 2px 8px rgba(255,94,108,0.4);
+    `;
+    badge.textContent = alerts.length > 9 ? '9+' : alerts.length;
+    alertsBtn.style.position = 'relative';
+    alertsBtn.appendChild(badge);
+  }
+}
+
+async function fetchLocationAlerts(lat, lon, locName) {
+  try {
+    // Check for various alert types based on location
+    // This is a simulated system - in production, this would call a real alerts API
+    const alerts = [];
+    const now = new Date();
+
+    // Simulate checking for different alert types
+    // In production, these would come from actual APIs or weather services
+
+    // Example alert types that could be generated:
+    // - Power outages
+    // - Severe weather (thunderstorms, high wind, heavy snow)
+    // - Air quality alerts
+    // - Extreme temperature alerts
+    // - Flood warnings
+    // - Winter storm warnings
+    // - Heat advisories
+
+    // Sample: Check if location-specific alerts exist in localStorage
+    const locationKey = `alerts_${Math.floor(lat)}_${Math.floor(lon)}`;
+    const locationAlerts = localStorage.getItem(locationKey);
+
+    if (locationAlerts) {
+      try {
+        const parsed = JSON.parse(locationAlerts);
+        alerts.push(...parsed);
+      } catch (e) {
+        console.error('Error parsing location alerts:', e);
+      }
+    }
+
+    // Store alerts if any exist
+    if (alerts.length > 0) {
+      localStorage.setItem('weatherAlerts', JSON.stringify(alerts));
+      updateAlertsBadge();
+    }
+  } catch (e) {
+    console.error('Error fetching location alerts:', e);
+  }
+}
+
 function loadAlerts() {
   try {
     const saved = localStorage.getItem('currentAlert');
@@ -1918,6 +2002,8 @@ function loadAlerts() {
       const alertsBar = document.getElementById('alerts-bar');
       if (alertsBar) alertsBar.style.display = 'block';
     }
+
+    updateAlertsBadge();
   } catch (e) {
     console.error('Error loading alerts:', e);
   }
@@ -1946,6 +2032,16 @@ function updateAlertsVisibility() {
 setTimeout(() => {
   loadAlerts();
   setInterval(updateAlertsVisibility, 500);
+
+  // Initialize alerts button visibility based on stored alerts
+  const storedAlerts = localStorage.getItem('weatherAlerts');
+  const alertsBtn = document.getElementById('alerts-btn');
+  if (alertsBtn && storedAlerts) {
+    const alerts = JSON.parse(storedAlerts);
+    if (alerts.length > 0) {
+      alertsBtn.style.display = 'block';
+    }
+  }
 }, 100);
 </script>
 </body>
