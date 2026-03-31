@@ -1176,21 +1176,21 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
     </div>
 
     <div class="wx-card wx-forecast" style="grid-column: 1 / -1;">
-      <span class="wx-card-label">⏰ Next 5 Hours Forecast</span>
+      <span class="wx-card-label">📅 7-Day Forecast</span>
       <div style="display: flex; gap: 0.8rem; margin-top: 1rem; overflow-x: auto; padding-bottom: 0.5rem;">
-        ${[...Array(5)].map((_, i) => {
-          const hIndex = h + i;
-          const hourTime = new Date(now.getTime() + i * 3600000).toLocaleString('en-US', { timeZone: tz, hour: 'numeric', hour12: true });
-          const temp = hourly?.apparent_temperature?.[hIndex];
-          const precip = hourly?.precipitation_probability?.[hIndex] ?? 0;
-          const code = hourly?.weather_code?.[hIndex] || 0;
-          const icon = getHourlyIcon(temp, precip);
+        ${[...Array(7)].map((_, i) => {
+          const forecastDate = new Date(now.getTime() + i * 86400000);
+          const dateStr = forecastDate.toLocaleString('en-US', { timeZone: tz, weekday: 'short', month: 'short', day: 'numeric' });
+          const maxT = daily?.temperature_2m_max?.[i];
+          const minT = daily?.temperature_2m_min?.[i];
+          const code = daily?.weather_code?.[i] || 0;
+          const pt = precipType(code);
           return `
-            <div style="flex-shrink: 0; text-align: center; padding: 0.8rem; background: rgba(100,200,255,0.08); border-radius: 10px; border: 1px solid rgba(100,200,255,0.15); min-width: 90px;">
-              <div style="font-size: 0.75rem; color: var(--muted); margin-bottom: 0.3rem;">${hourTime}</div>
-              <div style="font-size: 1.8rem; margin-bottom: 0.2rem;">${icon}</div>
-              <div style="font-size: 1rem; font-weight: 600;">${temp!=null?(isMetric?Math.round(temp):Math.round(c2f(temp)))+'°':'—'}</div>
-              <div style="font-size: 0.7rem; color: ${precip > 50 ? '#ff9b3a' : 'var(--muted)'}; margin-top: 0.2rem;">${precip}%</div>
+            <div style="flex-shrink: 0; text-align: center; padding: 0.8rem; background: rgba(100,200,255,0.08); border-radius: 10px; border: 1px solid rgba(100,200,255,0.15); min-width: 100px;">
+              <div style="font-size: 0.75rem; color: var(--muted); margin-bottom: 0.3rem;">${dateStr}</div>
+              <div style="font-size: 1.8rem; margin-bottom: 0.2rem;">${pt.icon}</div>
+              <div style="font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem;">${maxT!=null?(isMetric?Math.round(maxT):Math.round(c2f(maxT)))+'°':'—'}</div>
+              <div style="font-size: 0.7rem; color: var(--muted);">${minT!=null?(isMetric?Math.round(minT):Math.round(c2f(minT)))+'°':'—'}</div>
             </div>
           `;
         }).join('')}
@@ -1203,7 +1203,7 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
 async function fetchWeather(lat, lon, label) {
   try {
     const [wRes, aqRes, gRes] = await Promise.all([
-      fetchT(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=apparent_temperature,relative_humidity_2m,precipitation_probability,visibility&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset&timezone=auto&forecast_days=1`),
+      fetchT(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=apparent_temperature,relative_humidity_2m,precipitation_probability,visibility,weather_code&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,weather_code&timezone=auto&forecast_days=7`),
       fetchT(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm10,pm2_5,us_aqi&timezone=auto`),
       label ? Promise.resolve(null) : fetchT(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
     ]);
