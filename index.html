@@ -79,6 +79,12 @@
       100% { opacity: 0; transform: rotate(-30deg) translateX(260px); }
     }
 
+    /* Cloud animation */
+    @keyframes float {
+      0% { transform: translateX(0px); }
+      100% { transform: translateX(100vw); }
+    }
+
     /* ── PAGE CONTENT (above bg) ── */
     #page { position: relative; z-index: 10; }
 
@@ -773,6 +779,7 @@ function applyBackground(code, sunrise, sunset, precipProb = 0) {
   clearStars();
   clearMoon();
   clearShootingStars();
+  clearClouds();
   if (lightningTimer) { clearTimeout(lightningTimer); lightningTimer = null; }
 
   const gradients = {
@@ -810,6 +817,11 @@ function applyBackground(code, sunrise, sunset, precipProb = 0) {
       spawnStars(150);
       spawnMoon();
       if (Math.random() > 0.7) startShootingStars();
+    } else {
+      // Spawn clouds for daytime cloudy/overcast conditions
+      if (cat === 'cloudy-day' || cat === 'overcast' || cat === 'rain') {
+        spawnClouds(8);
+      }
     }
     if (cat === 'rain')  startParticles('rain');
     if (cat === 'storm') { startParticles('rain'); startLightning(); }
@@ -836,6 +848,35 @@ function spawnStars(count) {
 }
 function clearStars() {
   document.querySelectorAll('.star').forEach(s => s.remove());
+}
+
+// ── Clouds ──────────────────────────────────────────────────────────────────
+function spawnClouds(count) {
+  if (isHomepageView()) return;
+  const bg = document.getElementById('bg');
+  for (let i = 0; i < count; i++) {
+    const cloud = document.createElement('div');
+    cloud.className = 'cloud';
+    const size = Math.random() * 80 + 60;
+    const opacity = Math.random() * 0.4 + 0.3;
+    cloud.style.cssText = `
+      position: absolute;
+      width: ${size}px;
+      height: ${size * 0.5}px;
+      background: radial-gradient(ellipse at 30% 50%, rgba(255,255,255,${opacity}) 0%, rgba(255,255,255,${opacity*0.6}) 40%, transparent 70%);
+      border-radius: ${size * 0.25}px;
+      top: ${Math.random() * 60}%;
+      left: ${Math.random() * 100}%;
+      filter: blur(8px);
+      animation: float ${20 + Math.random()*30}s linear infinite;
+      animation-delay: ${Math.random() * 5}s;
+      z-index: 2;
+    `;
+    bg.appendChild(cloud);
+  }
+}
+function clearClouds() {
+  document.querySelectorAll('.cloud').forEach(c => c.remove());
 }
 
 // ── Moon ────────────────────────────────────────────────────────────────────
