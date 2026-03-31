@@ -1337,38 +1337,33 @@ function loadRadarMap(lat, lon, locName) {
         maxZoom: 19
       }).addTo(radarMap);
 
-      // Add real weather radar tiles
+      // Add real weather radar tiles from RainViewer
       const addRadarTiles = function() {
-        // Use OpenWeatherMap precipitation radar tiles
-        const timestamp = Math.floor(Date.now() / 1000);
-        const radarTile = L.tileLayer(
-          `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=e2df1b55381e81151e86881b934e1736`,
-          {
-            attribution: '',
-            opacity: 0.85,
-            maxZoom: 19,
-            tms: false,
-            crossOrigin: 'anonymous',
-            zIndex: 100
-          }
-        ).addTo(radarMap);
+        // Get latest radar timestamp
+        fetch('https://api.rainviewer.com/public/weather-maps-index.json')
+          .then(response => response.json())
+          .then(data => {
+            const timestamp = data.radar[0][0];
 
-        radarMap.radarTileLayer = radarTile;
+            // Add RainViewer radar tiles with proper format
+            const radarTile = L.tileLayer(
+              `https://tilecache.rainviewer.com/v2/radar_tiles/256/${timestamp}/{z}/{x}/{y}/2/1_1.png`,
+              {
+                attribution: '',
+                opacity: 0.85,
+                maxZoom: 16,
+                tms: false,
+                crossOrigin: 'anonymous',
+                zIndex: 100
+              }
+            ).addTo(radarMap);
 
-        // Add rain clouds visualization overlay
-        const cloudOverlay = L.tileLayer(
-          `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=e2df1b55381e81151e86881b934e1736`,
-          {
-            attribution: '',
-            opacity: 0.3,
-            maxZoom: 19,
-            tms: false,
-            crossOrigin: 'anonymous',
-            zIndex: 50
-          }
-        ).addTo(radarMap);
-
-        radarMap.cloudTileLayer = cloudOverlay;
+            radarMap.radarTileLayer = radarTile;
+            radarMap.radarTimestamp = timestamp;
+          })
+          .catch(err => {
+            console.log('Radar unavailable, using map only');
+          });
       };
       addRadarTiles();
 
@@ -1424,41 +1419,35 @@ function loadRadarMap(lat, lon, locName) {
       // Auto-refresh radar every 2 minutes
       radarRefreshTimer = setInterval(() => {
         if (radarMap && radarMap.radarTileLayer) {
-          // Remove old tiles
-          radarMap.removeLayer(radarMap.radarTileLayer);
-          if (radarMap.cloudTileLayer) {
-            radarMap.removeLayer(radarMap.cloudTileLayer);
-          }
+          // Fetch latest radar data
+          fetch('https://api.rainviewer.com/public/weather-maps-index.json')
+            .then(response => response.json())
+            .then(data => {
+              const newTimestamp = data.radar[0][0];
 
-          // Add fresh tiles with new timestamp
-          const newTimestamp = Math.floor(Date.now() / 1000);
+              // Only update if timestamp changed
+              if (radarMap.radarTimestamp !== newTimestamp) {
+                radarMap.removeLayer(radarMap.radarTileLayer);
 
-          const newRadarTile = L.tileLayer(
-            `https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=e2df1b55381e81151e86881b934e1736&t=${newTimestamp}`,
-            {
-              attribution: '',
-              opacity: 0.85,
-              maxZoom: 19,
-              tms: false,
-              crossOrigin: 'anonymous',
-              zIndex: 100
-            }
-          ).addTo(radarMap);
+                const newRadarTile = L.tileLayer(
+                  `https://tilecache.rainviewer.com/v2/radar_tiles/256/${newTimestamp}/{z}/{x}/{y}/2/1_1.png`,
+                  {
+                    attribution: '',
+                    opacity: 0.85,
+                    maxZoom: 16,
+                    tms: false,
+                    crossOrigin: 'anonymous',
+                    zIndex: 100
+                  }
+                ).addTo(radarMap);
 
-          const newCloudTile = L.tileLayer(
-            `https://tile.openweathermap.org/map/clouds_new/{z}/{x}/{y}.png?appid=e2df1b55381e81151e86881b934e1736&t=${newTimestamp}`,
-            {
-              attribution: '',
-              opacity: 0.3,
-              maxZoom: 19,
-              tms: false,
-              crossOrigin: 'anonymous',
-              zIndex: 50
-            }
-          ).addTo(radarMap);
-
-          radarMap.radarTileLayer = newRadarTile;
-          radarMap.cloudTileLayer = newCloudTile;
+                radarMap.radarTileLayer = newRadarTile;
+                radarMap.radarTimestamp = newTimestamp;
+              }
+            })
+            .catch(err => {
+              console.log('Radar refresh failed');
+            });
         }
       }, 2 * 60 * 1000); // 2 minutes
 
