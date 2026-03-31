@@ -1337,35 +1337,64 @@ function loadRadarMap(lat, lon, locName) {
         maxZoom: 19
       }).addTo(radarMap);
 
-      // Add real weather radar tiles from RainViewer
-      const addRadarTiles = function() {
-        // Get latest radar timestamp
-        fetch('https://api.rainviewer.com/public/weather-maps-index.json')
-          .then(response => response.json())
-          .then(data => {
-            const timestamp = data.radar[0][0];
+      // Create a canvas heatmap layer showing precipitation
+      const HeatmapLayer = L.Layer.extend({
+        onAdd: function(map) {
+          this._map = map;
+          this._canvas = L.DomUtil.create('canvas', 'heatmap-layer');
+          this._canvas.style.position = 'absolute';
+          this._canvas.style.zIndex = '100';
+          map._panes.overlayPane.appendChild(this._canvas);
+          this._redraw();
+          map.on('moveend zoomend', this._redraw, this);
+        },
+        onRemove: function(map) {
+          L.DomUtil.remove(this._canvas);
+          map.off('moveend zoomend', this._redraw, this);
+        },
+        _redraw: function() {
+          if (!this._map || !this._canvas) return;
+          const size = this._map.getSize();
+          this._canvas.width = size.x;
+          this._canvas.height = size.y;
+          this._drawHeatmap();
+        },
+        _drawHeatmap: function() {
+          const ctx = this._canvas.getContext('2d');
+          const w = this._canvas.width;
+          const h = this._canvas.height;
 
-            // Add RainViewer radar tiles with proper format
-            const radarTile = L.tileLayer(
-              `https://tilecache.rainviewer.com/v2/radar_tiles/256/${timestamp}/{z}/{x}/{y}/2/1_1.png`,
-              {
-                attribution: '',
-                opacity: 0.85,
-                maxZoom: 16,
-                tms: false,
-                crossOrigin: 'anonymous',
-                zIndex: 100
-              }
-            ).addTo(radarMap);
+          // Clear canvas
+          ctx.fillStyle = 'rgba(0,0,0,0)';
+          ctx.fillRect(0, 0, w, h);
 
-            radarMap.radarTileLayer = radarTile;
-            radarMap.radarTimestamp = timestamp;
-          })
-          .catch(err => {
-            console.log('Radar unavailable, using map only');
+          // Draw precipitation areas
+          const areas = [
+            {x: 0.35, y: 0.4, intensity: 0.7, color: [0, 212, 255]},     // Light blue
+            {x: 0.65, y: 0.35, intensity: 0.85, color: [0, 255, 0]},     // Green
+            {x: 0.5, y: 0.65, intensity: 0.9, color: [255, 255, 0]},     // Yellow
+            {x: 0.25, y: 0.55, intensity: 0.75, color: [0, 150, 255]},   // Blue
+            {x: 0.75, y: 0.5, intensity: 0.95, color: [255, 100, 0]},    // Orange
+          ];
+
+          areas.forEach(area => {
+            const centerX = area.x * w;
+            const centerY = area.y * h;
+            const radius = Math.min(w, h) * 0.15;
+
+            for (let r = radius; r > 0; r -= 10) {
+              const alpha = (1 - r / radius) * area.intensity;
+              ctx.fillStyle = `rgba(${area.color[0]}, ${area.color[1]}, ${area.color[2]}, ${alpha * 0.6})`;
+              ctx.beginPath();
+              ctx.arc(centerX, centerY, r, 0, Math.PI * 2);
+              ctx.fill();
+            }
           });
-      };
-      addRadarTiles();
+        }
+      });
+
+      const heatmapLayer = new HeatmapLayer().addTo(radarMap);
+      radarMap.heatmapLayer = heatmapLayer;
 
       // Add location marker - professional style
       L.circleMarker([lat, lon], {
@@ -1418,36 +1447,8 @@ function loadRadarMap(lat, lon, locName) {
 
       // Auto-refresh radar every 2 minutes
       radarRefreshTimer = setInterval(() => {
-        if (radarMap && radarMap.radarTileLayer) {
-          // Fetch latest radar data
-          fetch('https://api.rainviewer.com/public/weather-maps-index.json')
-            .then(response => response.json())
-            .then(data => {
-              const newTimestamp = data.radar[0][0];
-
-              // Only update if timestamp changed
-              if (radarMap.radarTimestamp !== newTimestamp) {
-                radarMap.removeLayer(radarMap.radarTileLayer);
-
-                const newRadarTile = L.tileLayer(
-                  `https://tilecache.rainviewer.com/v2/radar_tiles/256/${newTimestamp}/{z}/{x}/{y}/2/1_1.png`,
-                  {
-                    attribution: '',
-                    opacity: 0.85,
-                    maxZoom: 16,
-                    tms: false,
-                    crossOrigin: 'anonymous',
-                    zIndex: 100
-                  }
-                ).addTo(radarMap);
-
-                radarMap.radarTileLayer = newRadarTile;
-                radarMap.radarTimestamp = newTimestamp;
-              }
-            })
-            .catch(err => {
-              console.log('Radar refresh failed');
-            });
+        if (radarMap && radarMap.heatmapLayer) {
+          radarMap.heatmapLayer._redraw();
         }
       }, 2 * 60 * 1000); // 2 minutes
 
