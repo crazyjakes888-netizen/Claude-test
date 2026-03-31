@@ -342,6 +342,7 @@
 
     /* ── WEATHER SECTION ── */
     #weather { padding: 0 1.5rem 2rem; display: none; }
+    #radar-btn { display: none; }
 
     .wx-header {
       display: flex; align-items: flex-start; justify-content: space-between;
@@ -512,7 +513,16 @@
       </div>
     </div>
     <div class="wx-grid" id="wx-grid"></div>
+    <button id="radar-btn" style="position: fixed; bottom: 20px; left: 20px; padding: 0.7rem 1.2rem; background: linear-gradient(135deg, #6c63ff, #a855f7); border: none; border-radius: 8px; color: #fff; font-weight: 600; cursor: pointer; z-index: 100; font-size: 0.9rem;">📡 Radar View</button>
   </section>
+
+  <!-- RADAR MODAL -->
+  <div id="radar-modal" style="display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 500; display: flex; align-items: center; justify-content: center; padding: 1rem;">
+    <div style="position: relative; width: 90%; max-width: 800px; height: 80vh; background: #0a0e27; border-radius: 12px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.8);">
+      <button id="radar-close" style="position: absolute; top: 15px; right: 15px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.2); color: #fff; width: 40px; height: 40px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; z-index: 501; transition: all 0.2s;">✕</button>
+      <div id="radar-map" style="width: 100%; height: 100%; background: #1a2040;"></div>
+    </div>
+  </div>
 </div>
 
 <script>
@@ -1134,6 +1144,7 @@ function showWeatherView() {
   document.getElementById('quick-cities').style.display = 'none';
   document.getElementById('hero-inner').style.display = 'none';
   document.getElementById('weather').style.display = 'block';
+  document.getElementById('radar-btn').style.display = 'block';
   clearStars();
   clearShootingStars();
 }
@@ -1154,6 +1165,58 @@ function goHome() {
   location.reload();
 }
 
+// ── Radar View ─────────────────────────────────────────────────────────────
+let lastRadarLat = 0, lastRadarLon = 0;
+
+function showRadarView() {
+  const modal = document.getElementById('radar-modal');
+  if (!modal) return;
+
+  // Get the current location from the weather display
+  const locName = document.getElementById('wx-loc').textContent;
+  if (!locName || lastRadarLat === 0) {
+    alert('Please search for a city first');
+    return;
+  }
+
+  modal.style.display = 'flex';
+  loadRadarMap(lastRadarLat, lastRadarLon, locName);
+}
+
+function closeRadarView() {
+  const modal = document.getElementById('radar-modal');
+  if (modal) modal.style.display = 'none';
+}
+
+function loadRadarMap(lat, lon, locName) {
+  const mapDiv = document.getElementById('radar-map');
+  if (!mapDiv) return;
+
+  // Use OpenWeatherMap tiles for radar view
+  const zoom = 8;
+  const tileLayer = 'https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=e2df1b55381e81151e86881b934e1736';
+
+  // Calculate OpenWeatherMap tile coordinates
+  const n = Math.pow(2, zoom);
+  const x = Math.floor((lon + 180) / 360 * n);
+  const y = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * n);
+
+  // Create simple map with tiles
+  mapDiv.innerHTML = `
+    <div style="width:100%;height:100%;background:linear-gradient(135deg,#1a2847 0%,#2d3561 100%);display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;">
+      <div style="text-align:center;">
+        <div style="font-size:1.2rem;margin-bottom:1rem;">🗺️ Weather Radar</div>
+        <div style="font-size:0.9rem;color:#aaa;margin-bottom:2rem;">${locName}</div>
+        <img src="${tileLayer.replace('{z}',zoom).replace('{x}',x).replace('{y}',y)}" style="max-width:100%;max-height:60%;border-radius:8px;opacity:0.8;" alt="Radar" onerror="this.parentElement.innerHTML='<div style=\\"color:#ff6b6b;\\">Radar data unavailable</div>';" />
+        <div style="margin-top:1.5rem;font-size:0.8rem;color:#888;">
+          <div>Latitude: ${lat.toFixed(2)}°</div>
+          <div>Longitude: ${lon.toFixed(2)}°</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 // ── Search ─────────────────────────────────────────────────────────────────
 async function searchCity() {
   const val = document.getElementById('city-input').value.trim();
@@ -1166,6 +1229,8 @@ async function searchCity() {
     const j = await r.json();
     if (!j.length) { document.getElementById('wx-loc').textContent = 'Not found'; return; }
     const label = j[0].display_name.split(',')[0].trim();
+    lastRadarLat = parseFloat(j[0].lat);
+    lastRadarLon = parseFloat(j[0].lon);
     await fetchWeather(j[0].lat, j[0].lon, label);
     loadNews(label);
     document.getElementById('weather').scrollIntoView({ behavior: 'smooth' });
@@ -1184,6 +1249,8 @@ async function miniSearch() {
     const j = await r.json();
     if (!j.length) { document.getElementById('wx-loc').textContent = 'Not found'; return; }
     const label = j[0].display_name.split(',')[0].trim();
+    lastRadarLat = parseFloat(j[0].lat);
+    lastRadarLon = parseFloat(j[0].lon);
     await fetchWeather(j[0].lat, j[0].lon, label);
     loadNews(label);
     document.getElementById('mini-city-input').value = '';
@@ -1193,6 +1260,13 @@ async function miniSearch() {
 document.getElementById('mini-city-btn').addEventListener('click', miniSearch);
 document.getElementById('mini-city-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') miniSearch();
+});
+
+// ── Radar button listeners ──────────────────────────────────────────────────
+document.getElementById('radar-btn').addEventListener('click', showRadarView);
+document.getElementById('radar-close').addEventListener('click', closeRadarView);
+document.getElementById('radar-modal').addEventListener('click', (e) => {
+  if (e.target.id === 'radar-modal') closeRadarView();
 });
 document.getElementById('city-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') { hideSug(); searchCity(); }
