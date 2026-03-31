@@ -490,6 +490,20 @@
       /* Suggestions */
       #suggestions { width: 100%; }
     }
+
+    /* ── DESKTOP / LARGE SCREENS ── */
+    @media (min-width: 900px) {
+      /* Weather cards — 3 column grid on desktop */
+      .wx-grid { grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+      #weather { padding: 0 2rem 2rem; max-width: 1400px; margin: 0 auto; }
+      .wx-card { min-height: 280px; padding: 1.5rem 1.5rem; }
+    }
+
+    @media (min-width: 1400px) {
+      /* Weather cards — 4 column grid on very large screens */
+      .wx-grid { grid-template-columns: repeat(4, 1fr); }
+      #weather { max-width: 100%; padding: 0 3rem 2rem; }
+    }
   </style>
 </head>
 <body>
@@ -823,19 +837,18 @@ function applyBackground(code, sunrise, sunset, precipProb = 0) {
     bg.style.background = gradients[cat] || gradients['clear-night'];
   }
 
-  // Spawn stars and moon only for night conditions in city view (not homepage)
-  if (!isHomepageView()) {
-    if (isNight) {
-      spawnStars(150);
-      spawnMoon();
-      if (Math.random() > 0.7) startShootingStars();
-    } else {
-      // Spawn clouds for daytime cloudy/overcast conditions
-      if (cat === 'cloudy-day' || cat === 'overcast' || cat === 'rain') {
-        spawnClouds(8);
-      }
+  // Spawn stars and moon for night conditions, clouds for daytime
+  if (isNight) {
+    spawnStars(150);
+    spawnMoon();
+    if (Math.random() > 0.7) startShootingStars();
+  } else {
+    // Spawn clouds for daytime cloudy/overcast conditions (not on homepage)
+    if (!isHomepageView() && (cat === 'cloudy-day' || cat === 'overcast' || cat === 'rain')) {
+      spawnClouds(8);
     }
-    if (cat === 'rain')  startParticles('rain');
+  }
+  if (cat === 'rain' && !isHomepageView())  startParticles('rain');
     if (cat === 'storm') { startParticles('rain'); startLightning(); }
     if (cat === 'snow')  startParticles('snow');
   }
@@ -1247,6 +1260,7 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
       <span class="wx-card-label">Condition <span style="margin-left: auto;">${ICONS[code]??'🌤️'}</span></span>
       <span class="wx-card-main">${WMO[code]??'Unknown'}</span>
       <hr class="wx-divider"/>
+      <div class="wx-row"><span>Current</span><strong>${WMO[code]??'Unknown'}</strong></div>
       <div class="wx-row"><span>Visibility</span><strong>${vis!=null?(isMetric?(vis/1000).toFixed(1)+' km':(vis/1609).toFixed(1)+' mi'):'—'}</strong></div>
       <div class="wx-row"><span>Humidity</span><strong>${hum}%</strong></div>
       <div class="wx-row"><span>Precip chance</span><strong>${prec}%</strong></div>
