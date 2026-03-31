@@ -24,12 +24,17 @@
     html { scroll-behavior: smooth; background: #000; }
 
     body {
-      font-family: 'Segoe UI', system-ui, sans-serif, 'Noto Color Emoji';
+      font-family: 'Segoe UI', system-ui, sans-serif;
       color: var(--text);
       min-height: 100vh;
       background: #000;
       position: relative;
       overflow-x: hidden;
+    }
+
+    /* Force emoji font for better rendering */
+    * {
+      font-family: 'Segoe UI', system-ui, sans-serif, 'Noto Color Emoji', 'Apple Color Emoji', 'Segoe UI Emoji';
     }
 
     /* ── ANIMATED BACKGROUND ── */
