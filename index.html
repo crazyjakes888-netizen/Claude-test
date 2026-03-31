@@ -343,8 +343,36 @@
 
     /* ── WEATHER SECTION ── */
     #weather { padding: 0 1.5rem 2rem; display: none; }
-    #radar-btn { display: none; }
-    #alerts-btn { display: none; }
+    #radar-btn, #alerts-btn {
+      display: none;
+      position: fixed;
+      bottom: 40px;
+      padding: 0.85rem 1.4rem;
+      background: rgba(56, 198, 255, 0.1);
+      border: 1px solid rgba(56, 198, 255, 0.3);
+      border-radius: 10px;
+      color: #38c6ff;
+      font-weight: 600;
+      cursor: pointer;
+      z-index: 100;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      letter-spacing: 0.02em;
+      box-shadow: 0 2px 8px rgba(56, 198, 255, 0.1);
+    }
+    #radar-btn:hover, #alerts-btn:hover {
+      background: rgba(56, 198, 255, 0.2);
+      border-color: rgba(56, 198, 255, 0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(56, 198, 255, 0.2);
+    }
+    #radar-btn:active, #alerts-btn:active {
+      transform: translateY(0);
+    }
+    #radar-btn { left: 40px; }
+    #alerts-btn { left: 240px; }
 
     .wx-header {
       display: flex; align-items: flex-start; justify-content: space-between;
@@ -515,8 +543,8 @@
       </div>
     </div>
     <div class="wx-grid" id="wx-grid"></div>
-    <button id="radar-btn" style="position: fixed; bottom: 40px; left: 40px; padding: 1rem 1.5rem; background: #6b7280; border: 1px solid #4b5563; border-radius: 8px; color: #fff; font-weight: 500; cursor: pointer; z-index: 100; font-size: 1rem; transition: all 0.2s;">📡 Radar View</button>
-    <button id="alerts-btn" style="position: fixed; bottom: 40px; left: 220px; padding: 1rem 1.5rem; background: #6b7280; border: 1px solid #4b5563; border-radius: 8px; color: #fff; font-weight: 500; cursor: pointer; z-index: 100; font-size: 1rem; transition: all 0.2s;">⚠️ Alerts</button>
+    <button id="radar-btn">📡 Radar View</button>
+    <button id="alerts-btn">⚠️ Alerts</button>
   </section>
 
   <!-- RADAR MODAL -->
@@ -1364,6 +1392,7 @@ function loadRadarMap(lat, lon, locName) {
           const ctx = this._canvas.getContext('2d');
           const w = this._canvas.width;
           const h = this._canvas.height;
+          const map = this._map;
 
           // Clear canvas
           ctx.fillStyle = 'rgba(0,0,0,0)';
@@ -1373,41 +1402,47 @@ function loadRadarMap(lat, lon, locName) {
           ctx.imageSmoothingEnabled = true;
           ctx.imageSmoothingQuality = 'high';
 
+          // Get current map bounds and zoom
+          const bounds = map.getBounds();
+          const zoomScale = Math.pow(2, map.getZoom()) / Math.pow(2, 10);
+
+          // High-quality precipitation areas with map-based positioning
+          const areas = [
+            {lat: lat + 0.15, lng: lon + 0.12, intensity: 0.7, radius: 0.12, colors: [[0, 212, 255], [0, 150, 200]]},
+            {lat: lat - 0.10, lng: lon + 0.18, intensity: 0.85, radius: 0.14, colors: [[0, 255, 0], [0, 200, 0]]},
+            {lat: lat - 0.20, lng: lon - 0.10, intensity: 0.9, radius: 0.13, colors: [[255, 255, 0], [255, 200, 0]]},
+            {lat: lat + 0.05, lng: lon - 0.22, intensity: 0.75, radius: 0.11, colors: [[0, 180, 255], [0, 100, 200]]},
+            {lat: lat - 0.12, lng: lon - 0.15, intensity: 0.95, radius: 0.12, colors: [[255, 100, 0], [255, 50, 0]]},
+            {lat: lat + 0.10, lng: lon + 0.05, intensity: 0.6, radius: 0.10, colors: [[100, 200, 255], [50, 150, 255]]},
+            {lat: lat - 0.05, lng: lon + 0.15, intensity: 0.8, radius: 0.11, colors: [[100, 255, 0], [50, 200, 0]]},
+          ];
+
           // Create image data for high-quality heatmap
           const imageData = ctx.createImageData(w, h);
           const data = imageData.data;
 
-          // High-quality precipitation areas with multiple layers
-          const areas = [
-            {x: 0.35, y: 0.4, intensity: 0.7, radius: 0.12, colors: [[0, 212, 255], [0, 150, 200]]},
-            {x: 0.65, y: 0.35, intensity: 0.85, radius: 0.14, colors: [[0, 255, 0], [0, 200, 0]]},
-            {x: 0.5, y: 0.65, intensity: 0.9, radius: 0.13, colors: [[255, 255, 0], [255, 200, 0]]},
-            {x: 0.25, y: 0.55, intensity: 0.75, radius: 0.11, colors: [[0, 180, 255], [0, 100, 200]]},
-            {x: 0.75, y: 0.5, intensity: 0.95, radius: 0.12, colors: [[255, 100, 0], [255, 50, 0]]},
-            {x: 0.45, y: 0.25, intensity: 0.6, radius: 0.1, colors: [[100, 200, 255], [50, 150, 255]]},
-            {x: 0.6, y: 0.7, intensity: 0.8, radius: 0.11, colors: [[100, 255, 0], [50, 200, 0]]},
-          ];
-
           // Fill with gradient for each pixel
           for (let i = 0; i < w; i++) {
             for (let j = 0; j < h; j++) {
-              const x = i / w;
-              const y = j / h;
+              // Convert pixel to lat/lng
+              const topLeft = map.containerPointToLatLng([0, 0]);
+              const bottomRight = map.containerPointToLatLng([w, h]);
+              const pixelLat = topLeft.lat - (j / h) * (topLeft.lat - bottomRight.lat);
+              const pixelLng = topLeft.lng + (i / w) * (bottomRight.lng - topLeft.lng);
+
               let r = 0, g = 0, b = 0, a = 0;
 
               // Check distance to each precipitation area
               areas.forEach(area => {
-                const dx = x - area.x;
-                const dy = y - area.y;
-                const dist = Math.sqrt(dx * dx + dy * dy);
+                const dlat = pixelLat - area.lat;
+                const dlng = pixelLng - area.lng;
+                const dist = Math.sqrt(dlat * dlat + dlng * dlng);
                 const areaRadius = area.radius;
 
                 if (dist < areaRadius) {
-                  // Smooth falloff using cosine
                   const falloff = Math.cos((dist / areaRadius) * Math.PI / 2);
                   const strength = falloff * falloff * area.intensity;
 
-                  // Blend colors for smooth gradients
                   const color1 = area.colors[0];
                   const color2 = area.colors[1];
                   const blend = dist / areaRadius;
@@ -1426,7 +1461,7 @@ function loadRadarMap(lat, lon, locName) {
               data[pixelIndex] = Math.min(255, r);
               data[pixelIndex + 1] = Math.min(255, g);
               data[pixelIndex + 2] = Math.min(255, b);
-              data[pixelIndex + 3] = Math.min(255, a * 150); // Opacity
+              data[pixelIndex + 3] = Math.min(255, a * 150);
             }
           }
 
