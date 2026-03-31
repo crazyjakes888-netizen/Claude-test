@@ -1208,6 +1208,23 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
       <div class="wx-row"><span>Speed ${isMetric?'mph':'km/h'}</span><strong>${isMetric?(wind*0.621).toFixed(1):wind} ${isMetric?'mph':'km/h'}</strong></div>
       <div class="wx-row"><span>Speed m/s</span><strong>${(wind/3.6).toFixed(1)} m/s</strong></div>
       <div class="wx-row"><span>Beaufort</span><strong>${windBf}</strong></div>
+      <hr class="wx-divider" style="margin-top: auto; margin-bottom: 0.5rem;"/>
+      <div style="display: flex; gap: 0.4rem; overflow-x: auto;">
+        ${[...Array(12)].map((_, i) => {
+          const hIndex = h + i;
+          const hourTime = new Date(now.getTime() + i * 3600000).toLocaleString('en-US', { timeZone: tz, hour: 'numeric', hour12: true });
+          const windSpeed = hourly?.wind_speed_10m?.[hIndex];
+          const displaySpeed = windSpeed!=null ? (isMetric?Math.round(windSpeed):Math.round(windSpeed*0.621)) : '—';
+          const windIcon = windSpeed!=null ? (windSpeed>20?'💨':windSpeed>10?'🌬️':'🍃') : '—';
+          return `
+            <div style="flex-shrink: 0; text-align: center; padding: 0.4rem 0.5rem; background: rgba(0,229,160,0.1); border-radius: 6px; border: 1px solid rgba(0,229,160,0.2); font-size: 0.7rem; min-width: 55px;">
+              <div style="margin-bottom: 0.2rem; color: var(--muted);">${hourTime}</div>
+              <div style="font-size: 1.2rem; margin-bottom: 0.1rem;">${windIcon}</div>
+              <div style="font-weight: 600;">${displaySpeed} ${isMetric?'km/h':'mph'}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
     </div>
 
     <div class="wx-card wx-cond">
@@ -1302,7 +1319,7 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
 async function fetchWeather(lat, lon, label) {
   try {
     const [wRes, aqRes, gRes] = await Promise.all([
-      fetchT(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=apparent_temperature,relative_humidity_2m,precipitation_probability,visibility,weather_code&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,weather_code&timezone=auto&forecast_days=7`),
+      fetchT(`https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}&current_weather=true&hourly=apparent_temperature,relative_humidity_2m,precipitation_probability,visibility,weather_code,wind_speed_10m&daily=temperature_2m_max,temperature_2m_min,uv_index_max,sunrise,sunset,weather_code&timezone=auto&forecast_days=7`),
       fetchT(`https://air-quality-api.open-meteo.com/v1/air-quality?latitude=${lat}&longitude=${lon}&current=pm10,pm2_5,us_aqi&timezone=auto`),
       label ? Promise.resolve(null) : fetchT(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`)
     ]);
