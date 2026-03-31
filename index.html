@@ -731,9 +731,11 @@ function applyBackground(code, sunrise, sunset) {
     bg.style.background = gradients[cat] || gradients['clear-night'];
   }
 
-  // Spawn stars and moon for night conditions (but not during sunrise/sunset)
-  const isDuskOrDawn = isDusk || isDawn;
-  if (isNight && !isDuskOrDawn) {
+  // Spawn stars and moon only for night conditions in city view (not homepage)
+  const hero = document.getElementById('hero');
+  const isHomepage = hero && hero.style.display !== 'none';
+
+  if (isNight && !isHomepage) {
     spawnStars(150);
     spawnMoon();
     if (Math.random() > 0.7) startShootingStars();
