@@ -778,15 +778,15 @@ function applyBackground(code, sunrise, sunset, precipProb = 0) {
   const gradients = {
     'clear-day':   'linear-gradient(180deg, #0ea5e9 0%, #38bdf8 40%, #7dd3fc 100%)',
     'clear-night': 'linear-gradient(180deg, #1a1f4b 0%, #2d1b69 40%, #1a2847 100%)',
-    'cloudy-day':  'linear-gradient(180deg, #e2e8f0 0%, #f1f5f9 40%, #dbeafe 70%, #cbd5e1 100%)',
+    'cloudy-day':  'linear-gradient(180deg, #a0aec0 0%, #cbd5e1 40%, #94a3b8 70%, #64748b 100%)',
     'cloudy-night': 'linear-gradient(180deg, #2d3561 0%, #1a2847 50%, #16213e 100%)',
-    'overcast':    'linear-gradient(180deg, #cbd5e1 0%, #e2e8f0 50%, #f1f5f9 100%)',
+    'overcast':    'linear-gradient(180deg, #7c8fa8 0%, #94a3b8 40%, #a8b5c5 70%, #8fa0b3 100%)',
     'overcast-night': 'linear-gradient(180deg, #2d3561 0%, #1f2947 50%, #1a1f4b 100%)',
-    'rain':        'linear-gradient(180deg, #0c1a2e 0%, #1e3a5f 50%, #0f2d47 100%)',
-    'storm':       'linear-gradient(180deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)',
-    'snow':        'linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 50%, #94a3b8 100%)',
+    'rain':        'linear-gradient(180deg, #4a5f7f 0%, #5a7a99 50%, #3f5870 100%)',
+    'storm':       'linear-gradient(180deg, #1a2838 0%, #2a3a4e 50%, #1f3047 100%)',
+    'snow':        'linear-gradient(180deg, #c9d3dc 0%, #b5bfc9 50%, #9ba5b3 100%)',
     'snow-night':  'linear-gradient(180deg, #1a2847 0%, #2d3561 50%, #1f2947 100%)',
-    'fog':         'linear-gradient(180deg, #6b7280 0%, #9ca3af 100%)',
+    'fog':         'linear-gradient(180deg, #7a8390 0%, #8a92a0 100%)',
     'fog-night':   'linear-gradient(180deg, #2d3561 0%, #1f2947 100%)',
   };
   if (isDusk && cat.includes('clear')) {
