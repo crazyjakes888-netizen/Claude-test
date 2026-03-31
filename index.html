@@ -1132,6 +1132,22 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
       <div class="wx-row"><span>Humidity</span><strong>${hum}%</strong></div>
       <div class="wx-row"><span>Visibility</span><strong>${vis!=null?(isMetric?(vis/1000).toFixed(1)+' km':(vis/1609).toFixed(1)+' mi'):'—'}</strong></div>
       <div class="wx-row"><span>Dew point</span><strong>${feel!=null?Math.round(cw.temperature-(100-hum)/5)+'°C':'—'}</strong></div>
+      <hr class="wx-divider"/>
+      <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 0.5rem; font-weight: 700;">Next 12 Hours</div>
+      <div style="display: flex; gap: 0.4rem; overflow-x: auto;">
+        ${[...Array(12)].map((_, i) => {
+          const hIndex = h + i;
+          const hourTime = new Date(now.getTime() + i * 3600000).toLocaleString('en-US', { timeZone: tz, hour: 'numeric', hour12: true });
+          const precip = hourly?.precipitation_probability?.[hIndex] ?? 0;
+          return `
+            <div style="flex-shrink: 0; text-align: center; padding: 0.4rem 0.5rem; background: rgba(56,198,255,0.1); border-radius: 6px; border: 1px solid rgba(56,198,255,0.2); font-size: 0.7rem; min-width: 55px;">
+              <div style="margin-bottom: 0.2rem; color: var(--muted);">${hourTime}</div>
+              <div style="font-size: 1rem; margin-bottom: 0.1rem;">${precip > 70 ? '⛈️' : precip > 50 ? '🌧️' : precip > 30 ? '🌦️' : '☀️'}</div>
+              <div style="font-weight: 600;">${precip}%</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
     </div>
 
     <div class="wx-card wx-wind">
@@ -1188,6 +1204,22 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
       <div class="wx-row"><span>Sunset</span><strong>${set}</strong></div>
       <div class="wx-row"><span>Recommendation</span></div>
       <div style="font-size:0.73rem;color:var(--muted);margin-top:0.2rem">${uv==null?'—':uv<=2?'No protection needed':uv<=5?'Wear sunscreen SPF 30+':uv<=7?'Seek shade midday, SPF 50+':uv<=10?'Minimize sun exposure':'Avoid being outside midday'}</div>
+      <hr class="wx-divider"/>
+      <div style="font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--muted); margin-bottom: 0.5rem; font-weight: 700;">Next 12 Hours</div>
+      <div style="display: flex; gap: 0.4rem; overflow-x: auto;">
+        ${[...Array(12)].map((_, i) => {
+          const hIndex = h + i;
+          const hourTime = new Date(now.getTime() + i * 3600000).toLocaleString('en-US', { timeZone: tz, hour: 'numeric', hour12: true });
+          const uvVal = daily?.uv_index_max?.[0] ? Math.round((daily.uv_index_max[0] / 24) * (i + 1)) : '—';
+          return `
+            <div style="flex-shrink: 0; text-align: center; padding: 0.4rem 0.5rem; background: rgba(148,163,184,0.1); border-radius: 6px; border: 1px solid rgba(148,163,184,0.2); font-size: 0.7rem; min-width: 55px;">
+              <div style="margin-bottom: 0.2rem; color: var(--muted);">${hourTime}</div>
+              <div style="font-size: 1rem; margin-bottom: 0.1rem;">☀️</div>
+              <div style="font-weight: 600; color: ${uvVal > 7 ? '#ff6b6b' : uvVal > 5 ? '#ffd43b' : '#51cf66'}">${uvVal}</div>
+            </div>
+          `;
+        }).join('')}
+      </div>
     </div>
 
     <div class="wx-card wx-forecast" style="grid-column: 1 / -1;">
