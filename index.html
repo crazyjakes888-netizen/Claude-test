@@ -558,10 +558,6 @@
       </div>
     </div>
     <div class="wx-grid" id="wx-grid"></div>
-    <div id="buttons-container" class="hidden">
-      <button id="radar-btn">📡 Radar View</button>
-      <button id="alerts-btn">⚠️ Alerts</button>
-    </div>
   </section>
 
   <!-- RADAR MODAL -->
@@ -1878,5 +1874,13 @@ setTimeout(() => {
   setInterval(updateAlertsVisibility, 500);
 }, 100);
 </script>
+</div> <!-- Close #page div -->
+
+<!-- Radar and Alerts Buttons - Fixed to viewport, not affected by page scroll -->
+<div id="buttons-container" class="hidden">
+  <button id="radar-btn">📡 Radar View</button>
+  <button id="alerts-btn">⚠️ Alerts</button>
+</div>
+
 </body>
 </html>
