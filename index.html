@@ -1207,26 +1207,37 @@ function loadRadarMap(lat, lon, locName) {
   const mapDiv = document.getElementById('radar-map');
   if (!mapDiv) return;
 
-  // Use OpenWeatherMap tiles for radar view
+  // Create a simple radar using Rainviewer tiles
   const zoom = 8;
-  const tileLayer = 'https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=e2df1b55381e81151e86881b934e1736';
+  const tileSize = 256;
 
-  // Calculate OpenWeatherMap tile coordinates
+  // Convert lat/lon to tile coordinates
   const n = Math.pow(2, zoom);
+  const latRad = lat * Math.PI / 180;
   const x = Math.floor((lon + 180) / 360 * n);
-  const y = Math.floor((1 - Math.log(Math.tan(lat * Math.PI / 180) + 1 / Math.cos(lat * Math.PI / 180)) / Math.PI) / 2 * n);
+  const y = Math.floor((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2 * n);
 
-  // Create simple map with tiles
+  // Build radar HTML with map tiles and overlay
   mapDiv.innerHTML = `
-    <div style="width:100%;height:100%;background:linear-gradient(135deg,#1a2847 0%,#2d3561 100%);display:flex;align-items:center;justify-content:center;flex-direction:column;color:#fff;">
-      <div style="text-align:center;">
-        <div style="font-size:1.2rem;margin-bottom:1rem;">🗺️ Weather Radar</div>
-        <div style="font-size:0.9rem;color:#aaa;margin-bottom:2rem;">${locName}</div>
-        <img src="${tileLayer.replace('{z}',zoom).replace('{x}',x).replace('{y}',y)}" style="max-width:100%;max-height:60%;border-radius:8px;opacity:0.8;" alt="Radar" onerror="this.parentElement.innerHTML='<div style=\\"color:#ff6b6b;\\">Radar data unavailable</div>';" />
-        <div style="margin-top:1.5rem;font-size:0.8rem;color:#888;">
-          <div>Latitude: ${lat.toFixed(2)}°</div>
-          <div>Longitude: ${lon.toFixed(2)}°</div>
-        </div>
+    <div style="width:100%;height:100%;position:relative;background:#1a2040;overflow:hidden;">
+      <!-- Base map layer -->
+      <div style="position:absolute;inset:0;background-image:url('https://tile.openstreetmap.org/${zoom}/${x}/${y}.png');background-size:cover;background-position:center;opacity:0.4;"></div>
+
+      <!-- Radar overlay -->
+      <div style="position:absolute;inset:0;">
+        <img src="https://tile.rainviewer.com/v2/radar/${Date.now()}/512/${zoom}/${x}/${y}/1/1_0.png"
+             style="width:100%;height:100%;object-fit:cover;opacity:0.8;"
+             onerror="this.parentElement.innerHTML='<div style=\\"display:flex;align-items:center;justify-content:center;width:100%;height:100%;color:#888;\\">Live radar data unavailable</div>'" />
+      </div>
+
+      <!-- Location marker -->
+      <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:20px;height:20px;background:#ff3b30;border:3px solid white;border-radius:50%;box-shadow:0 0 20px rgba(255,59,48,0.6);z-index:10;"></div>
+
+      <!-- Info overlay -->
+      <div style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(to top, rgba(0,0,0,0.8), transparent);padding:1.5rem;color:#fff;z-index:5;">
+        <div style="font-weight:600;margin-bottom:0.5rem;">${locName}</div>
+        <div style="font-size:0.85rem;color:#aaa;margin-bottom:0.5rem;">📍 ${lat.toFixed(2)}° / ${lon.toFixed(2)}°</div>
+        <div style="font-size:0.75rem;color:#888;">🔄 Updates every 10 minutes</div>
       </div>
     </div>
   `;
