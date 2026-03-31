@@ -1200,7 +1200,7 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
     </div>
 
     <div class="wx-card wx-wind">
-      <span class="wx-card-label">Wind & Air Quality <span style="margin-left: auto;">💨</span></span>
+      <span class="wx-card-label">Wind <span style="margin-left: auto;">💨</span></span>
       <span class="wx-card-main">${isMetric?wind:(wind*0.621).toFixed(1)}<span class="wx-card-unit"> ${isMetric?'km/h':'mph'}</span></span>
       <span class="wx-card-sub">${windBf}</span>
       <hr class="wx-divider"/>
@@ -1208,9 +1208,6 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
       <div class="wx-row"><span>Speed ${isMetric?'mph':'km/h'}</span><strong>${isMetric?(wind*0.621).toFixed(1):wind} ${isMetric?'mph':'km/h'}</strong></div>
       <div class="wx-row"><span>Speed m/s</span><strong>${(wind/3.6).toFixed(1)} m/s</strong></div>
       <div class="wx-row"><span>Beaufort</span><strong>${windBf}</strong></div>
-      ${aq ? `<hr class="wx-divider"/><div class="wx-row"><span>PM2.5</span><strong>${aq.pm2_5?.toFixed(1) || '—'} µg/m³</strong></div>
-      <div class="wx-row"><span>PM10</span><strong>${aq.pm10?.toFixed(1) || '—'} µg/m³</strong></div>
-      <div class="wx-row"><span>US AQI</span><strong>${aq.us_aqi?.toFixed(0) || '—'}</strong></div>` : ''}
     </div>
 
     <div class="wx-card wx-cond">
@@ -1221,6 +1218,9 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
       <div class="wx-row"><span>Humidity</span><strong>${hum}%</strong></div>
       <div class="wx-row"><span>Precip chance</span><strong>${prec}%</strong></div>
       <div class="wx-row"><span>Wind</span><strong>${isMetric?wind+' km/h':(wind*0.621).toFixed(1)+' mph'} ${wdir(cw.winddirection)}</strong></div>
+      ${aq ? `<hr class="wx-divider"/><div class="wx-row"><span>PM2.5</span><strong>${aq.pm2_5?.toFixed(1) || '—'} µg/m³</strong></div>
+      <div class="wx-row"><span>PM10</span><strong>${aq.pm10?.toFixed(1) || '—'} µg/m³</strong></div>
+      <div class="wx-row"><span>US AQI</span><strong>${aq.us_aqi?.toFixed(0) || '—'}</strong></div>` : ''}
       <hr class="wx-divider" style="margin-top: auto; margin-bottom: 0.5rem;"/>
       <div style="display: flex; gap: 0.4rem; overflow-x: auto;">
         ${[...Array(12)].map((_, i) => {
