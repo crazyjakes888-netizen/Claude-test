@@ -682,7 +682,14 @@ function precipType(code) {
 let particleAnim = null;
 let lightningTimer = null;
 
-function getWeatherCategory(code, isNight) {
+function getWeatherCategory(code, isNight, precipProb = 0) {
+  // If high precipitation probability, treat as rain
+  if (precipProb > 50) {
+    if ([95,96,99].includes(code)) return 'storm';
+    if (precipProb > 75) return 'rain';
+    return 'rain';
+  }
+
   if ([95,96,99].includes(code)) return 'storm';
   if ([61,63,65,80,81,82,51,53,55].includes(code)) return 'rain';
   if ([71,73,75,77,85,86].includes(code)) return 'snow';
@@ -699,7 +706,7 @@ function isHomepageView() {
   return !hero || hero.style.display !== 'none';
 }
 
-function applyBackground(code, sunrise, sunset) {
+function applyBackground(code, sunrise, sunset, precipProb = 0) {
   const now = new Date();
   const riseH = parseInt(sunrise.split(':')[0]);
   const riseM = parseInt(sunrise.split(':')[1]);
@@ -712,7 +719,7 @@ function applyBackground(code, sunrise, sunset) {
   const isDusk  = Math.abs(nowMin - setMin) < 60;
   const isDawn  = Math.abs(nowMin - riseMin) < 60;
 
-  const cat = getWeatherCategory(code, isNight);
+  const cat = getWeatherCategory(code, isNight, precipProb);
   const bg  = document.getElementById('bg');
 
   // Clear old particles/lightning
@@ -1052,7 +1059,7 @@ function renderWeather(cw, hourly, daily, place, timezone, aq) {
   const windBf = wind<1?'Calm':wind<6?'Light air':wind<12?'Light breeze':wind<20?'Gentle breeze':wind<29?'Moderate breeze':wind<38?'Fresh breeze':wind<50?'Strong breeze':'High wind';
   const pt = precipType(code);
 
-  applyBackground(code, rise, set);
+  applyBackground(code, rise, set, prec || 0);
 
   document.getElementById('wx-grid').innerHTML = `
     <div class="wx-card wx-temp">
