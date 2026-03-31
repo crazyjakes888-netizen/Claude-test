@@ -1268,25 +1268,73 @@ function loadRadarMap(lat, lon, locName) {
         maxZoom: 19
       }).addTo(radarMap);
 
-      // Add precipitation circles based on simulated data
+      // Add natural-looking precipitation shapes
       const addPrecipitationLayers = function() {
-        const clusters = [
-          {lat: lat + 0.15, lon: lon + 0.12, radius: 15000, intensity: 0.6, color: '#00d4ff'}, // Light
-          {lat: lat - 0.10, lon: lon + 0.18, radius: 20000, intensity: 0.8, color: '#00ff00'}, // Moderate
-          {lat: lat - 0.20, lon: lon - 0.10, radius: 18000, intensity: 0.9, color: '#ffff00'}, // Heavy
-          {lat: lat + 0.05, lon: lon - 0.22, radius: 16000, intensity: 0.95, color: '#ff6400'}, // Extreme
-          {lat: lat - 0.12, lon: lon - 0.15, radius: 14000, intensity: 0.7, color: '#00d4ff'}, // Light
+        // Create irregular shapes around the search area
+        const areas = [
+          {
+            center: [lat + 0.15, lon + 0.12],
+            intensity: 0.6,
+            color: '#00d4ff',
+            points: 8,
+            variance: 0.8
+          },
+          {
+            center: [lat - 0.10, lon + 0.18],
+            intensity: 0.8,
+            color: '#00ff00',
+            points: 10,
+            variance: 1.2
+          },
+          {
+            center: [lat - 0.20, lon - 0.10],
+            intensity: 0.9,
+            color: '#ffff00',
+            points: 12,
+            variance: 1.0
+          },
+          {
+            center: [lat + 0.05, lon - 0.22],
+            intensity: 0.95,
+            color: '#ff6400',
+            points: 9,
+            variance: 0.9
+          },
+          {
+            center: [lat - 0.12, lon - 0.15],
+            intensity: 0.7,
+            color: '#00d4ff',
+            points: 7,
+            variance: 1.1
+          }
         ];
 
-        clusters.forEach(cluster => {
-          // Draw circle with gradient fill
-          const circle = L.circle([cluster.lat, cluster.lon], {
-            radius: cluster.radius,
-            fillColor: cluster.color,
-            color: cluster.color,
+        areas.forEach(area => {
+          const latlngs = [];
+          const centerLat = area.center[0];
+          const centerLon = area.center[1];
+          const baseRadius = 0.12;
+
+          // Create irregular polygon points
+          for (let i = 0; i < area.points; i++) {
+            const angle = (i / area.points) * Math.PI * 2;
+            const randomVariance = 0.7 + Math.random() * area.variance;
+            const radius = baseRadius * randomVariance;
+
+            latlngs.push([
+              centerLat + Math.sin(angle) * radius,
+              centerLon + Math.cos(angle) * radius * 0.8 // Account for lat/lon scaling
+            ]);
+          }
+
+          // Draw polygon with natural edges
+          const polygon = L.polygon(latlngs, {
+            fillColor: area.color,
+            color: area.color,
             weight: 0,
-            opacity: cluster.intensity * 0.8,
-            fillOpacity: cluster.intensity * 0.6
+            opacity: area.intensity * 0.7,
+            fillOpacity: area.intensity * 0.5,
+            smoothFactor: 1.0
           }).addTo(radarMap);
         });
       };
