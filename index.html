@@ -698,21 +698,23 @@ function applyBackground(code, sunrise, sunset) {
   // Clear old particles/lightning
   stopParticles();
   clearStars();
+  clearMoon();
+  clearShootingStars();
   if (lightningTimer) { clearTimeout(lightningTimer); lightningTimer = null; }
 
   const gradients = {
     'clear-day':   'linear-gradient(180deg, #0ea5e9 0%, #38bdf8 40%, #7dd3fc 100%)',
-    'clear-night': 'linear-gradient(180deg, #020617 0%, #0f172a 50%, #1e1b4b 100%)',
+    'clear-night': 'linear-gradient(180deg, #1a1f4b 0%, #2d1b69 40%, #1a2847 100%)',
     'cloudy-day':  'linear-gradient(180deg, #e2e8f0 0%, #f1f5f9 40%, #dbeafe 70%, #cbd5e1 100%)',
-    'cloudy-night': 'linear-gradient(180deg, #1e293b 0%, #0f172a 50%, #020617 100%)',
+    'cloudy-night': 'linear-gradient(180deg, #2d3561 0%, #1a2847 50%, #16213e 100%)',
     'overcast':    'linear-gradient(180deg, #cbd5e1 0%, #e2e8f0 50%, #f1f5f9 100%)',
-    'overcast-night': 'linear-gradient(180deg, #1e293b 0%, #0f172a 50%, #0c0c1f 100%)',
+    'overcast-night': 'linear-gradient(180deg, #2d3561 0%, #1f2947 50%, #1a1f4b 100%)',
     'rain':        'linear-gradient(180deg, #0c1a2e 0%, #1e3a5f 50%, #0f2d47 100%)',
     'storm':       'linear-gradient(180deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%)',
     'snow':        'linear-gradient(180deg, #e2e8f0 0%, #cbd5e1 50%, #94a3b8 100%)',
-    'snow-night':  'linear-gradient(180deg, #0f172a 0%, #1e293b 50%, #1a1a2e 100%)',
+    'snow-night':  'linear-gradient(180deg, #1a2847 0%, #2d3561 50%, #1f2947 100%)',
     'fog':         'linear-gradient(180deg, #6b7280 0%, #9ca3af 100%)',
-    'fog-night':   'linear-gradient(180deg, #1f2937 0%, #111827 100%)',
+    'fog-night':   'linear-gradient(180deg, #2d3561 0%, #1f2947 100%)',
   };
   if (isDusk && cat.includes('clear')) {
     bg.style.background = 'linear-gradient(180deg, #fde68a 0%, #fcd34d 40%, #fbbf24 70%, #daa520 100%)';
@@ -729,7 +731,12 @@ function applyBackground(code, sunrise, sunset) {
     bg.style.background = gradients[cat] || gradients['clear-night'];
   }
 
-  if (cat === 'clear-night') spawnStars(120);
+  // Spawn stars and moon for all night conditions
+  if (isNight) {
+    spawnStars(150);
+    spawnMoon();
+    if (Math.random() > 0.7) startShootingStars();
+  }
   if (cat === 'rain')  startParticles('rain');
   if (cat === 'storm') { startParticles('rain'); startLightning(); }
   if (cat === 'snow')  startParticles('snow');
@@ -753,6 +760,30 @@ function spawnStars(count) {
 }
 function clearStars() {
   document.querySelectorAll('.star').forEach(s => s.remove());
+}
+
+// ── Moon ────────────────────────────────────────────────────────────────────
+function spawnMoon() {
+  const moon = document.getElementById('moon') || document.createElement('div');
+  if (!moon.id) {
+    moon.id = 'moon';
+    moon.style.cssText = `
+      position: absolute;
+      width: 120px;
+      height: 120px;
+      background: radial-gradient(circle at 35% 35%, #fff8dc 0%, #f5deb3 50%, #e0c097 100%);
+      border-radius: 50%;
+      top: ${Math.random() * 30 + 5}%;
+      right: ${Math.random() * 20 + 5}%;
+      box-shadow: 0 0 40px rgba(255, 248, 220, 0.4), inset -20px -20px 40px rgba(0, 0, 0, 0.3);
+      z-index: 5;
+    `;
+    document.getElementById('bg').appendChild(moon);
+  }
+}
+function clearMoon() {
+  const moon = document.getElementById('moon');
+  if (moon) moon.remove();
 }
 
 // ── Shooting Stars ─────────────────────────────────────────────────────────
