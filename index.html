@@ -1271,16 +1271,19 @@ function loadRadarMap(lat, lon, locName) {
         maxZoom: 19
       }).addTo(radarMap);
 
-      // Precipitation layer - OpenWeatherMap with timestamp for live data
-      const radarLayer = L.tileLayer(`https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=e2df1b55381e81151e86881b934e1736&t=${Date.now()}`, {
+      // Precipitation layer - RainViewer for better colors
+      const timestamp = Math.floor(Date.now() / 1000);
+      const radarLayer = L.tileLayer(`https://tilecache.rainviewer.com/v2/radar_tiles/512/${timestamp}/{z}/{x}/{y}/1/1_1.png`, {
         attribution: '',
-        opacity: 0.75,
+        opacity: 0.8,
         maxZoom: 19,
-        tms: false
+        tms: false,
+        crossOrigin: 'anonymous'
       }).addTo(radarMap);
 
       // Store reference for refresh
       radarMap.radarLayer = radarLayer;
+      radarMap.radarTimestamp = timestamp;
 
       // Add location marker - professional style
       L.circleMarker([lat, lon], {
@@ -1310,14 +1313,17 @@ function loadRadarMap(lat, lon, locName) {
           radarMap.removeLayer(radarMap.radarLayer);
 
           // Add new layer with updated timestamp
-          const newRadarLayer = L.tileLayer(`https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=e2df1b55381e81151e86881b934e1736&t=${Date.now()}`, {
+          const newTimestamp = Math.floor(Date.now() / 1000);
+          const newRadarLayer = L.tileLayer(`https://tilecache.rainviewer.com/v2/radar_tiles/512/${newTimestamp}/{z}/{x}/{y}/1/1_1.png`, {
             attribution: '',
-            opacity: 0.75,
+            opacity: 0.8,
             maxZoom: 19,
-            tms: false
+            tms: false,
+            crossOrigin: 'anonymous'
           }).addTo(radarMap);
 
           radarMap.radarLayer = newRadarLayer;
+          radarMap.radarTimestamp = newTimestamp;
         }
       }, 2 * 60 * 1000); // 2 minutes
 
