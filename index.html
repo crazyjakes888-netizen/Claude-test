@@ -1161,12 +1161,14 @@ function resetHomeBackground() {
   startShootingStars();
 }
 function goHome() {
+  // Reset radar state before reloading
+  radarReady = false;
   // Simple refresh to clear all dynamic elements and reset to clean homepage
   location.reload();
 }
 
 // ── Radar View ─────────────────────────────────────────────────────────────
-let lastRadarLat = 0, lastRadarLon = 0;
+let lastRadarLat = null, lastRadarLon = null, radarReady = false;
 
 function showRadarView() {
   const modal = document.getElementById('radar-modal');
@@ -1174,7 +1176,9 @@ function showRadarView() {
 
   // Get the current location from the weather display
   const locName = document.getElementById('wx-loc').textContent;
-  if (!locName || lastRadarLat === 0) {
+
+  // Check if a city has been successfully searched
+  if (!radarReady || !locName) {
     alert('Please search for a city first');
     return;
   }
@@ -1235,10 +1239,11 @@ async function searchCity() {
     const label = j[0].display_name.split(',')[0].trim();
     lastRadarLat = parseFloat(j[0].lat);
     lastRadarLon = parseFloat(j[0].lon);
+    radarReady = true;
     await fetchWeather(j[0].lat, j[0].lon, label);
     loadNews(label);
     document.getElementById('weather').scrollIntoView({ behavior: 'smooth' });
-  } catch { document.getElementById('wx-loc').textContent = 'Error'; }
+  } catch { document.getElementById('wx-loc').textContent = 'Error'; radarReady = false; }
 }
 
 document.getElementById('city-btn').addEventListener('click', searchCity);
@@ -1255,11 +1260,12 @@ async function miniSearch() {
     const label = j[0].display_name.split(',')[0].trim();
     lastRadarLat = parseFloat(j[0].lat);
     lastRadarLon = parseFloat(j[0].lon);
+    radarReady = true;
     await fetchWeather(j[0].lat, j[0].lon, label);
     loadNews(label);
     document.getElementById('mini-city-input').value = '';
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  } catch { document.getElementById('wx-loc').textContent = 'Error'; }
+  } catch { document.getElementById('wx-loc').textContent = 'Error'; radarReady = false; }
 }
 document.getElementById('mini-city-btn').addEventListener('click', miniSearch);
 document.getElementById('mini-city-input').addEventListener('keydown', e => {
