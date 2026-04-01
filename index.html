@@ -349,9 +349,10 @@
       border-radius: 12px;
       color: var(--text); font-size: 0.88rem; font-weight: 600;
       padding: 0.55rem 1.2rem; cursor: pointer; font-family: inherit;
-      transition: background 0.15s, transform 0.12s;
+      transition: all 0.2s ease;
       backdrop-filter: blur(8px);
       align-self: flex-start; margin-top: 0.3rem;
+      will-change: transform;
     }
     #home-btn:hover { background: rgba(108,99,255,0.25); transform: scale(1.04); }
     #home-btn:active { transform: scale(0.97); }
@@ -364,9 +365,10 @@
       border-radius: 12px;
       color: var(--text); font-size: 0.88rem; font-weight: 600;
       padding: 0.55rem 1.2rem; cursor: pointer; font-family: inherit;
-      transition: background 0.15s, transform 0.12s;
+      transition: all 0.2s ease;
       backdrop-filter: blur(8px);
       align-self: flex-start; margin-top: 0.3rem;
+      will-change: transform;
     }
     #radar-btn:hover { background: rgba(108,99,255,0.25); transform: scale(1.04); }
     #radar-btn:active { transform: scale(0.97); }
@@ -384,6 +386,7 @@
       transition: all 0.2s ease;
       backdrop-filter: blur(8px);
       align-self: flex-start; margin-top: 0.3rem;
+      will-change: transform;
     }
     #alerts-btn:hover { background: rgba(255,94,108,0.35); border-color: #ff7a89; transform: scale(1.04); }
     #alerts-btn:active { transform: scale(0.97); }
