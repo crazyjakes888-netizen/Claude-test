@@ -1703,8 +1703,6 @@ async function searchCity() {
   } catch { document.getElementById('wx-loc').textContent = 'Error'; radarReady = false; }
 }
 
-document.getElementById('city-btn').addEventListener('click', searchCity);
-
 // ── Mini search bar ─────────────────────────────────────────────────────────
 async function miniSearch() {
   const val = document.getElementById('mini-city-input').value.trim();
@@ -1724,10 +1722,6 @@ async function miniSearch() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   } catch { document.getElementById('wx-loc').textContent = 'Error'; radarReady = false; }
 }
-document.getElementById('mini-city-btn').addEventListener('click', miniSearch);
-document.getElementById('mini-city-input').addEventListener('keydown', e => {
-  if (e.key === 'Enter') miniSearch();
-});
 
 // ── Radar button listeners ──────────────────────────────────────────────────
 document.getElementById('radar-btn').addEventListener('click', showRadarView);
@@ -1924,6 +1918,32 @@ document.addEventListener('DOMContentLoaded', () => {
     unitBtn.addEventListener('click', toggleUnits);
     updateUnitButton();
   }
+
+  // Setup search button listeners
+  const cityBtn = document.getElementById('city-btn');
+  if (cityBtn) {
+    cityBtn.addEventListener('click', searchCity);
+  }
+
+  const miniCityBtn = document.getElementById('mini-city-btn');
+  if (miniCityBtn) {
+    miniCityBtn.addEventListener('click', miniSearch);
+  }
+
+  // Also allow Enter key to search
+  const cityInput = document.getElementById('city-input');
+  if (cityInput) {
+    cityInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') searchCity();
+    });
+  }
+
+  const miniCityInput = document.getElementById('mini-city-input');
+  if (miniCityInput) {
+    miniCityInput.addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') miniSearch();
+    });
+  }
 });
 
 // Weather Alerts Carousel
@@ -2082,6 +2102,27 @@ setTimeout(() => {
     const alerts = JSON.parse(storedAlerts);
     if (alerts.length > 0) {
       alertsBtn.style.display = 'block';
+    }
+  }
+
+  // Initialize homepage background with stars
+  if (isHomepageView()) {
+    const now = new Date();
+    const hour = now.getHours();
+    const isNight = hour < 6 || hour > 18;
+
+    if (isNight) {
+      spawnStars(160);
+      spawnMoon();
+      startShootingStars();
+    }
+
+    // Set homepage background
+    const bg = document.getElementById('bg');
+    if (isNight) {
+      bg.style.background = 'linear-gradient(180deg, #1a1f4b 0%, #2d1b69 40%, #1a2847 100%)';
+    } else {
+      bg.style.background = 'linear-gradient(180deg, #0ea5e9 0%, #38bdf8 40%, #7dd3fc 100%)';
     }
   }
 }, 100);
