@@ -8,6 +8,7 @@ import {
   SafeAreaView,
   Platform,
   StatusBar as RNStatusBar,
+  useWindowDimensions,
 } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -86,6 +87,9 @@ const WEATHER_URL =
   '&wind_speed_unit=mph';
 
 export default function App() {
+  const { width } = useWindowDimensions();
+  const isIPad = width >= 768;
+
   const [weather, setWeather]         = useState(null);
   const [weatherLoading, setWeatherLoading] = useState(true);
   const [weatherError, setWeatherError]     = useState(null);
@@ -142,12 +146,12 @@ export default function App() {
         style={styles.header}
       >
         <SafeAreaView>
-          <View style={styles.headerContent}>
+          <View style={[styles.headerContent, isIPad && styles.headerContentIPad]}>
             <View>
-              <Text style={styles.headerTitle}>Weather & News</Text>
+              <Text style={[styles.headerTitle, isIPad && styles.headerTitleIPad]}>Weather & News</Text>
               <Text style={styles.headerDate}>{dateString}</Text>
             </View>
-            <Text style={styles.headerEmoji}>⛅</Text>
+            <Text style={[styles.headerEmoji, isIPad && styles.headerEmojiIPad]}>⛅</Text>
           </View>
         </SafeAreaView>
       </LinearGradient>
@@ -155,7 +159,7 @@ export default function App() {
       {/* ── Scrollable body ── */}
       <ScrollView
         style={styles.scroll}
-        contentContainerStyle={styles.scrollContent}
+        contentContainerStyle={[styles.scrollContent, isIPad && styles.scrollContentIPad]}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
@@ -167,19 +171,48 @@ export default function App() {
           />
         }
       >
-        {/* ── Weather section ── */}
-        <SectionHeader emoji="🌤️" title="Current Weather" />
-        <WeatherCard
-          weather={weather}
-          loading={weatherLoading}
-          error={weatherError}
-        />
+        {/* ── iPad two-column layout ── */}
+        {isIPad ? (
+          <View style={styles.iPadColumns}>
+            {/* Left column */}
+            <View style={styles.iPadColumn}>
+              <SectionHeader emoji="🌤️" title="Current Weather" />
+              <WeatherCard
+                weather={weather}
+                loading={weatherLoading}
+                error={weatherError}
+              />
+              <SectionHeader emoji="📰" title="Top Headlines" subtitle="Tap a card to read more" />
+              {MOCK_NEWS.filter((_, i) => i % 2 === 0).map((article) => (
+                <NewsCard key={article.id} article={article} />
+              ))}
+            </View>
 
-        {/* ── News section ── */}
-        <SectionHeader emoji="📰" title="Top Headlines" subtitle="Tap a card to read more" />
-        {MOCK_NEWS.map((article, i) => (
-          <NewsCard key={article.id} article={article} index={i} />
-        ))}
+            {/* Right column */}
+            <View style={styles.iPadColumn}>
+              <SectionHeader emoji="📰" title=" " />
+              {MOCK_NEWS.filter((_, i) => i % 2 === 1).map((article) => (
+                <NewsCard key={article.id} article={article} />
+              ))}
+            </View>
+          </View>
+        ) : (
+          <>
+            {/* ── Weather section ── */}
+            <SectionHeader emoji="🌤️" title="Current Weather" />
+            <WeatherCard
+              weather={weather}
+              loading={weatherLoading}
+              error={weatherError}
+            />
+
+            {/* ── News section ── */}
+            <SectionHeader emoji="📰" title="Top Headlines" subtitle="Tap a card to read more" />
+            {MOCK_NEWS.map((article, i) => (
+              <NewsCard key={article.id} article={article} index={i} />
+            ))}
+          </>
+        )}
 
         {/* Bottom padding */}
         <View style={styles.bottomPad} />
@@ -230,11 +263,19 @@ const styles = StyleSheet.create({
     paddingTop: 16,
     paddingBottom: 20,
   },
+  headerContentIPad: {
+    paddingHorizontal: 40,
+    paddingTop: 24,
+    paddingBottom: 28,
+  },
   headerTitle: {
     fontSize: 28,
     fontWeight: '800',
     color: '#fff',
     letterSpacing: -0.5,
+  },
+  headerTitleIPad: {
+    fontSize: 36,
   },
   headerDate: {
     fontSize: 14,
@@ -245,6 +286,9 @@ const styles = StyleSheet.create({
   headerEmoji: {
     fontSize: 40,
   },
+  headerEmojiIPad: {
+    fontSize: 52,
+  },
 
   // Scroll
   scroll: {
@@ -253,8 +297,21 @@ const styles = StyleSheet.create({
   scrollContent: {
     paddingTop: 24,
   },
+  scrollContentIPad: {
+    paddingTop: 32,
+    paddingHorizontal: 20,
+  },
   bottomPad: {
     height: 40,
+  },
+
+  // iPad two-column layout
+  iPadColumns: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  iPadColumn: {
+    flex: 1,
   },
 
   // Section headers
