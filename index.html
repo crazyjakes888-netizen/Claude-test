@@ -292,9 +292,8 @@
       width: 100%;
     }
     .city-row-inner {
-      display: flex; gap: 0.9rem;
+      display: flex;
       flex-shrink: 0;
-      min-width: 100%;
       animation: slide-left var(--dur, 30s) linear infinite;
       will-change: transform;
     }
@@ -307,6 +306,7 @@
 
     .city-chip {
       display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
+      margin-right: 0.9rem;
       background: rgba(160,160,170,0.13);
       border: 1px solid rgba(200,200,210,0.2);
       border-radius: 6px;
@@ -474,9 +474,8 @@
       #city-btn   { font-size: 0.8rem; padding: 0.55rem 0.9rem; }
 
       /* City chips */
-      .city-chip  { font-size: 0.82rem; padding: 0.55rem 0.9rem; min-width: 110px; height: 52px; }
+      .city-chip  { font-size: 0.82rem; padding: 0.55rem 0.9rem; min-width: 110px; height: 52px; margin-right: 0.5rem; }
       #quick-cities { gap: 0.5rem; padding: 1rem 0 1.5rem; }
-      .city-row   { gap: 0.5rem; }
 
       /* Weather header */
       .wx-header  { flex-direction: column; gap: 0.6rem; padding-top: 1rem; }
