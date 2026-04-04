@@ -67,16 +67,17 @@
 
     /* Shooting stars */
     .shooting-star {
-      position: absolute; width: 120px; height: 1.5px;
-      background: linear-gradient(90deg, rgba(255,255,255,0.9), transparent);
+      position: absolute; width: 150px; height: 2.5px;
+      background: linear-gradient(90deg, rgba(255,255,255,1), rgba(255,255,255,0.3), transparent);
       border-radius: 2px;
-      animation: shoot 1s ease-out forwards;
+      animation: shoot 1.2s ease-out forwards;
       transform-origin: left center;
       transform: rotate(-30deg);
+      box-shadow: 0 0 8px rgba(255,255,255,0.8);
     }
     @keyframes shoot {
       0%   { opacity: 1; transform: rotate(-30deg) translateX(0); }
-      100% { opacity: 0; transform: rotate(-30deg) translateX(260px); }
+      100% { opacity: 0; transform: rotate(-30deg) translateX(300px); }
     }
 
     /* Cloud animation */
@@ -979,7 +980,7 @@ function spawnShootingStar() {
   setTimeout(() => s.remove(), 1000);
 }
 function startShootingStars() {
-  shootingStarTimer = setInterval(() => spawnShootingStar(), 2500);
+  shootingStarTimer = setInterval(() => spawnShootingStar(), 1500);
 }
 function clearShootingStars() {
   if (shootingStarTimer) { clearInterval(shootingStarTimer); shootingStarTimer = null; }
