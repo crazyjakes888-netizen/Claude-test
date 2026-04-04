@@ -287,19 +287,23 @@
       overflow: hidden;
     }
     .city-row {
-      display: flex; gap: 0.9rem;
-      overflow: hidden; white-space: nowrap;
+      display: flex;
+      overflow: hidden;
+      width: 100%;
     }
     .city-row-inner {
-      display: inline-flex; gap: 0.9rem;
+      display: flex; gap: 0.9rem;
+      flex-shrink: 0;
+      min-width: 100%;
       animation: slide-left var(--dur, 30s) linear infinite;
+      will-change: transform;
     }
     .city-row.reverse .city-row-inner {
       animation-name: slide-right;
     }
     .city-row:hover .city-row-inner { animation-play-state: paused; }
-    @keyframes slide-left  { from { transform: translateX(0); } to { transform: translateX(-50%); } }
-    @keyframes slide-right { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+    @keyframes slide-left  { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
+    @keyframes slide-right { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
 
     .city-chip {
       display: inline-flex; align-items: center; justify-content: center; gap: 0.4rem;
