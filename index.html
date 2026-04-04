@@ -1680,12 +1680,12 @@ function loadRadarMap(lat, lon, locName) {
       };
       legend.addTo(radarMap);
 
-      // Auto-refresh radar every 2 minutes
+      // Auto-refresh radar every 5 minutes with new data
       radarRefreshTimer = setInterval(() => {
-        if (radarMap && radarMap.heatmapLayer) {
-          radarMap.heatmapLayer._redraw();
+        if (lastRadarLat && lastRadarLon) {
+          loadRadarMap(lastRadarLat, lastRadarLon, lastWeatherLabel);
         }
-      }, 2 * 60 * 1000); // 2 minutes
+      }, 5 * 60 * 1000); // 5 minutes
 
     } catch (e) {
       mapDiv.innerHTML = `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:#888;font-size:0.9rem;">Loading radar...</div>`;
