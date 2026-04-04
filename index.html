@@ -1456,6 +1456,14 @@ function closeAlertsView() {
   if (modal) modal.style.display = 'none';
 }
 
+// ── Auto weather refresh every 5 minutes ───────────────────────────────────
+let lastWeatherLabel = null;
+setInterval(() => {
+  if (!isHomepageView() && lastRadarLat && lastRadarLon) {
+    fetchWeather(lastRadarLat, lastRadarLon, lastWeatherLabel);
+  }
+}, 5 * 60 * 1000);
+
 // ── Radar View ─────────────────────────────────────────────────────────────
 let lastRadarLat = null, lastRadarLon = null, radarReady = false, radarMap = null, radarRefreshTimer = null;
 
@@ -1699,6 +1707,7 @@ async function searchCity() {
     const label = j[0].display_name.split(',')[0].trim();
     lastRadarLat = parseFloat(j[0].lat);
     lastRadarLon = parseFloat(j[0].lon);
+    lastWeatherLabel = label;
     radarReady = true;
     await fetchWeather(j[0].lat, j[0].lon, label);
     loadNews(label);
@@ -1718,6 +1727,7 @@ async function miniSearch() {
     const label = j[0].display_name.split(',')[0].trim();
     lastRadarLat = parseFloat(j[0].lat);
     lastRadarLon = parseFloat(j[0].lon);
+    lastWeatherLabel = label;
     radarReady = true;
     await fetchWeather(j[0].lat, j[0].lon, label);
     loadNews(label);
