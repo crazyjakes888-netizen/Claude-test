@@ -407,7 +407,7 @@
     /* Weather grid */
     .wx-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, 160px);
+      grid-template-columns: repeat(auto-fit, 180px);
       gap: 1rem;
       justify-content: start;
     }
@@ -486,7 +486,7 @@
       .mini-search-wrap { display: none; } /* too cramped on phone, use search bar on home */
 
       /* Weather cards — fixed width on phone */
-      .wx-grid { grid-template-columns: repeat(auto-fit, 160px); gap: 0.6rem; }
+      .wx-grid { grid-template-columns: repeat(auto-fit, 180px); gap: 0.6rem; }
       #weather  { padding: 0 0.75rem 1.5rem; }
       .wx-card  { min-height: 200px; padding: 1rem 0.9rem; }
       .wx-card-icon { font-size: 1.8rem; }
@@ -501,14 +501,14 @@
     /* ── DESKTOP / LARGE SCREENS ── */
     @media (min-width: 900px) {
       /* Weather cards — fixed width on desktop */
-      .wx-grid { grid-template-columns: repeat(auto-fit, 160px); gap: 1.5rem; }
+      .wx-grid { grid-template-columns: repeat(auto-fit, 180px); gap: 1.5rem; }
       #weather { padding: 0 2rem 2rem; max-width: 1400px; margin: 0 auto; }
       .wx-card { min-height: 340px; padding: 1.5rem 1.5rem; }
     }
 
     @media (min-width: 1400px) {
       /* Weather cards — fixed width on very large screens */
-      .wx-grid { grid-template-columns: repeat(auto-fit, 160px); }
+      .wx-grid { grid-template-columns: repeat(auto-fit, 180px); }
       #weather { max-width: 100%; padding: 0 3rem 2rem; }
     }
   </style>
