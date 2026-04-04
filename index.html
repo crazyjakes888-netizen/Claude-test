@@ -2108,18 +2108,14 @@ setTimeout(() => {
   if (isHomepageView()) {
     const now = new Date();
     const hour = now.getHours();
-    const isNight = hour < 6 || hour > 18;
+    const isNight = hour < 7 || hour >= 19;
 
+    const bg = document.getElementById('bg');
     if (isNight) {
+      bg.style.background = 'linear-gradient(180deg, #0a0e27 0%, #1a1f4b 40%, #2d1b69 70%, #1a2847 100%)';
       spawnStars(160);
       spawnMoon();
       startShootingStars();
-    }
-
-    // Set homepage background
-    const bg = document.getElementById('bg');
-    if (isNight) {
-      bg.style.background = 'linear-gradient(180deg, #1a1f4b 0%, #2d1b69 40%, #1a2847 100%)';
     } else {
       bg.style.background = 'linear-gradient(180deg, #0ea5e9 0%, #38bdf8 40%, #7dd3fc 100%)';
     }
