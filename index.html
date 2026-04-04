@@ -407,7 +407,7 @@
     /* Weather grid */
     .wx-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       gap: 1rem;
     }
 
@@ -419,7 +419,7 @@
       display: flex; flex-direction: column; gap: 0.35rem;
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
-      min-height: 260px;
+      min-height: 320px;
     }
 
     .wx-card-label {
@@ -502,7 +502,7 @@
       /* Weather cards — 3 column grid on desktop */
       .wx-grid { grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
       #weather { padding: 0 2rem 2rem; max-width: 1400px; margin: 0 auto; }
-      .wx-card { min-height: 280px; padding: 1.5rem 1.5rem; }
+      .wx-card { min-height: 340px; padding: 1.5rem 1.5rem; }
     }
 
     @media (min-width: 1400px) {
