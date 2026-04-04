@@ -1700,6 +1700,7 @@ async function searchCity() {
   document.getElementById('wx-loc').textContent = 'Loading…';
   showWeatherView();
   hideSug();
+  document.getElementById('city-input').value = '';
   try {
     const r = await fetchT(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(val)}`);
     const j = await r.json();
@@ -1752,6 +1753,10 @@ document.getElementById('alerts-modal').addEventListener('click', (e) => {
 document.getElementById('city-input').addEventListener('keydown', e => {
   if (e.key === 'Enter') { hideSug(); searchCity(); }
   if (e.key === 'Escape') hideSug();
+});
+
+document.getElementById('mini-city-input')?.addEventListener('keydown', e => {
+  if (e.key === 'Enter') miniSearch();
 });
 
 
@@ -1943,20 +1948,6 @@ document.addEventListener('DOMContentLoaded', () => {
     miniCityBtn.addEventListener('click', miniSearch);
   }
 
-  // Also allow Enter key to search
-  const cityInput = document.getElementById('city-input');
-  if (cityInput) {
-    cityInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') searchCity();
-    });
-  }
-
-  const miniCityInput = document.getElementById('mini-city-input');
-  if (miniCityInput) {
-    miniCityInput.addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') miniSearch();
-    });
-  }
 });
 
 // Weather Alerts Carousel
