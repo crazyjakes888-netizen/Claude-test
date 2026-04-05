@@ -70,14 +70,16 @@
       position: absolute; width: 150px; height: 2.5px;
       background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), rgba(255,255,255,1));
       border-radius: 2px;
-      animation: shoot 1.2s ease-out forwards;
+      animation: shoot 1.8s ease-in-out forwards;
       transform-origin: left center;
       transform: rotate(45deg);
       box-shadow: 0 0 8px rgba(255,255,255,0.8);
     }
     @keyframes shoot {
-      0%   { opacity: 1; transform: rotate(45deg) translateX(0); }
-      100% { opacity: 0; transform: rotate(45deg) translateX(300px); }
+      0%   { opacity: 0; transform: rotate(45deg) translateX(-100px); }
+      20%  { opacity: 1; }
+      80%  { opacity: 1; }
+      100% { opacity: 0; transform: rotate(45deg) translateX(400px); }
     }
 
     /* Cloud animation */
@@ -979,7 +981,11 @@ function spawnShootingStar() {
   setTimeout(() => s.remove(), 1000);
 }
 function startShootingStars() {
-  shootingStarTimer = setInterval(() => spawnShootingStar(), 1500);
+  const spawnRandomStar = () => {
+    spawnShootingStar();
+    shootingStarTimer = setTimeout(spawnRandomStar, 2000 + Math.random() * 4000); // 2-6 seconds
+  };
+  shootingStarTimer = setTimeout(spawnRandomStar, 1000 + Math.random() * 2000);
 }
 function clearShootingStars() {
   if (shootingStarTimer) { clearInterval(shootingStarTimer); shootingStarTimer = null; }
