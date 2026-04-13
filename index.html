@@ -1503,7 +1503,6 @@ function closeRadarView() {
   const modal = document.getElementById('radar-modal');
   if (modal) {
     modal.style.display = 'none';
-    modal.style.flexDirection = 'column';
   }
   // Clear refresh timer when closing
   if (radarRefreshTimer) {
@@ -1515,6 +1514,9 @@ function closeRadarView() {
     radarMap.remove();
     radarMap = null;
   }
+  // Clear the map div completely
+  const mapDiv = document.getElementById('radar-map');
+  if (mapDiv) mapDiv.innerHTML = '';
 }
 
 function loadRadarMap(lat, lon, locName) {
