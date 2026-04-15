@@ -1977,82 +1977,45 @@ async function fetchWeatherAlerts(lat, lon) {
   try {
     const alerts = [];
 
-    // Try to get alerts from NWS point data
-    try {
-      const pointRes = await fetchT(`https://api.weather.gov/points/${lat},${lon}`);
-      if (pointRes.ok) {
-        const pointData = await pointRes.json();
-        if (pointData.properties?.forecastZone) {
-          const zoneId = pointData.properties.forecastZone.split('/').pop();
-          // Fetch all active alerts for this zone (includes watches, warnings, advisories)
-          const alertsRes = await fetchT(`https://api.weather.gov/alerts/active?zone=${zoneId}`);
-          if (alertsRes.ok) {
-            const alertsData = await alertsRes.json();
-            if (alertsData.features) {
-              alertsData.features.forEach(feature => {
-                const props = feature.properties;
-                const event = props.event || 'Unknown';
-                const severity =
-                  event.includes('Tornado Warning') ? 'critical' :
-                  event.includes('Tornado Watch') || event.includes('Severe Thunderstorm Warning') ? 'high' :
-                  event.includes('Warning') ? 'high' :
-                  event.includes('Watch') || event.includes('Advisory') ? 'moderate' :
-                  'low';
+    // Get grid point from NWS API to find the correct forecast zone
+    const pointRes = await fetchT(`https://api.weather.gov/points/${lat},${lon}`);
+    if (!pointRes.ok) return [];
 
-                alerts.push({
-                  type: event,
-                  location: props.areaDesc || 'Unknown',
-                  description: (props.headline || '').replace(/<[^>]*>/g, ''),
-                  severity: severity,
-                  time: new Date(props.sent).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
-                });
-              });
-            }
-          }
-        }
-      }
-    } catch (e) {
-      // Continue if point lookup fails
-    }
+    const pointData = await pointRes.json();
+    if (!pointData.properties) return [];
 
-    // Also try to get alerts by area (county/state level)
-    try {
-      const areaRes = await fetchT(`https://api.weather.gov/alerts/active`);
-      if (areaRes.ok) {
-        const areaData = await areaRes.json();
-        if (areaData.features) {
-          areaData.features.forEach(feature => {
-            const props = feature.properties;
-            const areaDesc = props.areaDesc || '';
-            // Check if alert applies to this area
-            if (areaDesc.includes('Cook') || areaDesc.includes('Illinois') || areaDesc.includes('Chicago')) {
-              const event = props.event || 'Unknown';
-              const severity =
-                event.includes('Tornado Warning') ? 'critical' :
-                event.includes('Tornado Watch') || event.includes('Severe Thunderstorm Warning') ? 'high' :
-                event.includes('Warning') ? 'high' :
-                event.includes('Watch') || event.includes('Advisory') ? 'moderate' :
-                'low';
+    // Get the forecast zone for this specific location
+    const zoneUrl = pointData.properties.forecastZone;
+    if (!zoneUrl) return [];
 
-              // Check if alert already exists
-              if (!alerts.find(a => a.type === event && a.location === areaDesc)) {
-                alerts.push({
-                  type: event,
-                  location: areaDesc,
-                  description: (props.headline || '').replace(/<[^>]*>/g, ''),
-                  severity: severity,
-                  time: new Date(props.sent).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
-                });
-              }
-            }
-          });
-        }
-      }
-    } catch (e) {
-      // Continue if area lookup fails
-    }
+    const zoneId = zoneUrl.split('/').pop();
 
-    return alerts;
+    // Fetch ALL active alerts for this specific zone
+    const alertsRes = await fetchT(`https://api.weather.gov/alerts/active?zone=${zoneId}`);
+    if (!alertsRes.ok) return [];
+
+    const alertsData = await alertsRes.json();
+    if (!alertsData.features) return [];
+
+    // Convert all NWS alerts to our format
+    return alertsData.features.map(feature => {
+      const props = feature.properties;
+      const event = props.event || 'Unknown';
+      const severity =
+        event.includes('Tornado Warning') ? 'critical' :
+        event.includes('Tornado Watch') || event.includes('Severe Thunderstorm Warning') ? 'high' :
+        event.includes('Warning') ? 'high' :
+        event.includes('Watch') || event.includes('Advisory') ? 'moderate' :
+        'low';
+
+      return {
+        type: event,
+        location: props.areaDesc || 'Unknown',
+        description: (props.headline || '').replace(/<[^>]*>/g, ''),
+        severity: severity,
+        time: new Date(props.sent).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+      };
+    });
   } catch (e) {
     return [];
   }
