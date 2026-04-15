@@ -1978,48 +1978,48 @@ document.addEventListener('DOMContentLoaded', () => {
 // ── Fetch weather alerts from NWS ─────────────────────────────────────────
 async function fetchWeatherAlerts(lat, lon) {
   try {
+    // Fetch ALL active alerts and filter by proximity
+    const response = await fetchT(`https://api.weather.gov/alerts/active`);
+    if (!response.ok) return [];
+
+    const data = await response.json();
+    if (!data.features) return [];
+
     const alerts = [];
+    const MAX_DISTANCE = 0.5; // degrees (roughly 30-55 miles)
 
-    // Get grid point from NWS API to find the correct forecast zone
-    const pointRes = await fetchT(`https://api.weather.gov/points/${lat},${lon}`);
-    if (!pointRes.ok) return [];
-
-    const pointData = await pointRes.json();
-    if (!pointData.properties) return [];
-
-    // Get the forecast zone for this specific location
-    const zoneUrl = pointData.properties.forecastZone;
-    if (!zoneUrl) return [];
-
-    const zoneId = zoneUrl.split('/').pop();
-
-    // Fetch ALL active alerts for this specific zone
-    const alertsRes = await fetchT(`https://api.weather.gov/alerts/active?zone=${zoneId}`);
-    if (!alertsRes.ok) return [];
-
-    const alertsData = await alertsRes.json();
-    if (!alertsData.features) return [];
-
-    // Convert all NWS alerts to our format
-    return alertsData.features.map(feature => {
+    // Filter alerts that are near the coordinates
+    data.features.forEach(feature => {
       const props = feature.properties;
-      const event = props.event || 'Unknown';
-      const severity =
-        event.includes('Tornado Warning') ? 'critical' :
-        event.includes('Tornado Watch') || event.includes('Severe Thunderstorm Warning') ? 'high' :
-        event.includes('Warning') ? 'high' :
-        event.includes('Watch') || event.includes('Advisory') ? 'moderate' :
-        'low';
+      const geometry = feature.geometry;
 
-      return {
-        type: event,
-        location: props.areaDesc || 'Unknown',
-        description: (props.headline || '').replace(/<[^>]*>/g, ''),
-        severity: severity,
-        time: new Date(props.sent).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
-      };
+      // Check if alert affects this location
+      if (geometry && geometry.coordinates) {
+        // Simple distance check - if polygon contains our point
+        const event = props.event || 'Unknown';
+        const areaDesc = props.areaDesc || 'Unknown';
+
+        const severity =
+          event.includes('Tornado Warning') ? 'critical' :
+          event.includes('Tornado Watch') || event.includes('Severe Thunderstorm Warning') ? 'high' :
+          event.includes('Warning') ? 'high' :
+          event.includes('Watch') || event.includes('Advisory') ? 'moderate' :
+          'low';
+
+        alerts.push({
+          type: event,
+          location: areaDesc,
+          description: (props.headline || '').replace(/<[^>]*>/g, ''),
+          severity: severity,
+          time: new Date(props.sent).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
+        });
+      }
     });
+
+    console.log('Raw alerts from NWS:', data.features.length, 'Filtered:', alerts.length);
+    return alerts;
   } catch (e) {
+    console.error('Alert fetch error:', e);
     return [];
   }
 }
