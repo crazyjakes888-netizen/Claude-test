@@ -1416,7 +1416,10 @@ function showAlertsView() {
 
   // Load alerts from storage or use default alerts
   const storedAlerts = localStorage.getItem('weatherAlerts');
-  const alerts = storedAlerts ? JSON.parse(storedAlerts) : WEATHER_ALERTS;
+  let alerts = storedAlerts ? JSON.parse(storedAlerts) : [];
+
+  // Log for debugging
+  console.log('Alerts in localStorage:', alerts);
 
   // Populate alerts list
   const alertsList = document.getElementById('alerts-list');
