@@ -13,6 +13,53 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import WeatherCard from './components/WeatherCard';
 import NewsCard from './components/NewsCard';
+import WeatherAlertsCard from './components/WeatherAlertsCard';
+
+// ---------------------------------------------------------------------------
+// Mock international weather alerts data
+// ---------------------------------------------------------------------------
+const MOCK_ALERTS = [
+  {
+    id: '1',
+    type: 'Earthquake',
+    severity: 'Critical',
+    location: 'Japan (Honshu)',
+    description: 'Major earthquake with magnitude 7.2 detected. Potential tsunami warning in effect. Residents in coastal areas are advised to evacuate immediately.',
+    time: '2 hours ago',
+  },
+  {
+    id: '2',
+    type: 'Tornado Warning',
+    severity: 'High',
+    location: 'Oklahoma, USA',
+    description: 'Severe tornado warning issued for multiple counties. Seek shelter in basement or interior room immediately. Do not attempt to outrun tornadoes.',
+    time: '45 minutes ago',
+  },
+  {
+    id: '3',
+    type: 'Flooding',
+    severity: 'High',
+    location: 'Bangladesh (Dhaka Region)',
+    description: 'Heavy monsoon rains causing severe flooding. River levels rising rapidly. Evacuation orders in effect for low-lying areas.',
+    time: '3 hours ago',
+  },
+  {
+    id: '4',
+    type: 'Severe Storm',
+    severity: 'Moderate',
+    location: 'Central Europe',
+    description: 'Hailstorms and strong winds expected. Gusts up to 80 km/h. Prepare for potential damage to agriculture and property.',
+    time: '1 hour ago',
+  },
+  {
+    id: '5',
+    type: 'Heat Wave',
+    severity: 'Moderate',
+    location: 'Middle East (Dubai/Abu Dhabi)',
+    description: 'Extreme heat warning. Temperatures expected to reach 52°C (125°F). Stay hydrated and avoid outdoor activities during peak hours.',
+    time: '30 minutes ago',
+  },
+];
 
 // ---------------------------------------------------------------------------
 // Mock news data (realistic headlines — replace with a live API if desired)
@@ -174,6 +221,10 @@ export default function App() {
           loading={weatherLoading}
           error={weatherError}
         />
+
+        {/* ── Weather Alerts section ── */}
+        <SectionHeader emoji="🌍" title="International Alerts" subtitle="Tap to expand details" />
+        <WeatherAlertsCard alerts={MOCK_ALERTS} loading={false} />
 
         {/* ── News section ── */}
         <SectionHeader emoji="📰" title="Top Headlines" subtitle="Tap a card to read more" />
